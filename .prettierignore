@@ -1,0 +1,6 @@
+dist/
+.astro/
+coverage/
+pnpm-lock.yaml
+docs/design/
+Claude outputs/

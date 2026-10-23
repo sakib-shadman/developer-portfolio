@@ -1,21 +1,21 @@
 name: Feature task
 description: A PF-xx implementation task from the plan
-labels: ["type:feature"]
+labels: ['type:feature']
 body:
   - type: input
     id: srs
-    attributes: { label: SRS references, placeholder: "FR-05.8, NFR-02" }
+    attributes: { label: SRS references, placeholder: 'FR-05.8, NFR-02' }
     validations: { required: true }
   - type: input
     id: design
-    attributes: { label: Design file, placeholder: "docs/design/Projects.dc.html" }
+    attributes: { label: Design file, placeholder: 'docs/design/Projects.dc.html' }
   - type: textarea
     id: acceptance
     attributes: { label: Acceptance criteria, description: Copied from the SRS }
     validations: { required: true }
   - type: textarea
     id: subtasks
-    attributes: { label: Subtasks, value: "- [ ] " }
+    attributes: { label: Subtasks, value: '- [ ] ' }
   - type: input
     id: depends
-    attributes: { label: Depends on, placeholder: "#12, #13" }
+    attributes: { label: Depends on, placeholder: '#12, #13' }

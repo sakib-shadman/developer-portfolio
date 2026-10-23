@@ -1,0 +1,33 @@
+import js from '@eslint/js';
+import tseslint from 'typescript-eslint';
+import astro from 'eslint-plugin-astro';
+import globals from 'globals';
+
+export default [
+  {
+    ignores: [
+      'dist/',
+      '.astro/',
+      'node_modules/',
+      'coverage/',
+      'playwright-report/',
+      'test-results/',
+      'Claude outputs/',
+    ],
+  },
+  js.configs.recommended,
+  ...tseslint.configs.recommended,
+  ...astro.configs.recommended,
+  ...astro.configs['jsx-a11y-strict'],
+  { languageOptions: { globals: { ...globals.browser, ...globals.node } } },
+  {
+    // ADR-0008: data access only through src/lib/content/*
+    files: ['src/components/**', 'src/pages/**', 'src/layouts/**'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        { paths: [{ name: 'astro:content', message: 'Import data via src/lib/content/* (ADR-0008).' }] },
+      ],
+    },
+  },
+];

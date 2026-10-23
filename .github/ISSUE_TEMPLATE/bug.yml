@@ -1,6 +1,6 @@
 name: Bug
 description: Something on the site is broken
-labels: ["type:bug"]
+labels: ['type:bug']
 body:
   - type: input
     id: url
@@ -16,4 +16,4 @@ body:
     validations: { required: true }
   - type: input
     id: env
-    attributes: { label: Browser / device, placeholder: "iOS 18 Safari, iPhone 15" }
+    attributes: { label: Browser / device, placeholder: 'iOS 18 Safari, iPhone 15' }

@@ -1,6 +1,6 @@
 ## What & why
 
-Closes #<issue>. SRS: FR-xx.x …   Design: `docs/design/<file>`
+Closes #<issue>. SRS: FR-xx.x … Design: `docs/design/<file>`
 
 ## Preview
 
