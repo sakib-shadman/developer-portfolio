@@ -1,0 +1,14 @@
+name: Content update
+description: Add or change an article, project, experience entry, skill or the resume
+labels: ["type:content"]
+body:
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Content type
+      options: [Article, Project, Case study, Experience, Skill, Profile, Resume]
+    validations: { required: true }
+  - type: textarea
+    id: details
+    attributes: { label: Details, description: "Facts only — nothing invented (SRS §6.6)" }
+    validations: { required: true }
