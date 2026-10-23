@@ -1,0 +1,68 @@
+/**
+ * Data access for pages (ADR-0008). Thin I/O over astro:content; logic lives in logic.ts.
+ * Swapping files for a backend means changing loaders in content.config.ts, not this API.
+ */
+import { getCollection, getEntry } from 'astro:content';
+import {
+  isVisible,
+  pickFeaturedProjects,
+  pickHomeArticles,
+  sortArticles,
+  sortExperience,
+  assertUniqueUrls,
+} from './logic';
+import {
+  toArticleCard,
+  toExperienceItem,
+  toProfile,
+  toProjectCard,
+  toSkillGroup,
+  type SkillNames,
+} from './mappers';
+import type { ArticleCard, ExperienceItem, Profile, ProjectCard, SkillGroup } from './types';
+
+const includeDrafts = import.meta.env.DEV;
+
+let skillNames: Promise<SkillNames> | undefined;
+const getSkillNames = (): Promise<SkillNames> =>
+  (skillNames ??= getCollection('skills').then((s) => new Map(s.map((e) => [e.id, e.data.name]))));
+
+export async function getProfile(): Promise<Profile> {
+  const entry = await getEntry('profile', 'main');
+  if (!entry) throw new Error('src/content/profile.json must contain a "main" entry');
+  return toProfile(entry);
+}
+
+export async function getSkillGroups(): Promise<SkillGroup[]> {
+  const [groups, names] = await Promise.all([getCollection('skillGroups'), getSkillNames()]);
+  return groups.sort((a, b) => a.data.order - b.data.order).map((g) => toSkillGroup(g, names));
+}
+
+export async function getExperience(): Promise<ExperienceItem[]> {
+  const [entries, names] = await Promise.all([
+    getCollection('experience', (e) => isVisible(e.data.status, includeDrafts)),
+    getSkillNames(),
+  ]);
+  return sortExperience(entries.map((e) => toExperienceItem(e, names)));
+}
+
+export async function getProjects(): Promise<ProjectCard[]> {
+  const [entries, names] = await Promise.all([
+    getCollection('projects', (p) => isVisible(p.data.status, includeDrafts)),
+    getSkillNames(),
+  ]);
+  return entries.map((p) => toProjectCard(p, names)).sort((a, b) => a.name.localeCompare(b.name));
+}
+
+export async function getFeaturedProjects(): Promise<ProjectCard[]> {
+  return pickFeaturedProjects(await getProjects());
+}
+
+export async function getArticles(): Promise<ArticleCard[]> {
+  const entries = await getCollection('articles', (a) => isVisible(a.data.status, includeDrafts));
+  return sortArticles(assertUniqueUrls(entries.map(toArticleCard)));
+}
+
+export async function getHomeArticles(n = 6): Promise<ArticleCard[]> {
+  return pickHomeArticles(await getArticles(), n);
+}

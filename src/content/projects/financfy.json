@@ -1,0 +1,10 @@
+{
+  "name": "Financfy",
+  "label": "Fintech app",
+  "category": "mobile-app",
+  "summary": "Fintech wallet app for managing money on mobile.",
+  "technologies": ["flutter", "dart"],
+  "featured": true,
+  "featuredOrder": 3,
+  "status": "draft"
+}

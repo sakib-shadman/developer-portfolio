@@ -1,17 +1,17 @@
 ---
-// Walking skeleton — replaced by the real home page in PF-12.
+// Walking skeleton — replaced by the real home page in PF-12. Reads real content via lib/content.
 import BaseLayout from '../layouts/BaseLayout.astro';
+import { getProfile } from '../lib/content/queries';
+
+const profile = await getProfile();
 ---
 
-<BaseLayout
-  title="Shadman Sakib — Software Engineer"
-  description="Portfolio of Shadman Sakib, software engineer building production mobile apps and SDKs."
->
+<BaseLayout title={`${profile.name} — ${profile.title}`} description={profile.intro}>
   <section class="wrap" style="padding-block: var(--page-top)">
-    <span class="eyebrow">Portfolio</span>
+    <span class="eyebrow">{profile.focus.join(' · ')}</span>
     <h1 style="font-family: var(--font-display); font-size: var(--h1-page); letter-spacing: var(--tracking-display)">
-      Shadman Sakib
+      {profile.name}
     </h1>
-    <p style="color: var(--muted)">Under construction.</p>
+    <p style="color: var(--muted); max-width: 540px">{profile.intro}</p>
   </section>
 </BaseLayout>

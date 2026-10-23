@@ -1,0 +1,18 @@
+{
+  "main": {
+    "name": "Shadman Sakib",
+    "title": "Software Engineer",
+    "headline": "Mobile apps and SDKs, engineered for production.",
+    "headlineAccent": "engineered",
+    "intro": "I'm Shadman, a Software Engineer building production mobile apps with Flutter and Dart, backed by native iOS and Android experience. Currently building an iOS SDK for an adtech company.",
+    "location": "Dhaka, Bangladesh",
+    "timezone": "GMT+6",
+    "focus": ["Flutter", "iOS", "Android"],
+    "now": "Building an iOS SDK for adtech",
+    "links": {
+      "github": "https://github.com/sakib-shadman"
+    },
+    "stats": [{ "label": "Platforms · iOS, Android", "value": "2" }],
+    "availability": "Open to engineering roles, freelance work and collaboration."
+  }
+}

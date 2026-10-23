@@ -8,7 +8,8 @@ export default getViteConfig({
     coverage: {
       provider: 'v8',
       include: ['src/lib/**/*.ts'],
-      exclude: ['src/lib/**/types.ts'],
+      // queries.ts is thin astro:content I/O — exercised by e2e, not unit tests.
+      exclude: ['src/lib/**/types.ts', 'src/lib/content/queries.ts'],
       thresholds: { lines: 90, functions: 90, branches: 85, statements: 90 },
     },
   },

@@ -1,0 +1,7 @@
+[
+  { "id": "languages", "title": "Languages", "order": 1, "items": ["dart", "swift", "java", "go"] },
+  { "id": "frameworks", "title": "Frameworks", "order": 2, "items": ["flutter", "uikit", "swiftui"] },
+  { "id": "platforms", "title": "Platforms", "order": 3, "items": ["ios", "android"] },
+  { "id": "backend", "title": "Backend", "order": 4, "items": ["spring-boot", "go"] },
+  { "id": "devops-cloud", "title": "DevOps & Cloud", "order": 5, "items": ["docker", "aws-ec2", "aws-s3"] }
+]
