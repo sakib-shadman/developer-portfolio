@@ -1,6 +1,8 @@
 import { defineConfig, devices } from '@playwright/test';
 
-const baseURL = process.env.BASE_URL ?? 'http://localhost:4321';
+// Local/CI runs serve dist/ through the Firebase Hosting emulator: same cleanUrls, headers and
+// real 404 status as production. (Also avoids `astro preview` auto-backgrounding under AI agents.)
+const baseURL = process.env.BASE_URL ?? 'http://127.0.0.1:5000';
 
 export default defineConfig({
   testDir: 'tests/e2e',
@@ -8,11 +10,11 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? [['github'], ['html', { open: 'never' }]] : 'list',
   use: { baseURL, trace: 'retain-on-failure' },
-  // CI smoke tests against a deployed URL set BASE_URL; otherwise build + preview locally.
+  // Smoke tests against a deployed URL set BASE_URL; otherwise build + serve via the emulator.
   webServer: process.env.BASE_URL
     ? undefined
     : {
-        command: 'pnpm build && pnpm preview',
+        command: 'pnpm build && pnpm serve:firebase',
         url: baseURL,
         reuseExistingServer: !process.env.CI,
         timeout: 180_000,

@@ -18,3 +18,19 @@ for (const route of routes) {
     expect(results.violations).toEqual([]);
   });
 }
+
+test('@smoke unknown route returns a real 404', async ({ request }) => {
+  const res = await request.get('/this-route-does-not-exist');
+  expect(res.status()).toBe(404);
+});
+
+test('security headers are served', async ({ request }) => {
+  test.skip(
+    !!process.env.BASE_URL && !process.env.BASE_URL.includes('web.app'),
+    'headers come from firebase.json',
+  );
+  const res = await request.get('/');
+  const h = res.headers();
+  expect(h['content-security-policy']).toContain("default-src 'self'");
+  expect(h['x-content-type-options']).toBe('nosniff');
+});

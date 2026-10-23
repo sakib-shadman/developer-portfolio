@@ -15,15 +15,15 @@ Node ≥ 22.23 (CI uses `.nvmrc`), pnpm 10 (`corepack enable`).
 
 ## Scripts
 
-| Script                      | What                                                              |
-| --------------------------- | ----------------------------------------------------------------- |
-| `pnpm lint` / `pnpm format` | ESLint + Prettier                                                 |
-| `pnpm typecheck`            | `astro check` + `tsc`                                             |
-| `pnpm test`                 | Vitest unit tests + coverage (≥ 90% on `src/lib`)                 |
-| `pnpm e2e`                  | Playwright + axe (builds and previews automatically)              |
-| `pnpm lhci`                 | Lighthouse CI budgets against `dist/`                             |
-| `pnpm content:check`        | Placeholder guard + reference integrity (runs before every build) |
-| `pnpm schemas:export`       | Writes the content contract to `docs/contract/`                   |
+| Script                      | What                                                                          |
+| --------------------------- | ----------------------------------------------------------------------------- |
+| `pnpm lint` / `pnpm format` | ESLint + Prettier                                                             |
+| `pnpm typecheck`            | `astro check` + `tsc`                                                         |
+| `pnpm test`                 | Vitest unit tests + coverage (≥ 90% on `src/lib`)                             |
+| `pnpm e2e`                  | Playwright + axe against the Firebase Hosting emulator (builds automatically) |
+| `pnpm lhci`                 | Lighthouse CI budgets against `dist/`                                         |
+| `pnpm content:check`        | Placeholder guard + reference integrity (runs before every build)             |
+| `pnpm schemas:export`       | Writes the content contract to `docs/contract/`                               |
 
 ## Content
 
