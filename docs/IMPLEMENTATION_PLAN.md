@@ -931,7 +931,7 @@ jobs:
 ### 4.4 One-time setup
 
 1. Firebase console → create project `shadman-portfolio` (Spark). No billing account.
-2. `firebase init hosting:github` in the repo → creates the deploy service account and the `FIREBASE_SERVICE_ACCOUNT` GitHub secret.
+2. `firebase init hosting:github` in the repo → creates the deploy service account and the `FIREBASE_SERVICE_ACCOUNT_SHADMAN_PORTFOLIO` GitHub secret.
 3. Hosting settings → **release retention: 10 versions**.
 4. GitHub repo variable `PUBLIC_INDEXABLE=false`.
 5. (Optional) Cloudflare Web Analytics → add `shadman-portfolio.web.app` → paste the snippet token.
