@@ -1,0 +1,20 @@
+name: links
+on:
+  schedule: [{ cron: '17 3 * * 1' }] # weekly, Monday 09:17 Dhaka
+  workflow_dispatch:
+permissions: { contents: read, issues: write }
+jobs:
+  lychee:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { ref: main }
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with: { node-version-file: .nvmrc, cache: pnpm }
+      - run: pnpm install --frozen-lockfile && pnpm build
+        env: { PUBLIC_SITE_URL: 'https://shadman-portfolio.web.app' }
+      - uses: lycheeverse/lychee-action@v2
+        with:
+          args: --config lychee.toml --root-dir "$PWD/dist" dist
+          fail: true

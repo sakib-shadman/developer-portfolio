@@ -10,3 +10,9 @@ onlyBuiltDependencies:
   - esbuild
   - sharp
   - lefthook
+
+# eslint-plugin-astro auto-installs eslint-plugin-jsx-a11y as an optional peer; we use the
+# eslint-10-compatible fork (eslint-plugin-jsx-a11y-x), so silence the stale peer range.
+peerDependencyRules:
+  allowedVersions:
+    eslint-plugin-jsx-a11y>eslint: '10'

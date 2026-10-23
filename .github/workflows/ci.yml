@@ -1,0 +1,74 @@
+name: ci
+on:
+  pull_request:
+    branches: [develop, main]
+concurrency:
+  group: ci-${{ github.head_ref }}
+  cancel-in-progress: true
+permissions: { contents: read }
+
+jobs:
+  branch-policy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Only develop / release/* / hotfix/* may target main
+        env: { BASE: '${{ github.base_ref }}', HEAD: '${{ github.head_ref }}' }
+        run: |
+          if [[ "$BASE" != "main" ]]; then echo "base=$BASE → no restriction"; exit 0; fi
+          if [[ "$HEAD" == "develop" || "$HEAD" == release/* || "$HEAD" == hotfix/* ]]; then exit 0; fi
+          echo "::error::PRs into main must come from develop, release/* or hotfix/* (got $HEAD)"; exit 1
+
+  pr-title:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with: { node-version-file: .nvmrc, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - name: PR title is a Conventional Commit (it becomes the squash commit)
+        env: { TITLE: '${{ github.event.pull_request.title }}' }
+        run: echo "$TITLE" | pnpm exec commitlint
+
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with: { node-version-file: .nvmrc, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm build
+        env: { PUBLIC_SITE_URL: 'https://shadman-portfolio.web.app', PUBLIC_INDEXABLE: 'false' }
+
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with: { node-version-file: .nvmrc, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium webkit firefox
+      - run: pnpm e2e
+        env: { CI: 'true' }
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with: { name: playwright-report, path: playwright-report, retention-days: 7 }
+
+  lighthouse:
+    if: github.base_ref == 'main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with: { node-version-file: .nvmrc, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      # Indexable build so the SEO category is measured as production will be.
+      - run: pnpm build
+        env: { PUBLIC_SITE_URL: 'https://shadman-portfolio.web.app', PUBLIC_INDEXABLE: 'true' }
+      - run: pnpm lhci
