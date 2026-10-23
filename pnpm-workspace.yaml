@@ -11,6 +11,11 @@ onlyBuiltDependencies:
   - sharp
   - lefthook
 
+# firebase-tools transitive natives not needed for Hosting (re2 needs node-gyp).
+ignoredBuiltDependencies:
+  - protobufjs
+  - re2
+
 # eslint-plugin-astro auto-installs eslint-plugin-jsx-a11y as an optional peer; we use the
 # eslint-10-compatible fork (eslint-plugin-jsx-a11y-x), so silence the stale peer range.
 peerDependencyRules:

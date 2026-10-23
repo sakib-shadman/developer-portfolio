@@ -1,0 +1,50 @@
+name: deploy
+on:
+  pull_request:
+  push:
+    branches: [main, develop, 'release/**']
+  workflow_dispatch:
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+
+env:
+  SITE_URL: https://shadman-portfolio.web.app
+  # live = push/dispatch on main; everything else is a preview or staging deploy
+  IS_LIVE: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' }}
+
+jobs:
+  deploy:
+    # Fork PRs have no secrets; skip them.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+        env:
+          PUBLIC_SITE_URL: ${{ env.SITE_URL }}
+          PUBLIC_INDEXABLE: ${{ env.IS_LIVE == 'true' && vars.PUBLIC_INDEXABLE || 'false' }}
+          PUBLIC_CONTACT_FORM: 'false'
+      - uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          projectId: shadman-portfolio
+          # '' → auto-named PR preview channel (URL posted on the PR)
+          channelId: ${{ github.event_name == 'pull_request' && '' || (env.IS_LIVE == 'true' && 'live' || 'staging') }}
+          expires: ${{ github.event_name == 'pull_request' && '7d' || '30d' }}
+      - name: Smoke test live site
+        if: env.IS_LIVE == 'true'
+        run: |
+          pnpm exec playwright install --with-deps chromium
+          BASE_URL=${{ env.SITE_URL }} pnpm exec playwright test --project=chromium --grep @smoke
