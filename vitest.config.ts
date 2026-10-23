@@ -1,3 +1,4 @@
+/// <reference types="vitest/config" />
 import { getViteConfig } from 'astro/config';
 
 // getViteConfig gives tests the same aliases/virtual modules as the Astro build.
