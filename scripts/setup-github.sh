@@ -5,6 +5,10 @@
 set -euo pipefail
 REPO="${REPO:-sakib-shadman/developer-portfolio}"
 
+echo "→ Using gh credentials for git over HTTPS"
+gh auth status >/dev/null
+gh auth setup-git
+
 echo "→ Pushing main + develop"
 git push -u origin main develop
 
