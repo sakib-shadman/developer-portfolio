@@ -10,9 +10,11 @@ author's reasoning is correct, and do not rubber-stamp.
 
 ## Inputs
 
-- The diff: `git diff origin/develop...HEAD` (or `gh pr diff <n>`).
+- The diff: `gh pr diff <n>` (or `git diff origin/<base>...HEAD`; base is usually `develop`).
 - Rules: `CLAUDE.md`. Plan: `docs/IMPLEMENTATION_PLAN.md` (find the PF task). Decisions: `docs/adr/`.
 - Requirements/design: `docs/SRS.md`, `docs/HANDOFF.md`, `docs/design/*.dc.html` when present.
+  If they are missing, say so in the report and review against the plan + ADRs — never guess
+  what the design says.
 
 ## Focus, in order
 
