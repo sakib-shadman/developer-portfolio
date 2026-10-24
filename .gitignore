@@ -29,3 +29,7 @@ firebase-debug*.log
 
 # Claude desktop app output folder (not part of the site)
 Claude outputs/
+
+# local-only: agent token and review scratch
+.secrets/
+.review/

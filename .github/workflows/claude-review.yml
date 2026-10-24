@@ -1,0 +1,41 @@
+name: claude-review
+# Independent AI review on every PR, using the pr-reviewer agent brief.
+# Needs the repo secret CLAUDE_CODE_OAUTH_TOKEN (run `claude setup-token` locally) or
+# ANTHROPIC_API_KEY. Without either, the job skips with a notice.
+on:
+  pull_request:
+    types: [opened, synchronize, ready_for_review, reopened]
+concurrency:
+  group: claude-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+permissions:
+  contents: read
+  pull-requests: write
+  id-token: write
+jobs:
+  review:
+    if: github.event.pull_request.draft == false && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    env:
+      HAS_AUTH: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN != '' || secrets.ANTHROPIC_API_KEY != '' }}
+    steps:
+      - if: env.HAS_AUTH != 'true'
+        run: echo "::notice title=Claude review skipped::Add CLAUDE_CODE_OAUTH_TOKEN or ANTHROPIC_API_KEY to enable"
+      - if: env.HAS_AUTH == 'true'
+        uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - if: env.HAS_AUTH == 'true'
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            Review PR #${{ github.event.pull_request.number }} in ${{ github.repository }}.
+            Follow .claude/agents/pr-reviewer.md exactly (read it first) and CLAUDE.md.
+            Get the diff with `gh pr diff ${{ github.event.pull_request.number }}`.
+            Post your final report as ONE comment with
+            `gh pr comment ${{ github.event.pull_request.number }} --body-file <file>`.
+            Do not push commits, approve, or merge.
+          claude_args: >-
+            --max-turns 30
+            --allowedTools "Read,Grep,Glob,Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr comment:*),Bash(git diff:*),Bash(git log:*)"

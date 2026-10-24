@@ -13,6 +13,8 @@ export default [
       'playwright-report/',
       'test-results/',
       'Claude outputs/',
+      '.secrets/',
+      '.review/',
     ],
   },
   js.configs.recommended,
