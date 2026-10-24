@@ -39,12 +39,14 @@ Node ≥ 22.23 (CI: `.nvmrc`), pnpm 10.
 
 ## Workflow (agreed with the owner)
 
-1. **Develop** on a `feature/PF-<id>-<slug>` (or `fix/` / `chore/` / `content/`) branch from `develop`;
+1. **Develop** — by a `senior-engineer` agent (Sonnet, `.claude/agents/senior-engineer.md`) or the
+   lead — on a `feature/PF-<id>-<slug>` (or `fix/` / `chore/` / `content/`) branch from `develop`;
    run lint, typecheck, unit + e2e tests and build locally.
 2. **Raise a PR** into `develop` (Conventional-Commit title, DoD checklist filled in).
-3. **Review** by the `pr-reviewer` agent (`.claude/agents/pr-reviewer.md`) — an independent agent
+3. **Review** by the `pr-reviewer` agent (Opus) (`.claude/agents/pr-reviewer.md`) — an independent agent
    with fresh context, plus `.github/workflows/claude-review.yml` once a Claude secret is set.
 4. **Address every finding** in follow-up commits and post a findings → resolution table on the PR.
    Re-run the reviewer on the fix commits until it confirms nothing blocking is left.
 5. **Merge** (squash, delete branch) only when all review findings are resolved **and** all required
-   CI checks pass. The agent may merge; otherwise the owner does.
+   CI checks pass. The `team-lead` (Opus, `.claude/agents/team-lead.md`, run as the main session)
+   merges; the owner can review or veto any PR.

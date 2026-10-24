@@ -5,6 +5,11 @@ import sitemap from '@astrojs/sitemap';
 
 const site = process.env.PUBLIC_SITE_URL ?? 'http://localhost:4321';
 
+// Drafts are for dev/e2e only. An indexable (production) build must never include them.
+if (process.env.PUBLIC_INCLUDE_DRAFTS === 'true' && process.env.PUBLIC_INDEXABLE === 'true') {
+  throw new Error('Refusing to build: PUBLIC_INCLUDE_DRAFTS=true with PUBLIC_INDEXABLE=true');
+}
+
 export default defineConfig({
   site,
   output: 'static',
@@ -13,4 +18,6 @@ export default defineConfig({
   trailingSlash: 'never',
   build: { format: 'file' },
   integrations: [mdx(), sitemap({ filter: (page) => !page.endsWith('/404') })],
+  // CSP is script-src 'self': never inline bundled scripts into HTML.
+  vite: { build: { assetsInlineLimit: 0 } },
 });

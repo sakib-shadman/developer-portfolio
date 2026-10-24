@@ -2,7 +2,9 @@ import { defineConfig, devices } from '@playwright/test';
 
 // Local/CI runs serve dist/ through the Firebase Hosting emulator: same cleanUrls, headers and
 // real 404 status as production. (Also avoids `astro preview` auto-backgrounding under AI agents.)
-const baseURL = process.env.BASE_URL ?? 'http://127.0.0.1:5000';
+// E2E_PORT lets parallel checkouts run e2e at the same time (see scripts/serve-firebase.mjs).
+const port = Number(process.env.E2E_PORT ?? 5000);
+const baseURL = process.env.BASE_URL ?? `http://127.0.0.1:${port}`;
 
 export default defineConfig({
   testDir: 'tests/e2e',
@@ -15,6 +17,13 @@ export default defineConfig({
     ? undefined
     : {
         command: 'pnpm build && pnpm serve:firebase',
+        // Drafts are included by default so pages can be tested before real content exists;
+        // CI also runs @smoke + axe with PUBLIC_INCLUDE_DRAFTS=false (what actually ships).
+        env: {
+          ...(process.env as Record<string, string>),
+          PUBLIC_INCLUDE_DRAFTS: process.env.PUBLIC_INCLUDE_DRAFTS ?? 'true',
+          E2E_PORT: String(port),
+        },
         url: baseURL,
         reuseExistingServer: !process.env.CI,
         timeout: 180_000,

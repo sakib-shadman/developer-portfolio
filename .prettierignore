@@ -6,3 +6,5 @@ docs/design/
 Claude outputs/
 .secrets/
 .review/
+pw.local.config.ts
+.firebase-e2e.json
