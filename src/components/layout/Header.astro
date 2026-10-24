@@ -1,0 +1,115 @@
+---
+import { PRIMARY_NAV, isCurrent } from '../../lib/nav';
+
+interface Props {
+  name: string;
+  resume?: string | undefined;
+}
+
+const { name, resume } = Astro.props;
+const pathname = Astro.url.pathname;
+---
+
+<header class="site-header" id="top">
+  <nav aria-label="Primary" class="wrap bar">
+    <a href="/" class="brand">
+      <span class="logo" aria-hidden="true">
+        {name.charAt(0)}
+      </span>
+      <span>{name}</span>
+    </a>
+    <ul class="links">
+      {PRIMARY_NAV.map((item) => {
+        const current = isCurrent(pathname, item.match);
+        return (
+          <li>
+            <a
+              href={item.href}
+              class:list={['link', { current }]}
+              aria-current={current ? 'page' : undefined}
+            >
+              {item.label}
+            </a>
+          </li>
+        );
+      })}
+      {resume && (
+        <li>
+          <a href={resume} class="resume" target="_blank" rel="noopener">
+            Resume
+          </a>
+        </li>
+      )}
+    </ul>
+  </nav>
+</header>
+
+<style>
+  .site-header {
+    border-bottom: 1px solid var(--border);
+  }
+  .bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding-block: 20px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: var(--text-lg);
+  }
+  .logo {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-sm);
+    background: var(--acc);
+    color: var(--on-acc);
+  }
+  .links {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 28px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: 15px;
+    color: var(--muted);
+  }
+  .link {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--control-md); /* touch target ≥ 44px */
+  }
+  .link:hover {
+    color: var(--text);
+    opacity: 1;
+  }
+  .current {
+    color: var(--text);
+    box-shadow: inset 0 -2px 0 var(--acc);
+  }
+  .resume {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--control-md);
+    padding: 0 20px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-pill);
+    color: var(--text);
+    font-weight: 500;
+  }
+  .resume:hover {
+    border-color: var(--acc);
+    opacity: 1;
+  }
+</style>

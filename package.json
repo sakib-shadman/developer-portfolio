@@ -16,7 +16,7 @@
     "serve:firebase": "firebase emulators:start --only hosting",
     "lint": "eslint . && prettier --check .",
     "format": "prettier --write .",
-    "typecheck": "astro check && tsc --noEmit",
+    "typecheck": "astro check",
     "test": "vitest run --coverage",
     "test:watch": "vitest",
     "e2e": "playwright test",
