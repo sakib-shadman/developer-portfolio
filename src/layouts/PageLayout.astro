@@ -1,0 +1,23 @@
+---
+/** Standard page chrome: header + main + footer around BaseLayout. Pages use this. */
+import BaseLayout from './BaseLayout.astro';
+import Header from '../components/layout/Header.astro';
+import Footer from '../components/layout/Footer.astro';
+import { getProfile } from '../lib/content/queries';
+
+interface Props {
+  title: string;
+  description: string;
+  path?: string;
+  image?: string;
+  type?: 'website' | 'article' | 'profile';
+}
+
+const profile = await getProfile();
+---
+
+<BaseLayout {...Astro.props}>
+  <Header slot="header" name={profile.name} resume={profile.resume} />
+  <slot />
+  <Footer slot="footer" name={profile.name} location={profile.location} resume={profile.resume} />
+</BaseLayout>

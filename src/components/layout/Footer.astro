@@ -1,0 +1,87 @@
+---
+import Icon from '../ui/Icon.astro';
+
+interface Props {
+  name: string;
+  location?: string | undefined;
+  resume?: string | undefined;
+  /** Show the RSS link only once /rss.xml ships (FR-15; HANDOFF §12.7). */
+  rss?: boolean;
+}
+
+const { name, location, resume, rss = false } = Astro.props;
+const year = new Date().getFullYear();
+---
+
+<footer class="site-footer">
+  <div class="wrap bar">
+    <p class="copy">
+      © {year} {name}
+      {location && ` · ${location}`}
+    </p>
+    <ul class="actions">
+      {resume && (
+        <li>
+          <a class="pill" href={resume} target="_blank" rel="noopener">
+            <Icon name="download" color="var(--acc)" />
+            Resume
+          </a>
+        </li>
+      )}
+      {rss && (
+        <li>
+          <a class="pill" href="/rss.xml">
+            <Icon name="rss" color="var(--acc)" />
+            RSS
+          </a>
+        </li>
+      )}
+      <li>
+        <a class="pill" href="#top">
+          <Icon name="arrow-up" color="var(--acc)" />
+          Back to top
+        </a>
+      </li>
+    </ul>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    border-top: 1px solid var(--border);
+  }
+  .bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding-block: 24px;
+    font-size: 14px;
+    color: var(--muted);
+  }
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: var(--control-md);
+    padding: 0 18px;
+    border-radius: var(--radius-pill);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    font-weight: 500;
+    color: var(--text);
+  }
+  .pill:hover {
+    border-color: var(--acc);
+    opacity: 1;
+  }
+</style>
