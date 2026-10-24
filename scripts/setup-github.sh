@@ -10,11 +10,12 @@ gh auth status >/dev/null
 gh auth setup-git
 
 echo "→ Pushing main + develop"
-git push -u origin main develop
+git push -u origin main develop || echo "   (already pushed)"
 
 echo "→ Default branch = develop (PRs target it by default)"
 gh repo edit "$REPO" --default-branch develop \
-  --enable-squash-merge --enable-merge-commit --disable-rebase-merge \
+  --enable-squash-merge --enable-merge-commit --enable-rebase-merge=false \
+  --squash-merge-commit-message pr-title \
   --delete-branch-on-merge
 
 echo "→ Labels"
