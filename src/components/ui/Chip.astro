@@ -1,0 +1,25 @@
+---
+/** Non-interactive tag (HANDOFF §3 Chip): mono 12px, pill, 1px border, muted text. */
+interface Props {
+  class?: string;
+}
+const { class: className } = Astro.props;
+---
+
+<span class:list={['chip', className]}>
+  <slot />
+</span>
+
+<style>
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 12px;
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--border);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    line-height: 1.5;
+    color: var(--muted);
+  }
+</style>

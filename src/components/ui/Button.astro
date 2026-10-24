@@ -1,0 +1,115 @@
+---
+/**
+ * HANDOFF §3 buttons.
+ *  solid   — 52px, accent fill, primary CTA only
+ *  outline — 44px (md) / 52px (lg), surface fill, border, teal icon
+ *  soft    — 44px, accent-soft fill + accent border ("All projects", "All articles")
+ * Renders <a> when `href` is given (unsafe hrefs render nothing), otherwise <button>.
+ */
+import Icon, { type IconName } from './Icon.astro';
+import { linkAttrs } from '../../lib/link';
+
+interface Props {
+  variant?: 'solid' | 'outline' | 'soft';
+  size?: 'md' | 'lg';
+  href?: string | undefined;
+  type?: 'button' | 'submit';
+  icon?: IconName;
+  iconEnd?: IconName;
+  download?: boolean;
+  /** Required when the visible label is not descriptive enough. */
+  'aria-label'?: string;
+  class?: string;
+  [attr: `data-${string}`]: string | undefined;
+}
+
+const {
+  variant = 'outline',
+  size = variant === 'solid' ? 'lg' : 'md',
+  href,
+  type = 'button',
+  icon,
+  iconEnd,
+  download,
+  class: className,
+  ...rest
+} = Astro.props;
+
+const link = href === undefined ? undefined : linkAttrs(href);
+const iconColor = variant === 'outline' ? 'var(--acc)' : 'currentColor';
+const classes = ['btn', variant, size, className];
+---
+
+{href === undefined ? (
+  <button type={type} class:list={classes} {...rest}>
+    {icon && <Icon name={icon} color={iconColor} />}
+    <slot />
+    {iconEnd && <Icon name={iconEnd} color={iconColor} />}
+  </button>
+) : (
+  link && (
+    <a
+      href={link.href}
+      target={link.target}
+      rel={link.rel}
+      download={download ? '' : undefined}
+      class:list={classes}
+      {...rest}
+    >
+      {icon && <Icon name={icon} color={iconColor} />}
+      <slot />
+      {iconEnd && <Icon name={iconEnd} color={iconColor} />}
+      {link.external && <span class="sr-only">(opens in a new tab)</span>}
+    </a>
+  )
+)}
+
+<style>
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-sizing: border-box;
+    border-radius: var(--radius-pill);
+    border: 1px solid transparent;
+    font-family: var(--font-body);
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+    cursor: pointer;
+    text-decoration: none;
+  }
+  .lg {
+    min-height: var(--control-lg);
+    padding: 0 26px;
+    font-size: var(--text-base);
+  }
+  .md {
+    min-height: var(--control-md);
+    padding: 0 20px;
+    font-size: 15px;
+  }
+  .solid {
+    background: var(--acc);
+    color: var(--on-acc);
+  }
+  .outline {
+    background: var(--surface);
+    border-color: var(--border);
+    color: var(--text);
+  }
+  .outline:hover {
+    border-color: var(--acc);
+    opacity: 1;
+  }
+  .soft {
+    background: var(--acc-soft);
+    border-color: var(--acc);
+    color: var(--acc-text);
+  }
+  button.btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+</style>

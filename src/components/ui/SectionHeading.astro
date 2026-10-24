@@ -1,0 +1,38 @@
+---
+/** Eyebrow + heading used by every section ("01 — Skills" / "Technology stack"). */
+interface Props {
+  eyebrow?: string;
+  title: string;
+  id?: string;
+  level?: 'h1' | 'h2';
+  lead?: string;
+}
+const { eyebrow, title, id, level: H = 'h2', lead } = Astro.props;
+---
+
+<div class="heading">
+  {eyebrow && <span class="eyebrow">{eyebrow}</span>}
+  <H id={id} class:list={[{ h2: H === 'h2', h1: H === 'h1' }]}>
+    {title}
+  </H>
+  {lead && <p class="lead">{lead}</p>}
+</div>
+
+<style>
+  .heading {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .h1 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: var(--h1-page);
+    line-height: 1.02;
+    letter-spacing: var(--tracking-display);
+  }
+  .lead {
+    color: var(--muted);
+    max-width: 640px;
+  }
+</style>

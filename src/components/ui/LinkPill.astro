@@ -1,0 +1,57 @@
+---
+/**
+ * Card link pills (HANDOFF §3 .lk-p / .lk-s): fixed 40px height so primary and secondary
+ * render identically. External links get "↗" and open in a new tab. Unsafe hrefs render nothing.
+ */
+import { linkAttrs } from '../../lib/link';
+
+interface Props {
+  href: string | undefined;
+  variant?: 'primary' | 'secondary';
+  class?: string;
+}
+
+const { href, variant = 'primary', class: className } = Astro.props;
+const link = linkAttrs(href);
+---
+
+{link && (
+  <a href={link.href} target={link.target} rel={link.rel} class:list={['pill', variant, className]}>
+    <slot />
+    <span aria-hidden="true">{link.external ? '↗' : '→'}</span>
+    {link.external && <span class="sr-only">(opens in a new tab)</span>}
+  </a>
+)}
+
+<style>
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: var(--control-sm);
+    box-sizing: border-box;
+    padding: 0 16px;
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--border);
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 1;
+    white-space: nowrap;
+    vertical-align: middle;
+  }
+  .primary {
+    border-color: var(--acc);
+    background: var(--acc-soft);
+    color: var(--acc-text);
+  }
+  .secondary {
+    background: transparent;
+    color: var(--text);
+  }
+  .secondary:hover {
+    border-color: var(--acc);
+    opacity: 1;
+  }
+</style>

@@ -1,0 +1,58 @@
+---
+/**
+ * Toggle button for client-side filters (HANDOFF §3, §6.2/§6.3): 40px pill,
+ * active = accent fill + aria-pressed="true". Behaviour is wired by the page script
+ * via the data-filter attribute.
+ */
+interface Props {
+  value: string;
+  pressed?: boolean;
+  count?: number;
+  /** Group name so a script can find sibling chips. */
+  group: string;
+}
+
+const { value, pressed = false, count, group } = Astro.props;
+---
+
+<button
+  type="button"
+  class="filter"
+  aria-pressed={pressed ? 'true' : 'false'}
+  data-filter-group={group}
+  data-filter={value}
+>
+  <slot />
+  {count !== undefined && <span class="count">{count}</span>}
+</button>
+
+<style>
+  .filter {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: var(--control-sm);
+    padding: 0 16px;
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-weight: 500;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  .filter:hover {
+    border-color: var(--acc);
+  }
+  .filter[aria-pressed='true'] {
+    background: var(--acc);
+    border-color: var(--acc);
+    color: var(--on-acc);
+  }
+  .count {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    opacity: 0.8;
+  }
+</style>

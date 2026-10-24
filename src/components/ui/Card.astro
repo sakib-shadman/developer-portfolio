@@ -1,0 +1,37 @@
+---
+/**
+ * Card surface (HANDOFF §3): surface fill, 1px border, 20px radius.
+ * `as` picks the element; `highlight` uses the accent border (featured/in-progress cards).
+ */
+interface Props {
+  as?: 'article' | 'div' | 'li' | 'section';
+  highlight?: boolean;
+  padded?: boolean;
+  class?: string;
+  'aria-labelledby'?: string;
+}
+
+const { as: Tag = 'div', highlight = false, padded = true, class: className, ...rest } = Astro.props;
+---
+
+<Tag class:list={['card', { highlight, padded }, className]} {...rest}>
+  <slot />
+</Tag>
+
+<style>
+  .card {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+  }
+  .padded {
+    padding: 24px;
+    gap: 14px;
+  }
+  .highlight {
+    border-color: var(--acc);
+  }
+</style>
