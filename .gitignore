@@ -33,3 +33,7 @@ Claude outputs/
 # local-only: agent token and review scratch
 .secrets/
 .review/
+
+# local e2e helpers
+pw.local.config.ts
+.firebase-e2e.json

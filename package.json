@@ -13,7 +13,7 @@
     "content:check": "tsx scripts/check-content.ts",
     "build": "pnpm content:check && astro build",
     "preview": "astro preview",
-    "serve:firebase": "firebase emulators:start --only hosting",
+    "serve:firebase": "node scripts/serve-firebase.mjs",
     "lint": "eslint . && prettier --check .",
     "format": "prettier --write .",
     "typecheck": "astro check",

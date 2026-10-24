@@ -1,6 +1,6 @@
 ---
 name: pr-reviewer
-description: Independent, skeptical code review of a pull request in this repo against the SRS, the design handoff and the repo rules. Use for every PR before the owner merges.
+description: Independent, skeptical code review of a pull request in this repo against the SRS, the design handoff and the repo rules. Use for every PR before it is merged.
 tools: Read, Grep, Glob, Bash
 model: opus
 ---

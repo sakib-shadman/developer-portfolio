@@ -15,6 +15,7 @@ export default [
       'Claude outputs/',
       '.secrets/',
       '.review/',
+      'pw.local.config.ts',
     ],
   },
   js.configs.recommended,

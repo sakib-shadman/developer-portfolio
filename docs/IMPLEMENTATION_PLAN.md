@@ -809,7 +809,7 @@ Rules: one task per PR (< 400 changed lines excluding content); PR title = Conve
 release PRs (`release/*` → `main`) additionally need staging e2e + Lighthouse green, a changelog
 from commits since the last tag (`git cliff`), and a version bump in `package.json`.
 
-### 3.7 Agent team (M1)
+### 3.8 Agent team (M1)
 
 Roles live in `.claude/agents/`: `senior-engineer` (Sonnet) ×3, `pr-reviewer` (Opus), `team-lead`
 (Opus). Lanes run in parallel; tasks in a lane are sequential.

@@ -19,7 +19,8 @@ You are a senior front-end engineer on this repo. You own one task (PF-xx) at a 
 
 ## Building
 
-- Branch: `git fetch origin && git switch -c feature/PF-<id>-<slug> origin/develop`.
+- Work only in your own checkout (separate clone or worktree — never a tree another engineer
+  uses). Branch: `git fetch origin && git switch -c feature/PF-<id>-<slug> origin/develop`.
 - Reuse primitives; scoped `<style>` per component; tokens from `src/styles/tokens.css`.
 - Data only via `src/lib/content/queries.ts` (ADR-0008). New logic goes in `src/lib/**` as pure
   functions with unit tests. New query/type needs → extend types.ts/mappers.ts/queries.ts.
@@ -31,7 +32,9 @@ You are a senior front-end engineer on this repo. You own one task (PF-xx) at a 
   without JS.
 - Tests: unit tests in `tests/unit/` (Astro container API for components), e2e in a **new**
   `tests/e2e/<page>.spec.ts` (don't edit other specs unless the task requires it). e2e runs on a
-  production build with drafts included (`PUBLIC_INCLUDE_DRAFTS=true`).
+  production build with drafts included by default; tests tagged `@smoke` and axe tests must also
+  pass with `PUBLIC_INCLUDE_DRAFTS=false` (CI runs them on the build that ships). Set your own
+  `E2E_PORT` so parallel lanes don't collide.
 
 ## Before the PR — all must pass
 

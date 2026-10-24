@@ -52,6 +52,8 @@ jobs:
           PUBLIC_SITE_URL: ${{ env.SITE_URL }}
           PUBLIC_INDEXABLE: ${{ env.IS_LIVE == 'true' && vars.PUBLIC_INDEXABLE || 'false' }}
           PUBLIC_CONTACT_FORM: 'false'
+          # Explicit false also overrides any stray .env file (process.env wins in Vite).
+          PUBLIC_INCLUDE_DRAFTS: 'false'
       - if: steps.gate.outputs.enabled == 'true'
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
