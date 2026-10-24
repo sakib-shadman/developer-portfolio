@@ -133,6 +133,27 @@
     "objective": {
       "type": "string"
     },
+    "yearsExperience": {
+      "type": "integer",
+      "exclusiveMinimum": 0,
+      "maximum": 60
+    },
+    "community": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "interests": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
     "replyTime": {
       "type": "string"
     }

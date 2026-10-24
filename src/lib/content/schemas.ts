@@ -48,6 +48,12 @@ export const makeProfileSchema = <I extends z.ZodType>(image: I) =>
     bio: z.array(z.string().min(1)).default([]),
     principles: z.array(z.object({ title: z.string().min(1), text: z.string().min(1) })).default([]),
     objective: z.string().optional(),
+    /** FR-02.2: shown on /about only when provided. */
+    yearsExperience: z.number().int().positive().max(60).optional(),
+    /** FR-02.4: talks, mentoring, open source, interviewing… one line each. */
+    community: z.array(z.string().min(1)).default([]),
+    /** FR-02.4: "Outside work" interests. */
+    interests: z.array(z.string().min(1)).default([]),
     replyTime: z.string().optional(),
   });
 

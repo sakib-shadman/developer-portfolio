@@ -31,6 +31,9 @@ export interface Profile {
   bio: string[];
   principles: { title: string; text: string }[];
   objective?: string;
+  yearsExperience?: number;
+  community: string[];
+  interests: string[];
   replyTime?: string;
 }
 

@@ -1,0 +1,361 @@
+---
+/** /about (FR-02, design: About.dc.html). Every section renders only when its data exists. */
+import PageLayout from '../layouts/PageLayout.astro';
+import Breadcrumbs from '../components/layout/Breadcrumbs.astro';
+import SectionHeading from '../components/ui/SectionHeading.astro';
+import Button from '../components/ui/Button.astro';
+import Card from '../components/ui/Card.astro';
+import ChipList from '../components/ui/ChipList.astro';
+import LinkPill from '../components/ui/LinkPill.astro';
+import { getProfile, getSkillGroups } from '../lib/content/queries';
+import { buildAbout } from '../lib/about';
+import { linkAttrs } from '../lib/link';
+
+const [profile, groups] = await Promise.all([getProfile(), getSkillGroups()]);
+const about = buildAbout(profile, groups);
+
+const PROFILE_LINKS = [
+  ['GitHub', profile.links.github],
+  ['LinkedIn', profile.links.linkedin],
+  ['Medium', profile.links.medium],
+] as const;
+const profileLinks = PROFILE_LINKS.filter(([, href]) => linkAttrs(href));
+const resume = profile.resume;
+const photo = profile.photo;
+const hasBeyond = about.community.length > 0 || Boolean(about.objective) || about.interests.length > 0;
+---
+
+<PageLayout
+  title={`About — ${profile.name}`}
+  description={about.lead[0] ?? profile.intro}
+  path="/about"
+  type="profile"
+>
+  <div class="wrap page">
+    <section class:list={['hero', { 'has-photo': Boolean(photo) }]} aria-labelledby="about-title">
+      <div class="hero-copy">
+        <Breadcrumbs
+          items={[
+            { label: 'Home', href: '/' },
+            { label: 'About', href: '/about' },
+          ]}
+        />
+        <SectionHeading level="h1" id="about-title" title={`About ${profile.name}`} />
+        {about.years && <p class="years">{about.years} of professional experience</p>}
+        <div class="lead">
+          {about.lead.map((p) => (
+            <p>{p}</p>
+          ))}
+        </div>
+        <div class="actions">
+          {resume && (
+            <Button variant="solid" href={resume} icon="download">
+              Download resume
+            </Button>
+          )}
+          <Button variant="outline" size="lg" href="/contact">
+            Get in touch
+          </Button>
+        </div>
+        {profileLinks.length > 0 && (
+          <ul class="links" role="list" aria-label="Profiles">
+            {profileLinks.map(([label, href]) => (
+              <li>
+                <LinkPill href={href} variant="secondary">
+                  {label}
+                </LinkPill>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+      {photo && (
+        <div class="photo">
+          <span class="frame-outline" aria-hidden="true"></span>
+          <figure>
+            <img src={photo.src} width={photo.width} height={photo.height} alt={photo.alt} />
+          </figure>
+        </div>
+      )}
+    </section>
+
+    {about.expertise.length > 0 && (
+      <section class="sec" aria-labelledby="expertise-title">
+        <SectionHeading eyebrow="What I do" id="expertise-title" title="Areas of expertise" />
+        <ul class="grid expertise" role="list">
+          {about.expertise.map((card) => (
+            <li>
+              <Card as="div" class="fill">
+                <h3>{card.title}</h3>
+                <ChipList items={card.items} aria-label={`${card.title} technologies`} />
+              </Card>
+            </li>
+          ))}
+        </ul>
+      </section>
+    )}
+
+    {about.principles.length > 0 && (
+      <section class="sec" aria-labelledby="principles-title">
+        <SectionHeading eyebrow="How I work" id="principles-title" title="Engineering principles" />
+        <ol class="principles" role="list">
+          {about.principles.map((p) => (
+            <li>
+              <span class="num" aria-hidden="true">
+                {p.num}
+              </span>
+              <h3>{p.title}</h3>
+              <p>{p.text}</p>
+            </li>
+          ))}
+        </ol>
+      </section>
+    )}
+
+    {hasBeyond && (
+      <section class="sec grid beyond" aria-label="Beyond the day job">
+        {about.community.length > 0 && (
+          <Card as="section" class="pad" aria-labelledby="community-title">
+            <span class="eyebrow">Beyond the day job</span>
+            <h2 id="community-title" class="card-title">
+              Community &amp; writing
+            </h2>
+            <ul class="bullets">
+              {about.community.map((c) => (
+                <li>{c}</li>
+              ))}
+            </ul>
+          </Card>
+        )}
+        {(about.objective || about.interests.length > 0) && (
+          <Card as="section" class="pad" aria-labelledby="next-title">
+            <span class="eyebrow">What's next</span>
+            <h2 id="next-title" class="card-title">
+              {about.objective ? 'Looking for' : 'Outside work'}
+            </h2>
+            {about.objective && <p class="muted">{about.objective}</p>}
+            {about.interests.length > 0 && (
+              <p class="muted">
+                {about.objective && 'Outside work: '}
+                {about.interests.join(', ')}
+              </p>
+            )}
+          </Card>
+        )}
+      </section>
+    )}
+
+    <section class="sec cta-sec" aria-labelledby="cta-title">
+      <div class="cta">
+        <div class="cta-copy">
+          <h2 id="cta-title">Want the full picture?</h2>
+          <p>{resume ? 'Download my resume, or send me a message.' : 'Send me a message.'}</p>
+        </div>
+        <div class="cta-actions">
+          {resume && (
+            <a class="cta-btn dark" href={resume} download>
+              Download resume
+            </a>
+          )}
+          <Button variant="outline" size="lg" href="/contact" icon="mail">
+            Contact me
+          </Button>
+        </div>
+      </div>
+    </section>
+  </div>
+</PageLayout>
+
+<style>
+  .page {
+    padding-bottom: var(--section-gap);
+  }
+  .hero {
+    padding-top: var(--page-top);
+    display: grid;
+    gap: 56px;
+    align-items: center;
+  }
+  .hero.has-photo {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr));
+  }
+  .hero-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    max-width: 760px;
+  }
+  .years {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    letter-spacing: var(--tracking-label);
+    text-transform: uppercase;
+    color: var(--acc-text);
+  }
+  .lead {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    font-size: 19px;
+    color: var(--muted);
+  }
+  .actions,
+  .links,
+  .cta-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .actions {
+    padding-top: 8px;
+  }
+  .photo {
+    position: relative;
+    justify-self: center;
+    width: 100%;
+    max-width: 440px;
+    padding: 0 20px 20px 0;
+  }
+  .frame-outline {
+    position: absolute;
+    inset: 20px 0 0 20px;
+    border: 2px solid var(--acc);
+    border-radius: var(--radius-lg);
+  }
+  .photo figure {
+    position: relative;
+    aspect-ratio: 4 / 5;
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .sec {
+    padding-top: var(--section-gap);
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+  }
+  .grid {
+    display: grid;
+    gap: 20px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .expertise {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+  }
+  .expertise :global(.fill) {
+    height: 100%;
+  }
+  h3 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 21px;
+  }
+
+  .principles {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+    gap: 1px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+  }
+  .principles li {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 28px;
+    background: var(--surface);
+  }
+  .principles h3 {
+    font-size: var(--text-lg);
+  }
+  .principles p,
+  .muted {
+    color: var(--muted);
+  }
+  .num {
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    color: var(--acc-text);
+  }
+
+  .beyond {
+    padding-top: var(--section-gap);
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr));
+    gap: var(--grid-gap);
+  }
+  .beyond :global(.pad .body) {
+    padding: 32px;
+    gap: 16px;
+  }
+  .card-title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 26px;
+  }
+  .bullets {
+    margin: 0;
+    padding-left: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    color: var(--muted);
+  }
+
+  .cta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 28px;
+    padding: clamp(32px, 6vw, 64px);
+    border-radius: var(--radius-lg);
+    background: var(--acc);
+    color: var(--on-acc);
+  }
+  .cta-copy {
+    flex: 1 1 320px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .cta h2 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(28px, 4vw, 48px);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+  }
+  .cta p {
+    font-size: 18px;
+  }
+  .cta-btn {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--control-lg);
+    padding: 0 26px;
+    border-radius: var(--radius-pill);
+    font-weight: 600;
+    background: var(--on-acc);
+    color: var(--acc);
+  }
+</style>

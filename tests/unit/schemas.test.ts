@@ -62,6 +62,20 @@ describe('content contract', () => {
     ).toBe(false);
   });
 
+  it('profile: about fields are optional; years must be a positive integer', () => {
+    const min = { name: 'A', title: 'B', headline: 'C', intro: 'D' };
+    const ok = contract.profile.parse(min);
+    expect(ok.community).toEqual([]);
+    expect(ok.interests).toEqual([]);
+    expect(ok.yearsExperience).toBeUndefined();
+    expect(contract.profile.safeParse({ ...min, yearsExperience: 12 }).success).toBe(true);
+    for (const bad of [0, -1, 1.5, 61]) {
+      expect(contract.profile.safeParse({ ...min, yearsExperience: bad }).success).toBe(false);
+    }
+    expect(contract.profile.safeParse({ ...min, community: [''] }).success).toBe(false);
+    expect(contract.profile.safeParse({ ...min, interests: ['Chess'] }).success).toBe(true);
+  });
+
   it('profile: optional fields may be omitted; email validated', () => {
     const min = { name: 'S', title: 'SE', headline: 'H', intro: 'I' };
     expect(contract.profile.safeParse(min).success).toBe(true);
