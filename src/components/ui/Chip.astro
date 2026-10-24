@@ -1,12 +1,12 @@
 ---
 /** Non-interactive tag (HANDOFF §3 Chip): mono 12px, pill, 1px border, muted text. */
-interface Props {
-  class?: string;
-}
-const { class: className } = Astro.props;
+import type { HTMLAttributes } from 'astro/types';
+
+type Props = HTMLAttributes<'span'>;
+const { class: className, ...rest } = Astro.props;
 ---
 
-<span class:list={['chip', className]}>
+<span class:list={['chip', className]} {...rest}>
   <slot />
 </span>
 

@@ -1,16 +1,18 @@
 ---
 /** A wrapped row of chips as a real list (screen readers announce the count). Hidden when empty. */
+import type { HTMLAttributes } from 'astro/types';
 import Chip from './Chip.astro';
 
-interface Props {
+interface Props extends HTMLAttributes<'ul'> {
   items: string[];
   label?: string;
 }
-const { items, label } = Astro.props;
+const { items, label, class: className, ...rest } = Astro.props;
 ---
 
 {items.length > 0 && (
-  <ul class="chips" aria-label={label}>
+  // role="list": Safari/VoiceOver drops list semantics when list-style is none.
+  <ul class:list={['chips', className]} role="list" aria-label={label} {...rest}>
     {items.map((item) => (
       <li>
         <Chip>{item}</Chip>

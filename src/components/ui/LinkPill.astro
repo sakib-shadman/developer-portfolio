@@ -3,20 +3,20 @@
  * Card link pills (HANDOFF §3 .lk-p / .lk-s): fixed 40px height so primary and secondary
  * render identically. External links get "↗" and open in a new tab. Unsafe hrefs render nothing.
  */
+import type { HTMLAttributes } from 'astro/types';
 import { linkAttrs } from '../../lib/link';
 
-interface Props {
+interface Props extends Omit<HTMLAttributes<'a'>, 'href' | 'target' | 'rel'> {
   href: string | undefined;
   variant?: 'primary' | 'secondary';
-  class?: string;
 }
 
-const { href, variant = 'primary', class: className } = Astro.props;
+const { href, variant = 'primary', class: className, ...rest } = Astro.props;
 const link = linkAttrs(href);
 ---
 
 {link && (
-  <a href={link.href} target={link.target} rel={link.rel} class:list={['pill', variant, className]}>
+  <a href={link.href} target={link.target} rel={link.rel} class:list={['pill', variant, className]} {...rest}>
     <slot />
     <span aria-hidden="true">{link.external ? '↗' : '→'}</span>
     {link.external && <span class="sr-only">(opens in a new tab)</span>}

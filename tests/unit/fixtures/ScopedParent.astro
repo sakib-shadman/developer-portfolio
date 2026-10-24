@@ -1,0 +1,30 @@
+---
+// Test fixture: a parent with scoped styles that passes a class to every primitive.
+import Badge from '../../../src/components/ui/Badge.astro';
+import Button from '../../../src/components/ui/Button.astro';
+import Card from '../../../src/components/ui/Card.astro';
+import Chip from '../../../src/components/ui/Chip.astro';
+import ChipList from '../../../src/components/ui/ChipList.astro';
+import FilterChip from '../../../src/components/ui/FilterChip.astro';
+import LinkPill from '../../../src/components/ui/LinkPill.astro';
+import SectionHeading from '../../../src/components/ui/SectionHeading.astro';
+---
+
+<Badge class="x">b</Badge>
+<Button class="x">btn</Button>
+<Card class="x">card</Card>
+<Chip class="x">chip</Chip>
+<ChipList class="x" items={['a']} />
+<FilterChip class="x" value="v" group="g">
+  f
+</FilterChip>
+<LinkPill class="x" href="/p">
+  pill
+</LinkPill>
+<SectionHeading class="x" title="T" />
+
+<style>
+  .x {
+    outline: 1px solid red;
+  }
+</style>

@@ -18,7 +18,7 @@ const pathname = Astro.url.pathname;
       </span>
       <span>{name}</span>
     </a>
-    <ul class="links">
+    <ul class="links" role="list">
       {PRIMARY_NAV.map((item) => {
         const current = isCurrent(pathname, item.match);
         return (
@@ -35,8 +35,8 @@ const pathname = Astro.url.pathname;
       })}
       {resume && (
         <li>
-          <a href={resume} class="resume" target="_blank" rel="noopener">
-            Resume
+          <a href={resume} class="resume" target="_blank" rel="noopener noreferrer">
+            Resume<span class="sr-only"> (opens in a new tab)</span>
           </a>
         </li>
       )}

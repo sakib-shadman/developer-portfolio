@@ -21,6 +21,10 @@ export default [
   ...astro.configs['jsx-a11y-strict'],
   { languageOptions: { globals: { ...globals.browser, ...globals.node } } },
   {
+    // role="list" on styled lists is intentional: Safari/VoiceOver drops list semantics with list-style:none.
+    rules: { 'astro/jsx-a11y/no-redundant-roles': ['error', { ul: ['list'], ol: ['list'] }] },
+  },
+  {
     // ADR-0008: data access only through src/lib/content/*
     files: ['src/components/**', 'src/pages/**', 'src/layouts/**'],
     rules: {

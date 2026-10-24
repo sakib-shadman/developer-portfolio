@@ -1,16 +1,19 @@
 ---
 /** Eyebrow + heading used by every section ("01 — Skills" / "Technology stack"). */
-interface Props {
+import type { HTMLAttributes } from 'astro/types';
+
+interface Props extends Omit<HTMLAttributes<'div'>, 'title' | 'id'> {
   eyebrow?: string;
   title: string;
+  /** id of the heading element (for aria-labelledby on the section). */
   id?: string;
   level?: 'h1' | 'h2';
   lead?: string;
 }
-const { eyebrow, title, id, level: H = 'h2', lead } = Astro.props;
+const { eyebrow, title, id, level: H = 'h2', lead, class: className, ...rest } = Astro.props;
 ---
 
-<div class="heading">
+<div class:list={['heading', className]} {...rest}>
   {eyebrow && <span class="eyebrow">{eyebrow}</span>}
   <H id={id} class:list={[{ h2: H === 'h2', h1: H === 'h1' }]}>
     {title}

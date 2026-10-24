@@ -4,7 +4,9 @@
  * active = accent fill + aria-pressed="true". Behaviour is wired by the page script
  * via the data-filter attribute.
  */
-interface Props {
+import type { HTMLAttributes } from 'astro/types';
+
+interface Props extends Omit<HTMLAttributes<'button'>, 'type' | 'value'> {
   value: string;
   pressed?: boolean;
   count?: number;
@@ -12,15 +14,16 @@ interface Props {
   group: string;
 }
 
-const { value, pressed = false, count, group } = Astro.props;
+const { value, pressed = false, count, group, class: className, ...rest } = Astro.props;
 ---
 
 <button
   type="button"
-  class="filter"
+  class:list={['filter', className]}
   aria-pressed={pressed ? 'true' : 'false'}
   data-filter-group={group}
   data-filter={value}
+  {...rest}
 >
   <slot />
   {count !== undefined && <span class="count">{count}</span>}

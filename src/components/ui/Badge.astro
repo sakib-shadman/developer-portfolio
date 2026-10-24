@@ -4,13 +4,15 @@
  *  solid  — accent fill ("Current" on experience rows)
  *  status — accent dot + mono uppercase text ("In progress", "Featured")
  */
-interface Props {
+import type { HTMLAttributes } from 'astro/types';
+
+interface Props extends HTMLAttributes<'span'> {
   variant?: 'solid' | 'status';
 }
-const { variant = 'solid' } = Astro.props;
+const { variant = 'solid', class: className, ...rest } = Astro.props;
 ---
 
-<span class:list={['badge', variant]}>
+<span class:list={['badge', variant, className]} {...rest}>
   {variant === 'status' && <span class="dot" aria-hidden="true" />}
   <slot />
 </span>
