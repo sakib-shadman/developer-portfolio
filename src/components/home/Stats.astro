@@ -1,0 +1,60 @@
+---
+/** At-a-glance band (FR-01): <dl> of value + optional accent suffix over a mono label. Hidden when empty. */
+import type { Profile } from '../../lib/content/types';
+
+interface Props {
+  stats: Profile['stats'];
+}
+const { stats } = Astro.props;
+---
+
+{stats.length > 0 && (
+  <section class="band" aria-label="At a glance">
+    <dl class="wrap">
+      {stats.map((s) => (
+        <div class="stat">
+          <dt>{s.label}</dt>
+          <dd>
+            {s.value}
+            {s.suffix && <span class="suffix">{s.suffix}</span>}
+          </dd>
+        </div>
+      ))}
+    </dl>
+  </section>
+)}
+
+<style>
+  .band {
+    border-block: 1px solid var(--border);
+  }
+  dl {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+    gap: 32px;
+    margin: 0 auto;
+    padding-block: 56px;
+  }
+  .stat {
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 6px;
+  }
+  dt {
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  dd {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: var(--stat);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+  .suffix {
+    color: var(--acc-text);
+  }
+</style>

@@ -1,17 +1,35 @@
 ---
-// Walking skeleton — replaced by the real home page in PF-12.
 import PageLayout from '../layouts/PageLayout.astro';
-import { getProfile } from '../lib/content/queries';
+import Hero from '../components/home/Hero.astro';
+import Stats from '../components/home/Stats.astro';
+import Skills from '../components/home/Skills.astro';
+import Experience from '../components/home/Experience.astro';
+import ContactCta from '../components/home/ContactCta.astro';
+import { getExperience, getProfile, getSkillGroups } from '../lib/content/queries';
+import { numberSections } from '../lib/home';
 
-const profile = await getProfile();
+const [profile, skillGroups, experience] = await Promise.all([
+  getProfile(),
+  getSkillGroups(),
+  getExperience(),
+]);
+
+// Eyebrow numbers follow what is actually rendered. Projects/Writing (PF-14/PF-33) flip `visible`
+// to their real condition when they land, so numbering stays gap-free.
+const eyebrows = numberSections([
+  { id: 'skills', label: 'Skills', visible: skillGroups.some((g) => g.items.length > 0) },
+  { id: 'experience', label: 'Experience', visible: experience.length > 0 },
+  { id: 'projects', label: 'Projects', visible: false },
+  { id: 'writing', label: 'Writing', visible: false },
+]);
 ---
 
 <PageLayout title={`${profile.name} — ${profile.title}`} description={profile.intro}>
-  <section class="wrap" style="padding-block: var(--page-top)">
-    <span class="eyebrow">{profile.focus.join(' · ')}</span>
-    <h1 style="font-family: var(--font-display); font-size: var(--h1-page); letter-spacing: var(--tracking-display)">
-      {profile.name}
-    </h1>
-    <p style="color: var(--muted); max-width: 540px">{profile.intro}</p>
-  </section>
+  <Hero profile={profile} />
+  <Stats stats={profile.stats} />
+  <Skills groups={skillGroups} eyebrow={eyebrows.skills ?? ''} />
+  <Experience items={experience} eyebrow={eyebrows.experience ?? ''} />
+  {/* PF-14 insertion point: <FeaturedProjects eyebrow={eyebrows.projects} /> (section#work, "03 — Projects") */}
+  {/* PF-33 insertion point: <HomeWriting eyebrow={eyebrows.writing} /> (section#writing, "04 — Writing") */}
+  <ContactCta profile={profile} />
 </PageLayout>

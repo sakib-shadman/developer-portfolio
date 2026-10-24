@@ -1,0 +1,247 @@
+---
+/** Home hero (FR-01): focus pill, location, headline, intro, CTAs, profile tiles, optional photo. */
+import type { Profile } from '../../lib/content/types';
+import { linkAttrs } from '../../lib/link';
+import { splitHeadline } from '../../lib/home';
+import Button from '../ui/Button.astro';
+import Icon, { type IconName } from '../ui/Icon.astro';
+
+interface Props {
+  profile: Profile;
+}
+const { profile } = Astro.props;
+
+const headline = splitHeadline(profile.headline, profile.headlineAccent);
+const place = [profile.location, profile.timezone].filter(Boolean).join(' · ');
+
+const candidates: { label: string; href?: string; icon: IconName }[] = [
+  { label: 'GitHub', href: profile.links.github, icon: 'code' },
+  { label: 'LinkedIn', href: profile.links.linkedin, icon: 'briefcase' },
+  { label: 'Medium', href: profile.links.medium, icon: 'article' },
+  { label: 'Email', href: profile.email ? '#contact' : undefined, icon: 'mail' },
+];
+const tiles = candidates.flatMap((c) => {
+  const link = linkAttrs(c.href);
+  return link ? [{ ...c, link }] : [];
+});
+const photo = profile.photo;
+---
+
+<section id="hero" class:list={['hero wrap', { 'has-photo': !!photo }]} aria-labelledby="hero-title">
+  <div class="copy">
+    {(profile.focus.length > 0 || place) && (
+      <div class="meta">
+        {profile.focus.length > 0 && (
+          <span class="focus">
+            <span class="dot" aria-hidden="true" />
+            {profile.focus.join(' · ')}
+          </span>
+        )}
+        {place && (
+          <span class="place">
+            <Icon name="pin" />
+            {place}
+          </span>
+        )}
+      </div>
+    )}
+    <h1 id="hero-title">
+      {headline ? (
+        <>
+          {headline.before}
+          <span class="accent">{headline.accent}</span>
+          {headline.after}
+        </>
+      ) : (
+        profile.headline
+      )}
+    </h1>
+    <p class="intro">{profile.intro}</p>
+    <div class="ctas">
+      <Button variant="solid" href="/projects" iconEnd="arrow-right">
+        View projects
+      </Button>
+      {profile.resume && (
+        <Button variant="outline" size="lg" href={profile.resume} icon="download" download>
+          Download resume
+        </Button>
+      )}
+    </div>
+    {tiles.length > 0 && (
+      <nav aria-label="Profiles">
+        <ul class="tiles" role="list">
+          {tiles.map((t) => (
+            <li>
+              <a class="tile" href={t.link.href} target={t.link.target} rel={t.link.rel}>
+                <Icon name={t.icon} size={18} color="var(--acc)" />
+                {t.label}
+                {t.link.external && <span class="sr-only">(opens in a new tab)</span>}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </nav>
+    )}
+  </div>
+  {photo && (
+    <div class="frame">
+      <div class="outline" aria-hidden="true" />
+      <figure>
+        <img src={photo.src} width={photo.width} height={photo.height} alt={photo.alt} fetchpriority="high" />
+        {profile.now && (
+          <figcaption>
+            <span class="dot" aria-hidden="true" />
+            Now: {profile.now}
+          </figcaption>
+        )}
+      </figure>
+    </div>
+  )}
+</section>
+
+<style>
+  .hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 56px;
+    align-items: center;
+    padding-block: 104px;
+  }
+  .has-photo {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr));
+  }
+  .copy {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 24px;
+    min-width: 0;
+  }
+  .hero:not(.has-photo) .copy {
+    max-width: 860px;
+  }
+  .meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 20px;
+  }
+  .focus {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    border-radius: var(--radius-pill);
+    background: var(--acc-soft);
+    color: var(--acc-text);
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+  }
+  .dot {
+    flex: none;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--acc);
+  }
+  .place {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    color: var(--muted);
+  }
+  h1 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: var(--h1-home);
+    line-height: 1.02;
+    letter-spacing: var(--tracking-display);
+    overflow-wrap: break-word;
+  }
+  .accent {
+    color: var(--acc-text);
+  }
+  .intro {
+    max-width: 540px;
+    font-size: var(--text-lg);
+    color: var(--muted);
+  }
+  .ctas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding-top: 8px;
+  }
+  .tiles {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .tile {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: var(--control-md);
+    padding: 0 16px;
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+  }
+  .tile:hover {
+    opacity: 1;
+    border-color: var(--acc);
+  }
+  .frame {
+    position: relative;
+    justify-self: center;
+    width: 100%;
+    max-width: 440px;
+    padding: 0 20px 20px 0;
+  }
+  .outline {
+    position: absolute;
+    inset: 20px 0 0 20px;
+    border: 2px solid var(--acc);
+    border-radius: var(--radius-lg);
+  }
+  figure {
+    position: relative;
+    aspect-ratio: 4 / 5;
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-photo);
+  }
+  figure img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  figcaption {
+    position: absolute;
+    inset: auto 16px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    border-radius: 14px;
+    background: rgba(11, 15, 26, 0.88);
+    border: 1px solid var(--border);
+    font-size: 14px;
+  }
+  @media (max-width: 640px) {
+    .hero {
+      padding-block: 64px;
+      gap: 40px;
+    }
+  }
+</style>

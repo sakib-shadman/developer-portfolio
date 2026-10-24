@@ -1,0 +1,115 @@
+---
+/** Contact CTA panel (FR-01). Email button and profile pills render only when configured. */
+import type { Profile } from '../../lib/content/types';
+import { linkAttrs } from '../../lib/link';
+import Icon, { type IconName } from '../ui/Icon.astro';
+
+interface Props {
+  profile: Profile;
+}
+const { profile } = Astro.props;
+
+const email = profile.email ? linkAttrs(`mailto:${profile.email}`) : null;
+const pills = (
+  [
+    { label: 'LinkedIn', href: profile.links.linkedin, icon: 'briefcase' },
+    { label: 'GitHub', href: profile.links.github, icon: 'code' },
+  ] as { label: string; href?: string; icon: IconName }[]
+).flatMap((p) => {
+  const link = linkAttrs(p.href);
+  return link ? [{ ...p, link }] : [];
+});
+---
+
+<section id="contact" class="wrap" aria-labelledby="contact-title">
+  <div class="panel">
+    <div class="text">
+      <h2 id="contact-title">Let's build something together.</h2>
+      {profile.availability && <p>{profile.availability}</p>}
+    </div>
+    {(email || pills.length > 0) && (
+      <div class="actions">
+        {email && (
+          <a class="email" href={email.href}>
+            {profile.email}
+          </a>
+        )}
+        {pills.map((p) => (
+          <a class="pill" href={p.link.href} target={p.link.target} rel={p.link.rel}>
+            <Icon name={p.icon} size={18} color="var(--acc)" />
+            {p.label}
+            {p.link.external && <span class="sr-only">(opens in a new tab)</span>}
+          </a>
+        ))}
+      </div>
+    )}
+  </div>
+</section>
+
+<style>
+  section {
+    padding-bottom: 96px;
+  }
+  .panel {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 32px;
+    padding: clamp(32px, 6vw, 72px);
+    border-radius: var(--radius-lg);
+    background: var(--acc);
+    color: var(--on-acc);
+  }
+  .text {
+    flex: 1 1 420px;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  h2 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(32px, 4.5vw, 56px);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+  }
+  .text p {
+    font-size: var(--text-md);
+  }
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    min-width: 0;
+  }
+  .email,
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: var(--control-lg);
+    border-radius: var(--radius-pill);
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+  .email {
+    padding: 0 26px;
+    background: var(--on-acc);
+    color: var(--acc);
+    font-weight: 600;
+  }
+  .pill {
+    padding: 0 22px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text);
+  }
+  .email:focus-visible,
+  .pill:focus-visible {
+    outline-color: var(--on-acc);
+  }
+</style>
