@@ -806,7 +806,8 @@ Loop for every PR (see `CLAUDE.md` → Workflow):
    branch. The owner can review or veto any PR at any time.
 
 Rules: one task per PR (< 400 changed lines excluding content); PR title = Conventional Commit;
-release PRs (`release/*` → `main`) additionally need staging e2e + Lighthouse green and a changelog.
+release PRs (`release/*` → `main`) additionally need staging e2e + Lighthouse green, a changelog
+from commits since the last tag (`git cliff`), and a version bump in `package.json`.
 
 ### 3.6 Adding an article
 
