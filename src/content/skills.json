@@ -1,0 +1,15 @@
+[
+  { "id": "dart", "name": "Dart" },
+  { "id": "swift", "name": "Swift" },
+  { "id": "java", "name": "Java" },
+  { "id": "go", "name": "Go" },
+  { "id": "flutter", "name": "Flutter" },
+  { "id": "uikit", "name": "UIKit" },
+  { "id": "swiftui", "name": "SwiftUI" },
+  { "id": "ios", "name": "iOS" },
+  { "id": "android", "name": "Android" },
+  { "id": "spring-boot", "name": "Spring Boot" },
+  { "id": "docker", "name": "Docker" },
+  { "id": "aws-ec2", "name": "AWS EC2" },
+  { "id": "aws-s3", "name": "AWS S3" }
+]

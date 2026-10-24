@@ -1,0 +1,23 @@
+# pnpm 10 settings.
+# Install native binaries for the dev VM (linux) AND macOS arm64, so node_modules
+# works on the Mac without reinstalling (sharp, esbuild, rolldown, lefthook).
+supportedArchitectures:
+  os: [current, darwin]
+  cpu: [current, arm64]
+
+# pnpm 10 blocks dependency build scripts unless allow-listed.
+onlyBuiltDependencies:
+  - esbuild
+  - sharp
+  - lefthook
+
+# firebase-tools transitive natives not needed for Hosting (re2 needs node-gyp).
+ignoredBuiltDependencies:
+  - protobufjs
+  - re2
+
+# eslint-plugin-astro auto-installs eslint-plugin-jsx-a11y as an optional peer; we use the
+# eslint-10-compatible fork (eslint-plugin-jsx-a11y-x), so silence the stale peer range.
+peerDependencyRules:
+  allowedVersions:
+    eslint-plugin-jsx-a11y>eslint: '10'

@@ -1,0 +1,141 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "headline": {
+      "type": "string",
+      "minLength": 1
+    },
+    "headlineAccent": {
+      "type": "string"
+    },
+    "intro": {
+      "type": "string",
+      "minLength": 1
+    },
+    "location": {
+      "type": "string"
+    },
+    "timezone": {
+      "type": "string"
+    },
+    "focus": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "now": {
+      "type": "string"
+    },
+    "email": {
+      "type": "string",
+      "format": "email",
+      "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+    },
+    "links": {
+      "default": {},
+      "type": "object",
+      "properties": {
+        "github": {
+          "type": "string",
+          "format": "uri"
+        },
+        "linkedin": {
+          "type": "string",
+          "format": "uri"
+        },
+        "medium": {
+          "type": "string",
+          "format": "uri"
+        }
+      }
+    },
+    "resume": {
+      "type": "string",
+      "pattern": "^\\/resume\\/[\\w.-]+\\.pdf$"
+    },
+    "photo": {
+      "type": "object",
+      "properties": {
+        "src": {
+          "type": "string",
+          "minLength": 1
+        },
+        "alt": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": ["src", "alt"]
+    },
+    "stats": {
+      "default": [],
+      "maxItems": 3,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "value": {
+            "type": "string",
+            "minLength": 1
+          },
+          "suffix": {
+            "type": "string"
+          }
+        },
+        "required": ["label", "value"]
+      }
+    },
+    "availability": {
+      "type": "string"
+    },
+    "bio": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "principles": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": ["title", "text"]
+      }
+    },
+    "objective": {
+      "type": "string"
+    },
+    "replyTime": {
+      "type": "string"
+    }
+  },
+  "required": ["name", "title", "headline", "intro"]
+}

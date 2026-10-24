@@ -1,0 +1,9 @@
+{
+  "name": "LMS Cricket",
+  "category": "mobile-app",
+  "summary": "Large-scale live scoring and statistics app for cricket.",
+  "technologies": ["flutter", "dart"],
+  "featured": true,
+  "featuredOrder": 2,
+  "status": "draft"
+}

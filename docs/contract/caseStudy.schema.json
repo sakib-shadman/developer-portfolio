@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "project": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "problem": {
+      "type": "string",
+      "minLength": 1
+    },
+    "outcomes": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  },
+  "required": ["project", "problem"]
+}

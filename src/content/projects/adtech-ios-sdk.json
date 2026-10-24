@@ -1,0 +1,10 @@
+{
+  "name": "Adtech iOS SDK",
+  "label": "iOS SDK · Adtech",
+  "category": "sdk",
+  "technologies": ["swift", "ios"],
+  "progress": "in-progress",
+  "featured": true,
+  "featuredOrder": 1,
+  "status": "draft"
+}

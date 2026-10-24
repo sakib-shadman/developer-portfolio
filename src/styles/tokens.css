@@ -1,0 +1,68 @@
+/* Developer Portfolio — design tokens (Theme A · Midnight Teal, dark only).
+   Source of truth: HANDOFF.md §2 / tokens.css in the design package. */
+:root {
+  /* Colour */
+  --bg: #0b0f1a;
+  --surface: #131a2a;
+  --border: #243049;
+  --text: #e8ecf5;
+  --muted: #9aa4bc;
+  --placeholder: #7c879f;
+  --acc: #5eead4;
+  --acc-text: #5eead4;
+  --on-acc: #04201c;
+  --acc-soft: rgba(94, 234, 212, 0.12);
+  --danger: #fca5a5;
+  --danger-soft: rgba(252, 165, 165, 0.08);
+
+  /* Typography — self-hosted variable fonts (Fontsource) first */
+  --font-display: 'Space Grotesk Variable', 'Space Grotesk', system-ui, sans-serif;
+  --font-body: 'Inter Variable', 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace;
+
+  --text-xs: 12px;
+  --text-sm: 13px;
+  --text-base: 16px;
+  --text-md: 18px;
+  --text-lg: 20px;
+  --h1-home: clamp(44px, 6vw, 76px);
+  --h1-page: clamp(40px, 5vw, 64px);
+  --h2: clamp(32px, 4vw, 48px);
+  --stat: 44px;
+
+  --leading-body: 1.6;
+  --leading-display: 1.05;
+  --tracking-display: -0.03em;
+  --tracking-label: 0.08em;
+
+  /* Layout */
+  --container: 1200px;
+  --gutter: 24px;
+  --section-gap: 112px;
+  --page-top: 64px;
+  --grid-gap: 24px;
+
+  /* Radius */
+  --radius-sm: 12px;
+  --radius-md: 20px;
+  --radius-lg: 28px;
+  --radius-pill: 999px;
+
+  /* Control heights */
+  --control-lg: 52px;
+  --control-md: 44px;
+  --control-sm: 40px;
+
+  /* Elevation */
+  --shadow-photo: 0 30px 80px rgba(0, 0, 0, 0.3);
+
+  /* Focus */
+  --focus-ring: 2px solid var(--acc);
+
+  /* Slider */
+  --slider-interval: 5000ms;
+  --dot: 6px;
+  --dot-active-w: 28px;
+}
+
+/* Breakpoints (media queries can't read custom properties): tablet ≤1024px, phone ≤640px */

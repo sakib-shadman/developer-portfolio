@@ -1,0 +1,106 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "label": {
+      "type": "string"
+    },
+    "summary": {
+      "type": "string",
+      "maxLength": 200
+    },
+    "description": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string",
+      "enum": ["mobile-app", "sdk", "library", "open-source", "web-app", "backend"]
+    },
+    "technologies": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+      }
+    },
+    "role": {
+      "type": "string"
+    },
+    "contributions": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "links": {
+      "default": {},
+      "type": "object",
+      "properties": {
+        "repo": {
+          "type": "string",
+          "format": "uri"
+        },
+        "demo": {
+          "type": "string",
+          "format": "uri"
+        },
+        "store": {
+          "type": "string",
+          "format": "uri"
+        },
+        "docs": {
+          "type": "string",
+          "format": "uri"
+        }
+      }
+    },
+    "media": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "src": {
+            "type": "string",
+            "minLength": 1
+          },
+          "alt": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": ["src", "alt"]
+      }
+    },
+    "progress": {
+      "type": "string",
+      "enum": ["in-progress", "shipped"]
+    },
+    "featured": {
+      "default": false,
+      "type": "boolean"
+    },
+    "featuredOrder": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "status": {
+      "default": "draft",
+      "type": "string",
+      "enum": ["draft", "published", "archived"]
+    },
+    "caseStudy": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    }
+  },
+  "required": ["name", "category"]
+}

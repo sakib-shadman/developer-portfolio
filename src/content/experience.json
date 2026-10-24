@@ -1,0 +1,15 @@
+[
+  {
+    "id": "vivasoft",
+    "company": "Vivasoft",
+    "title": "Software Engineer, L-I",
+    "endDate": null,
+    "technologies": ["flutter", "dart", "swift"],
+    "status": "draft"
+  },
+  {
+    "id": "sheba-platform",
+    "company": "Sheba Platform",
+    "status": "draft"
+  }
+]

@@ -1,0 +1,45 @@
+---
+import '@fontsource-variable/inter';
+import '@fontsource-variable/space-grotesk';
+import '@fontsource-variable/jetbrains-mono';
+import '../styles/global.css';
+import interLatin from '@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url';
+import groteskLatin from '@fontsource-variable/space-grotesk/files/space-grotesk-latin-wght-normal.woff2?url';
+import Seo from '../components/layout/Seo.astro';
+
+interface Props {
+  title: string;
+  description: string;
+  path?: string;
+  image?: string;
+  type?: 'website' | 'article' | 'profile';
+}
+
+const props = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#0B0F1A" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="alternate" type="application/rss+xml" title="Articles" href="/rss.xml" />
+    <!-- Above-the-fold fonts: body + display (latin). Mono loads on demand. -->
+    <link rel="preload" href={interLatin} as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href={groteskLatin} as="font" type="font/woff2" crossorigin />
+    <Seo {...props} />
+    <slot name="head" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">
+      Skip to content
+    </a>
+    <slot name="header" />
+    <main id="main" tabindex="-1">
+      <slot />
+    </main>
+    <slot name="footer" />
+  </body>
+</html>

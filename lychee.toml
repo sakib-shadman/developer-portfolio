@@ -1,0 +1,5 @@
+# Checks internal + external links in the built site.
+max_concurrency = 8
+accept = ["200..=299", "429"]
+timeout = 20
+exclude = ["^https://www\\.linkedin\\.com"] # LinkedIn returns 999 to bots

@@ -1,0 +1,36 @@
+---
+/**
+ * Per-page metadata (FR-14). Indexing is controlled by PUBLIC_INDEXABLE (plan §2.7):
+ * false for previews, staging and 0.x; true from v1.0 production.
+ */
+interface Props {
+  title: string;
+  description: string;
+  /** Path relative to the site root, e.g. "/projects". Defaults to the current path. */
+  path?: string;
+  image?: string;
+  type?: 'website' | 'article' | 'profile';
+}
+
+const { title, description, path = Astro.url.pathname, image, type = 'website' } = Astro.props;
+const site = Astro.site ?? new URL('http://localhost:4321');
+const canonical = new URL(path === '/' ? '/' : path.replace(/\/$/, ''), site).toString();
+// OG images arrive in PF-40; until then omit the tag rather than point at a missing file.
+const ogImage = image ? new URL(image, site).toString() : undefined;
+const indexable = import.meta.env.PUBLIC_INDEXABLE === 'true';
+---
+
+<title>{title}</title>
+<meta name="description" content={description} />
+<link rel="canonical" href={canonical} />
+{!indexable && <meta name="robots" content="noindex, nofollow" />}
+
+<meta property="og:type" content={type} />
+<meta property="og:title" content={title} />
+<meta property="og:description" content={description} />
+<meta property="og:url" content={canonical} />
+{ogImage && <meta property="og:image" content={ogImage} />}
+<meta name="twitter:card" content={ogImage ? 'summary_large_image' : 'summary'} />
+<meta name="twitter:title" content={title} />
+<meta name="twitter:description" content={description} />
+{ogImage && <meta name="twitter:image" content={ogImage} />}
