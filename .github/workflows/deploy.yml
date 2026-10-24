@@ -23,19 +23,37 @@ jobs:
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      # Until Firebase is set up (see docs/IMPLEMENTATION_PLAN.md §4.4) skip instead of failing.
+      - name: Check Firebase is configured
+        id: gate
+        env:
+          SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_SHADMAN_PORTFOLIO }}
+        run: |
+          if [ -z "$SA" ]; then
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=Deploy skipped::FIREBASE_SERVICE_ACCOUNT_SHADMAN_PORTFOLIO is not set yet"
+          else
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          fi
+      - if: steps.gate.outputs.enabled == 'true'
+        uses: actions/checkout@v4
+      - if: steps.gate.outputs.enabled == 'true'
+        uses: pnpm/action-setup@v4
+      - if: steps.gate.outputs.enabled == 'true'
+        uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
           cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm build
+      - if: steps.gate.outputs.enabled == 'true'
+        run: pnpm install --frozen-lockfile
+      - if: steps.gate.outputs.enabled == 'true'
+        run: pnpm build
         env:
           PUBLIC_SITE_URL: ${{ env.SITE_URL }}
           PUBLIC_INDEXABLE: ${{ env.IS_LIVE == 'true' && vars.PUBLIC_INDEXABLE || 'false' }}
           PUBLIC_CONTACT_FORM: 'false'
-      - uses: FirebaseExtended/action-hosting-deploy@v0
+      - if: steps.gate.outputs.enabled == 'true'
+        uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_SHADMAN_PORTFOLIO }}
@@ -44,7 +62,7 @@ jobs:
           channelId: ${{ github.event_name == 'pull_request' && '' || (env.IS_LIVE == 'true' && 'live' || 'staging') }}
           expires: ${{ github.event_name == 'pull_request' && '7d' || '30d' }}
       - name: Smoke test live site
-        if: env.IS_LIVE == 'true'
+        if: steps.gate.outputs.enabled == 'true' && env.IS_LIVE == 'true'
         run: |
           pnpm exec playwright install --with-deps chromium
           BASE_URL=${{ env.SITE_URL }} pnpm exec playwright test --project=chromium --grep @smoke
