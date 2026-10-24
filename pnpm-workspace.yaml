@@ -1,9 +1,11 @@
 # pnpm 10 settings.
-# Install native binaries for the dev VM (linux) AND macOS arm64, so node_modules
-# works on the Mac without reinstalling (sharp, esbuild, rolldown, lefthook).
+# Install native binaries for macOS arm64 AND linux arm64 (glibc), so the same node_modules
+# works both on the Mac and in the Linux VM Claude uses on this machine
+# (sharp, esbuild, rolldown, lightningcss, astro compiler, lefthook).
 supportedArchitectures:
-  os: [current, darwin]
+  os: [current, darwin, linux]
   cpu: [current, arm64]
+  libc: [current, glibc]
 
 # pnpm 10 blocks dependency build scripts unless allow-listed.
 onlyBuiltDependencies:
