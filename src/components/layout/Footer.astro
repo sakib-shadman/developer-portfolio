@@ -19,12 +19,12 @@ const year = new Date().getFullYear();
       © {year} {name}
       {location && ` · ${location}`}
     </p>
-    <ul class="actions">
+    <ul class="actions" role="list">
       {resume && (
         <li>
-          <a class="pill" href={resume} target="_blank" rel="noopener">
+          <a class="pill" href={resume} target="_blank" rel="noopener noreferrer">
             <Icon name="download" color="var(--acc)" />
-            Resume
+            Resume<span class="sr-only"> (opens in a new tab)</span>
           </a>
         </li>
       )}

@@ -1,0 +1,47 @@
+---
+/**
+ * Small status labels.
+ *  solid  — accent fill ("Current" on experience rows)
+ *  status — accent dot + mono uppercase text ("In progress", "Featured")
+ */
+import type { HTMLAttributes } from 'astro/types';
+
+interface Props extends HTMLAttributes<'span'> {
+  variant?: 'solid' | 'status';
+}
+const { variant = 'solid', class: className, ...rest } = Astro.props;
+---
+
+<span class:list={['badge', variant, className]} {...rest}>
+  {variant === 'status' && <span class="dot" aria-hidden="true" />}
+  <slot />
+</span>
+
+<style>
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    width: fit-content;
+  }
+  .solid {
+    padding: 3px 10px;
+    border-radius: var(--radius-pill);
+    background: var(--acc);
+    color: var(--on-acc);
+    font-size: var(--text-xs);
+    font-weight: 600;
+  }
+  .status {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    text-transform: uppercase;
+    color: var(--acc-text);
+  }
+  .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--acc);
+  }
+</style>

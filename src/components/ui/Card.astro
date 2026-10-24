@@ -1,0 +1,68 @@
+---
+/**
+ * Card surface (HANDOFF §3): surface fill, 1px border, 20px radius.
+ * `as` picks the element; `highlight` uses the accent border (featured/in-progress cards).
+ * Optional `media` slot renders the 180–220px accent-soft media well; only that well clips,
+ * so focus rings on the card body are never cut off.
+ */
+import type { HTMLAttributes } from 'astro/types';
+
+interface Props extends HTMLAttributes<'div'> {
+  as?: 'article' | 'div' | 'li' | 'section';
+  highlight?: boolean;
+  padded?: boolean;
+  /** Media well height in px (HANDOFF: 180–220). */
+  mediaHeight?: number;
+}
+
+const {
+  as: Tag = 'div',
+  highlight = false,
+  padded = true,
+  mediaHeight = 220,
+  class: className,
+  ...rest
+} = Astro.props;
+const hasMedia = Astro.slots.has('media');
+---
+
+<Tag class:list={['card', { highlight }, className]} {...rest}>
+  {hasMedia && (
+    <div class="media" style={`height:${mediaHeight}px`}>
+      <slot name="media" />
+    </div>
+  )}
+  <div class:list={['body', { padded }]}>
+    <slot />
+  </div>
+</Tag>
+
+<style>
+  .card {
+    display: flex;
+    flex-direction: column;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+  }
+  .media {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background: var(--acc-soft);
+    border-radius: calc(var(--radius-md) - 1px) calc(var(--radius-md) - 1px) 0 0;
+  }
+  .body {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+  }
+  .padded {
+    padding: 24px;
+    gap: 14px;
+  }
+  .highlight {
+    border-color: var(--acc);
+  }
+</style>

@@ -1,0 +1,135 @@
+---
+/**
+ * HANDOFF §3 buttons.
+ *  solid   — 52px only, accent fill, primary CTA
+ *  outline — 44px (md) / 52px (lg), surface fill, border, teal icon
+ *  soft    — 44px (md) / 52px (lg), accent-soft fill + accent border ("All projects")
+ * Renders <a> when `href` is given (unsafe hrefs render nothing), otherwise <button>.
+ */
+import type { HTMLAttributes } from 'astro/types';
+import Icon, { type IconName } from './Icon.astro';
+import { linkAttrs } from '../../lib/link';
+
+type Common = Omit<
+  HTMLAttributes<'a'> & HTMLAttributes<'button'>,
+  'href' | 'type' | 'target' | 'rel' | 'disabled'
+> & {
+  icon?: IconName;
+  iconEnd?: IconName;
+};
+/** Links can't be disabled (no such attribute on <a>); only buttons take `disabled`/`type`. */
+type Element =
+  | { href: string | undefined; download?: boolean; disabled?: never; type?: never }
+  | { href?: never; download?: never; disabled?: boolean; type?: 'button' | 'submit' };
+type Variant = { variant: 'solid'; size?: 'lg' } | { variant?: 'outline' | 'soft'; size?: 'md' | 'lg' };
+type Props = Common & Element & Variant;
+
+const {
+  variant = 'outline',
+  size = variant === 'solid' ? 'lg' : 'md',
+  href,
+  type = 'button',
+  icon,
+  iconEnd,
+  download,
+  disabled,
+  class: className,
+  'aria-label': ariaLabel,
+  ...rest
+} = Astro.props;
+
+const link = href === undefined ? undefined : linkAttrs(href);
+const iconColor = variant === 'outline' ? 'var(--acc)' : 'currentColor';
+const classes = ['btn', variant, size, className];
+// An aria-label replaces the content name, so the sr-only new-tab hint must be part of it.
+const linkLabel = ariaLabel && link?.external ? `${ariaLabel} (opens in a new tab)` : ariaLabel;
+---
+
+{href === undefined ? (
+  <button type={type} class:list={classes} disabled={disabled} aria-label={ariaLabel} {...rest}>
+    {icon && <Icon name={icon} color={iconColor} />}
+    <slot />
+    {iconEnd && <Icon name={iconEnd} color={iconColor} />}
+  </button>
+) : (
+  link && (
+    <a
+      href={link.href}
+      target={link.target}
+      rel={link.rel}
+      download={download ? '' : undefined}
+      class:list={classes}
+      aria-label={linkLabel}
+      {...rest}
+    >
+      {icon && <Icon name={icon} color={iconColor} />}
+      <slot />
+      {iconEnd && <Icon name={iconEnd} color={iconColor} />}
+      {link.external && !ariaLabel && <span class="sr-only">(opens in a new tab)</span>}
+    </a>
+  )
+)}
+
+<style>
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-sizing: border-box;
+    border-radius: var(--radius-pill);
+    border: 1px solid transparent;
+    font-family: var(--font-body);
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+    cursor: pointer;
+    text-decoration: none;
+    transition:
+      border-color 0.15s,
+      filter 0.15s,
+      background-color 0.15s;
+  }
+  /* Same hover for <a> and <button>: override the global a:hover opacity. */
+  .btn:hover {
+    opacity: 1;
+  }
+  .lg {
+    min-height: var(--control-lg);
+    padding: 0 26px;
+    font-size: var(--text-base);
+  }
+  .md {
+    min-height: var(--control-md);
+    padding: 0 20px;
+    font-size: 15px;
+  }
+  .solid {
+    background: var(--acc);
+    color: var(--on-acc);
+  }
+  .solid:hover {
+    filter: brightness(1.08);
+  }
+  .outline {
+    background: var(--surface);
+    border-color: var(--border);
+    color: var(--text);
+  }
+  .outline:hover {
+    border-color: var(--acc);
+  }
+  .soft {
+    background: var(--acc-soft);
+    border-color: var(--acc);
+    color: var(--acc-text);
+  }
+  .soft:hover {
+    background: rgba(94, 234, 212, 0.2);
+  }
+  button.btn:disabled {
+    cursor: not-allowed;
+    filter: none;
+    opacity: 0.6;
+  }
+</style>
