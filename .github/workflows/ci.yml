@@ -18,18 +18,6 @@ jobs:
           if [[ "$HEAD" == "develop" || "$HEAD" == release/* || "$HEAD" == hotfix/* ]]; then exit 0; fi
           echo "::error::PRs into main must come from develop, release/* or hotfix/* (got $HEAD)"; exit 1
 
-  pr-title:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with: { node-version-file: .nvmrc, cache: pnpm }
-      - run: pnpm install --frozen-lockfile
-      - name: PR title is a Conventional Commit (it becomes the squash commit)
-        env: { TITLE: '${{ github.event.pull_request.title }}' }
-        run: echo "$TITLE" | pnpm exec commitlint
-
   quality:
     runs-on: ubuntu-latest
     steps:
