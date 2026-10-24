@@ -21,7 +21,9 @@ import {
 } from './mappers';
 import type { ArticleCard, ExperienceItem, Profile, ProjectCard, SkillGroup } from './types';
 
-const includeDrafts = import.meta.env.DEV;
+// Drafts render in `astro dev` and in e2e/test builds (PUBLIC_INCLUDE_DRAFTS=true) so pages can be
+// built and tested before the owner's real content is complete. Never set it for live deploys.
+const includeDrafts = import.meta.env.DEV || import.meta.env.PUBLIC_INCLUDE_DRAFTS === 'true';
 
 let skillNames: Promise<SkillNames> | undefined;
 const getSkillNames = (): Promise<SkillNames> =>

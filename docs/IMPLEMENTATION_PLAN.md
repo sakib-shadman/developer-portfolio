@@ -809,6 +809,18 @@ Rules: one task per PR (< 400 changed lines excluding content); PR title = Conve
 release PRs (`release/*` → `main`) additionally need staging e2e + Lighthouse green, a changelog
 from commits since the last tag (`git cliff`), and a version bump in `package.json`.
 
+### 3.7 Agent team (M1)
+
+Roles live in `.claude/agents/`: `senior-engineer` (Sonnet) ×3, `pr-reviewer` (Opus), `team-lead`
+(Opus). Lanes run in parallel; tasks in a lane are sequential.
+
+| Wave | Lane A — home                                              | Lane B — projects                                    | Lane C — pages                |
+| ---- | ---------------------------------------------------------- | ---------------------------------------------------- | ----------------------------- |
+| 0    | team setup (lead): drafts in e2e builds, agent definitions |                                                      |                               |
+| 1    | PF-12 home sections                                        | PF-15 `/projects` + filters                          | PF-17 `/about`                |
+| 2    | PF-13 slider                                               | PF-16 `/projects/[slug]`                             | PF-19 `/contact` (email only) |
+| 3    | PF-14 featured projects on home                            | PF-18 resume (+ header/footer links via `linkAttrs`) | PF-21 404                     |
+
 ### 3.6 Adding an article
 
 ```bash

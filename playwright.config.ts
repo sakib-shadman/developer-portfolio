@@ -14,7 +14,8 @@ export default defineConfig({
   webServer: process.env.BASE_URL
     ? undefined
     : {
-        command: 'pnpm build && pnpm serve:firebase',
+        // e2e builds include draft content so pages can be tested before real content exists.
+        command: 'PUBLIC_INCLUDE_DRAFTS=true pnpm build && pnpm serve:firebase',
         url: baseURL,
         reuseExistingServer: !process.env.CI,
         timeout: 180_000,
