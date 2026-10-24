@@ -1,0 +1,51 @@
+name: claude-review
+# Independent AI review on every PR, using the pr-reviewer agent brief.
+# Needs ONE repo secret: CLAUDE_CODE_OAUTH_TOKEN (run `claude setup-token` locally) or
+# ANTHROPIC_API_KEY. Without it the job skips with a notice. Posts with the workflow's
+# GITHUB_TOKEN, so the Claude GitHub App is not required.
+on:
+  pull_request:
+    types: [opened, synchronize, ready_for_review, reopened]
+concurrency:
+  group: claude-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+permissions:
+  contents: read
+  pull-requests: write
+jobs:
+  review:
+    if: github.event.pull_request.draft == false && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    env:
+      HAS_AUTH: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN != '' || secrets.ANTHROPIC_API_KEY != '' }}
+    steps:
+      - if: env.HAS_AUTH != 'true'
+        run: echo "::notice title=Claude review skipped::Add CLAUDE_CODE_OAUTH_TOKEN or ANTHROPIC_API_KEY to enable"
+      - if: env.HAS_AUTH == 'true'
+        uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      # The brief runs tests/typecheck/lint, so the toolchain must be present.
+      - if: env.HAS_AUTH == 'true'
+        uses: pnpm/action-setup@v4
+      - if: env.HAS_AUTH == 'true'
+        uses: actions/setup-node@v4
+        with: { node-version-file: .nvmrc, cache: pnpm }
+      - if: env.HAS_AUTH == 'true'
+        run: pnpm install --frozen-lockfile
+      - if: env.HAS_AUTH == 'true'
+        uses: anthropics/claude-code-action@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            Review PR #${{ github.event.pull_request.number }} in ${{ github.repository }}
+            (base: ${{ github.base_ref }}).
+            Follow .claude/agents/pr-reviewer.md exactly (read it first) and CLAUDE.md.
+            Get the diff with `gh pr diff ${{ github.event.pull_request.number }}`.
+            Write your final report to .review/review.md, then post it as ONE comment with
+            `gh pr comment ${{ github.event.pull_request.number }} --body-file .review/review.md`.
+            Do not push commits, approve, or merge.
+          claude_args: >-
+            --max-turns 40
+            --allowedTools "Read,Grep,Glob,Write,Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr comment:*),Bash(git diff:*),Bash(git log:*),Bash(pnpm test:*),Bash(pnpm typecheck:*),Bash(pnpm lint:*),Bash(pnpm exec vitest:*)"

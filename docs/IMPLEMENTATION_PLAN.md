@@ -795,13 +795,19 @@ Preview URL: <posted by Firebase action> · Desktop / 768px / 375px screenshots
 
 ### 3.5 Code review
 
-1. One task per PR, < 400 changed lines (content excluded).
-2. Self-review the diff on GitHub, then open the preview channel on a phone.
-3. CI green → AI review (Claude Code `/review` or Copilot); resolve or reply to every comment.
-4. L-size PRs: re-review after a break before merging.
-5. Review order: acceptance criteria → missing-data states → a11y → security → performance → naming (style is the linter's job).
-6. Squash into `develop` with the Conventional-Commit title; delete branch; close issue.
-7. Release PRs: staging e2e + Lighthouse green; changelog via `git cliff`; version bump.
+Loop for every PR (see `CLAUDE.md` → Workflow):
+
+1. Agent develops on a task branch, runs lint/typecheck/tests/build, raises a PR into `develop`.
+2. Independent `pr-reviewer` agent (fresh context) reviews: correctness vs SRS/HANDOFF → a11y →
+   security → repo rules → maintainability → tests. Output: verdict + findings table.
+3. Agent addresses every finding, posts a findings → resolution comment, and has the reviewer
+   verify the fix commits.
+4. When no finding is open and all required CI checks pass, the agent squash-merges and deletes the
+   branch. The owner can review or veto any PR at any time.
+
+Rules: one task per PR (< 400 changed lines excluding content); PR title = Conventional Commit;
+release PRs (`release/*` → `main`) additionally need staging e2e + Lighthouse green, a changelog
+from commits since the last tag (`git cliff`), and a version bump in `package.json`.
 
 ### 3.6 Adding an article
 
