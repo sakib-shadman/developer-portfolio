@@ -45,5 +45,6 @@ describe('linkAttrs', () => {
     'mailto:nobody',
     'ftp://x.com',
     'relative/path',
+    'http://[::1', // URL constructor throws → caught
   ])('rejects %j', (href) => expect(linkAttrs(href)).toBeNull());
 });

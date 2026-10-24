@@ -10,16 +10,19 @@ import type { HTMLAttributes } from 'astro/types';
 import Icon, { type IconName } from './Icon.astro';
 import { linkAttrs } from '../../lib/link';
 
-type Common = Omit<HTMLAttributes<'a'> & HTMLAttributes<'button'>, 'href' | 'type' | 'target' | 'rel'> & {
-  href?: string | undefined;
-  type?: 'button' | 'submit';
+type Common = Omit<
+  HTMLAttributes<'a'> & HTMLAttributes<'button'>,
+  'href' | 'type' | 'target' | 'rel' | 'disabled'
+> & {
   icon?: IconName;
   iconEnd?: IconName;
-  download?: boolean;
-  disabled?: boolean;
 };
-type Props = Common &
-  ({ variant: 'solid'; size?: 'lg' } | { variant?: 'outline' | 'soft'; size?: 'md' | 'lg' });
+/** Links can't be disabled (no such attribute on <a>); only buttons take `disabled`/`type`. */
+type Element =
+  | { href: string | undefined; download?: boolean; disabled?: never; type?: never }
+  | { href?: never; download?: never; disabled?: boolean; type?: 'button' | 'submit' };
+type Variant = { variant: 'solid'; size?: 'lg' } | { variant?: 'outline' | 'soft'; size?: 'md' | 'lg' };
+type Props = Common & Element & Variant;
 
 const {
   variant = 'outline',
