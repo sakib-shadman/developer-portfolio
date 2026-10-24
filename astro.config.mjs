@@ -17,7 +17,7 @@ export default defineConfig({
   // /about is served from about.html, no redirect loops.
   trailingSlash: 'never',
   build: { format: 'file' },
-  integrations: [mdx(), sitemap({ filter: (page) => !page.endsWith('/404') })],
-  // CSP is script-src 'self': never inline bundled scripts into HTML.
+  // CSP is `script-src 'self'` (firebase.json): Astro must never inline page scripts into the HTML.
   vite: { build: { assetsInlineLimit: 0 } },
+  integrations: [mdx(), sitemap({ filter: (page) => !page.endsWith('/404') })],
 });

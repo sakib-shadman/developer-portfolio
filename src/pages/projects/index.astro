@@ -1,0 +1,220 @@
+---
+import PageLayout from '../../layouts/PageLayout.astro';
+import Breadcrumbs from '../../components/layout/Breadcrumbs.astro';
+import ProjectCard from '../../components/projects/ProjectCard.astro';
+import Button from '../../components/ui/Button.astro';
+import Card from '../../components/ui/Card.astro';
+import FilterChip from '../../components/ui/FilterChip.astro';
+import SectionHeading from '../../components/ui/SectionHeading.astro';
+import { getProjects } from '../../lib/content/queries';
+import { buildFilters, counterParts, sortProjects } from '../../lib/projects';
+
+const projects = sortProjects(await getProjects());
+const filters = buildFilters(projects);
+const total = projects.length;
+const counter = counterParts(total, total);
+---
+
+<PageLayout
+  title="Projects — Shadman Sakib"
+  description="Mobile apps, SDKs and backend services Shadman Sakib has built or contributed to."
+  path="/projects"
+>
+  <section class="wrap page" aria-labelledby="projects-title" data-projects>
+    <Breadcrumbs
+      items={[
+        { label: 'Home', href: '/' },
+        { label: 'Projects', href: '/projects' },
+      ]}
+    />
+
+    <div class="intro">
+      <SectionHeading
+        level="h1"
+        id="projects-title"
+        title="Projects"
+        lead="Mobile apps, SDKs and backend services I've built or contributed to."
+        class="intro-text"
+      />
+      {total > 0 && (
+        <p class="counter" aria-live="polite" data-counter>
+          <span class="shown" data-counter-shown>
+            {counter.shown}
+          </span>
+          <span data-counter-rest>{counter.rest}</span>
+        </p>
+      )}
+    </div>
+
+    {/* Hidden until the script runs: without JS every card shows and there is nothing to click. */}
+    {total > 0 && (
+      <div role="group" aria-label="Filter by category" class="filters" data-filters hidden>
+        {filters.map((f) => (
+          <FilterChip group="projects-category" value={f.value} count={f.count} pressed={f.value === 'all'}>
+            {f.label}
+          </FilterChip>
+        ))}
+      </div>
+    )}
+
+    <h2 class="sr-only">Project list</h2>
+    <ul class="grid" role="list" data-grid>
+      {projects.map((p) => (
+        <li data-category={p.category}>
+          <ProjectCard project={p} />
+        </li>
+      ))}
+    </ul>
+
+    <Card as="div" class="empty" data-empty hidden={total > 0} tabindex="-1">
+      <svg
+        width="40"
+        height="40"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="var(--acc)"
+        stroke-width="1.6"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <rect x="3" y="4" width="18" height="16" rx="2"></rect>
+        <path d="M3 9h18"></path>
+      </svg>
+      <h2>{total > 0 ? 'No projects in this category yet' : 'No projects yet'}</h2>
+      {total > 0 && (
+        <>
+          <p>Try another filter, or see everything.</p>
+          <Button variant="soft" data-show-all>
+            Show all projects
+          </Button>
+        </>
+      )}
+    </Card>
+  </section>
+</PageLayout>
+
+<style>
+  .page {
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+    padding-top: var(--page-top);
+    padding-bottom: 112px;
+  }
+  .intro {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+  }
+  .intro-text {
+    gap: 16px;
+    max-width: 680px;
+  }
+  .intro-text :global(.lead) {
+    font-size: 19px;
+  }
+  .counter {
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    color: var(--muted);
+  }
+  .shown {
+    color: var(--text);
+  }
+  .filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding-bottom: 28px;
+    border-bottom: 1px solid var(--border);
+  }
+  .filters[hidden],
+  .grid li[hidden],
+  .page :global([data-empty][hidden]) {
+    display: none;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
+    gap: var(--grid-gap);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .grid li {
+    display: flex;
+  }
+  .page :global(.empty .body) {
+    align-items: center;
+    padding: 64px 24px;
+    text-align: center;
+  }
+  .page :global(.empty h2) {
+    font-family: var(--font-display);
+    font-size: 24px;
+  }
+  .page :global(.empty p) {
+    color: var(--muted);
+  }
+</style>
+
+<script>
+  import {
+    CATEGORY_PARAM,
+    categoryQuery,
+    counterParts,
+    filterByCategory,
+    parseCategory,
+    type CategoryFilter,
+  } from '../../lib/projects';
+  import type { ProjectCategory } from '../../lib/content/types';
+
+  const root = document.querySelector<HTMLElement>('[data-projects]');
+  const filters = root?.querySelector<HTMLElement>('[data-filters]');
+  const empty = root?.querySelector<HTMLElement>('[data-empty]');
+  const shownEl = root?.querySelector('[data-counter-shown]');
+  const restEl = root?.querySelector('[data-counter-rest]');
+
+  if (root && filters && empty && shownEl && restEl) {
+    const pills = [...filters.querySelectorAll<HTMLButtonElement>('[data-filter]')];
+    const items = [...root.querySelectorAll<HTMLElement>('[data-grid] > li')].map((el) => ({
+      el,
+      category: el.dataset.category as ProjectCategory,
+    }));
+
+    const apply = (filter: CategoryFilter) => {
+      const visible = new Set(filterByCategory(items, filter));
+      for (const item of items) item.el.hidden = !visible.has(item);
+      for (const pill of pills) pill.setAttribute('aria-pressed', String(pill.dataset.filter === filter));
+      const parts = counterParts(visible.size, items.length);
+      shownEl.textContent = parts.shown;
+      restEl.textContent = parts.rest;
+      empty.hidden = visible.size > 0;
+    };
+
+    const fromUrl = () => parseCategory(new URLSearchParams(location.search).get(CATEGORY_PARAM));
+
+    const select = (filter: CategoryFilter) => {
+      apply(filter);
+      history.replaceState(history.state, '', `${location.pathname}${categoryQuery(filter)}${location.hash}`);
+    };
+
+    filters.hidden = false;
+    filters.addEventListener('click', (e) => {
+      const pill = (e.target as Element).closest<HTMLButtonElement>('[data-filter]');
+      if (pill) select(pill.dataset.filter as CategoryFilter);
+    });
+    empty.querySelector('[data-show-all]')?.addEventListener('click', () => {
+      select('all');
+      pills.find((p) => p.dataset.filter === 'all')?.focus();
+    });
+    // Back/Forward and bfcache restores re-read the URL.
+    window.addEventListener('popstate', () => apply(fromUrl()));
+    window.addEventListener('pageshow', (e) => e.persisted && apply(fromUrl()));
+
+    apply(fromUrl());
+  }
+</script>
