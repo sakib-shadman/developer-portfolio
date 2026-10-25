@@ -1,0 +1,103 @@
+---
+/** /contact, email only (PF-19, FR-11.1-11.3, ADR-0004). The form is M5 and not built here. */
+import PageLayout from '../layouts/PageLayout.astro';
+import Breadcrumbs from '../components/layout/Breadcrumbs.astro';
+import SectionHeading from '../components/ui/SectionHeading.astro';
+import Icon from '../components/ui/Icon.astro';
+import ProfileLinks from '../components/ui/ProfileLinks.astro';
+import ContactDirect from '../components/contact/ContactDirect.astro';
+import { getProfile } from '../lib/content/queries';
+import { placeLine } from '../lib/contact';
+
+const profile = await getProfile();
+const place = placeLine(profile.location, profile.timezone);
+---
+
+<PageLayout
+  title={`Contact — ${profile.name}`}
+  description={profile.availability ?? `Contact ${profile.name}.`}
+  path="/contact"
+>
+  <div class="wrap page">
+    <div class="col">
+      <Breadcrumbs
+        items={[
+          { label: 'Home', href: '/' },
+          { label: 'Contact', href: '/contact' },
+        ]}
+      />
+      <SectionHeading level="h1" title="Let's talk." />
+      {profile.availability && <p class="lead">{profile.availability}</p>}
+
+      <ContactDirect email={profile.email} />
+
+      <ProfileLinks
+        variant="pill"
+        links={profile.links}
+        kinds={['linkedin', 'github', 'medium']}
+        aria-label="Profiles"
+      />
+
+      {(place || profile.replyTime) && (
+        <dl class="facts">
+          {place && (
+            <div class="fact">
+              <Icon name="pin" size={20} color="var(--acc)" />
+              <dt>Location</dt>
+              <dd>{place}</dd>
+            </div>
+          )}
+          {profile.replyTime && (
+            <div class="fact">
+              <Icon name="mail" size={20} color="var(--acc)" />
+              <dt>Reply time</dt>
+              <dd>{profile.replyTime}</dd>
+            </div>
+          )}
+        </dl>
+      )}
+    </div>
+  </div>
+</PageLayout>
+
+<style>
+  .page {
+    padding-block: var(--page-top) var(--section-gap);
+  }
+  .col {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    max-width: 680px;
+  }
+  .lead {
+    font-size: 19px;
+    color: var(--muted);
+  }
+  .facts {
+    display: flex;
+    flex-direction: column;
+    margin: 8px 0 0;
+    padding: 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .fact {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    column-gap: 14px;
+    align-items: center;
+    padding: 16px 0;
+    border-top: 1px solid var(--border);
+  }
+  .fact :global(svg) {
+    grid-row: span 2;
+  }
+  dt {
+    font-size: var(--text-sm);
+    color: var(--muted);
+  }
+  dd {
+    margin: 0;
+    font-weight: 500;
+  }
+</style>
