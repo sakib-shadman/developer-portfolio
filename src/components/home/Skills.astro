@@ -1,0 +1,53 @@
+---
+/** Technology stack (FR-04): one card per skill group (non-empty, from getHomeSections). Hidden when none. */
+import type { SkillGroup } from '../../lib/content/types';
+import Card from '../ui/Card.astro';
+import ChipList from '../ui/ChipList.astro';
+import SectionHeading from '../ui/SectionHeading.astro';
+
+interface Props {
+  groups: SkillGroup[];
+  eyebrow: string;
+}
+const { eyebrow, groups } = Astro.props;
+---
+
+{groups.length > 0 && (
+  <section id="skills" class="wrap" aria-labelledby="skills-title">
+    <SectionHeading eyebrow={eyebrow} title="Technology stack" id="skills-title" />
+    <ul class="grid" role="list">
+      {groups.map((g) => (
+        <Card as="li" class="group">
+          <h3>{g.title}</h3>
+          <ChipList items={g.items.map((t) => t.name)} />
+        </Card>
+      ))}
+    </ul>
+  </section>
+)}
+
+<style>
+  section {
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+    padding-top: var(--section-gap);
+    padding-bottom: 56px;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+    gap: 20px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .group :global(.body) {
+    gap: 16px;
+  }
+  h3 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 18px;
+  }
+</style>

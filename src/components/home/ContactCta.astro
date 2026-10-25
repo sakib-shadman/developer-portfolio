@@ -1,0 +1,94 @@
+---
+/** Contact CTA panel (FR-01). Email button and profile pills render only when configured. */
+import type { Profile } from '../../lib/content/types';
+import { linkAttrs } from '../../lib/link';
+import ProfileLinks from '../ui/ProfileLinks.astro';
+
+interface Props {
+  profile: Profile;
+}
+const { profile } = Astro.props;
+
+const email = profile.email ? linkAttrs(`mailto:${profile.email}`) : null;
+const hasPills = [profile.links.linkedin, profile.links.github].some((h) => linkAttrs(h));
+---
+
+<section id="contact" class="wrap" aria-labelledby="contact-title">
+  <div class="panel">
+    <div class="text">
+      <h2 id="contact-title">Let's build something together.</h2>
+      {profile.availability && <p>{profile.availability}</p>}
+    </div>
+    {(email || hasPills) && (
+      <div class="actions">
+        {email && (
+          <a class="email" href={email.href}>
+            {profile.email}
+          </a>
+        )}
+        <ProfileLinks class="pills" variant="pill" links={profile.links} kinds={['linkedin', 'github']} />
+      </div>
+    )}
+  </div>
+</section>
+
+<style>
+  section {
+    padding-bottom: 96px;
+  }
+  .panel {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 32px;
+    padding: clamp(32px, 6vw, 72px);
+    border-radius: var(--radius-lg);
+    background: var(--acc);
+    color: var(--on-acc);
+  }
+  .text {
+    flex: 1 1 420px;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  h2 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(32px, 4.5vw, 56px);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+  }
+  .text p {
+    font-size: var(--text-md);
+  }
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    min-width: 0;
+  }
+  .email {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--control-lg);
+    border-radius: var(--radius-pill);
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+  .email {
+    padding: 0 26px;
+    background: var(--on-acc);
+    color: var(--acc);
+    font-weight: 600;
+  }
+  .email:focus-visible {
+    outline-color: var(--on-acc);
+  }
+  .actions :global(.pills) {
+    gap: 12px;
+    --pill-focus: var(--on-acc);
+  }
+</style>

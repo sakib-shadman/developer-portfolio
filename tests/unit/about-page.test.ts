@@ -3,10 +3,15 @@ import { beforeAll, describe, expect, it, vi } from 'vitest';
 import type { Profile, SkillGroup } from '../../src/lib/content/types';
 
 const state = vi.hoisted(() => ({ profile: undefined as unknown, groups: [] as unknown[] }));
-vi.mock('../../src/lib/content/queries', () => ({
-  getProfile: async () => state.profile,
-  getSkillGroups: async () => state.groups,
-}));
+vi.mock('../../src/lib/content/queries', async () => {
+  const { composeHomeSections } = await import('../../src/lib/home');
+  return {
+    getProfile: async () => state.profile,
+    getSkillGroups: async () => state.groups,
+    // PageLayout derives header anchors from this; reuse the real pure composition.
+    getHomeSections: async () => composeHomeSections({ skillGroups: state.groups as never, experience: [] }),
+  };
+});
 
 import About from '../../src/pages/about.astro';
 

@@ -32,3 +32,16 @@ describe('nav', () => {
     expect(PRIMARY_NAV.filter((i) => i.href.startsWith('/#')).every((i) => !i.match)).toBe(true);
   });
 });
+
+describe('visibleNav', () => {
+  it('drops anchor items whose home section is not rendered', async () => {
+    const { visibleNav } = await import('../../src/lib/nav');
+    const labels = (r: { skills: boolean; experience: boolean }) =>
+      visibleNav(PRIMARY_NAV, r).map((i) => i.label);
+    expect(labels({ skills: true, experience: true })).toContain('Experience');
+    expect(labels({ skills: true, experience: false })).not.toContain('Experience');
+    expect(labels({ skills: false, experience: true })).not.toContain('Skills');
+    // page links are never dropped
+    expect(labels({ skills: false, experience: false })).toEqual(['Projects', 'Writing', 'About', 'Contact']);
+  });
+});

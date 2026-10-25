@@ -6,7 +6,12 @@ test('@smoke header, main and footer landmarks with primary nav', async ({ page 
   await expect(page.getByRole('main')).toBeVisible();
   await expect(page.getByRole('contentinfo')).toBeVisible();
   const nav = page.getByRole('navigation', { name: 'Primary' });
-  for (const label of ['Skills', 'Experience', 'Projects', 'Writing', 'About', 'Contact']) {
+  // Anchor items exist only when their home section renders (experience is draft-only for now).
+  const hasExperience = (await page.locator('#experience').count()) > 0;
+  const labels = ['Skills', 'Experience', 'Projects', 'Writing', 'About', 'Contact'].filter(
+    (l) => l !== 'Experience' || hasExperience,
+  );
+  for (const label of labels) {
     await expect(nav.getByRole('link', { name: label, exact: true })).toBeVisible();
   }
 });
