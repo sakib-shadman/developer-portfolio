@@ -1,3 +1,5 @@
+import type { ExperienceItem, SkillGroup } from './content/types';
+
 /** Pure helpers for the home page composition. */
 
 export interface HomeSection {
@@ -30,4 +32,35 @@ export function splitHeadline(
   const i = headline.indexOf(accent);
   if (i < 0) return undefined;
   return { before: headline.slice(0, i), accent, after: headline.slice(i + accent.length) };
+}
+
+export interface HomeSections {
+  /** Skill groups that have at least one item (empty groups never render). */
+  skillGroups: SkillGroup[];
+  experience: ExperienceItem[];
+  /** Which home anchors exist — drives the header nav. */
+  rendered: { skills: boolean; experience: boolean };
+  /** "01 — Skills" etc., keyed by section id; absent for sections not rendered. */
+  eyebrows: Record<string, string>;
+}
+
+/**
+ * Single source of truth for which home sections render, shared by the header nav, the home page
+ * and the section components so anchors and eyebrow numbers cannot drift.
+ * Projects/Writing (PF-14/PF-33) become `visible` here when they land.
+ */
+export function composeHomeSections(input: {
+  skillGroups: SkillGroup[];
+  experience: ExperienceItem[];
+}): HomeSections {
+  const skillGroups = input.skillGroups.filter((g) => g.items.length > 0);
+  const experience = input.experience;
+  const rendered = { skills: skillGroups.length > 0, experience: experience.length > 0 };
+  const eyebrows = numberSections([
+    { id: 'skills', label: 'Skills', visible: rendered.skills },
+    { id: 'experience', label: 'Experience', visible: rendered.experience },
+    { id: 'projects', label: 'Projects', visible: false },
+    { id: 'writing', label: 'Writing', visible: false },
+  ]);
+  return { skillGroups, experience, rendered, eyebrows };
 }

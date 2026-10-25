@@ -29,7 +29,12 @@ const full: Profile = {
     medium: 'https://medium.com/@ada',
   },
   resume: '/resume/ada.pdf',
-  photo: { src: '/ada.jpg', width: 800, height: 1000, alt: 'Ada at her desk' },
+  photo: {
+    src: { src: '/ada.jpg', width: 800, height: 1000, format: 'jpg' },
+    width: 800,
+    height: 1000,
+    alt: 'Ada at her desk',
+  },
   stats: [{ label: 'Years', value: '10', suffix: '+' }],
   availability: 'Open to work.',
   bio: [],
@@ -69,6 +74,8 @@ describe('Hero', () => {
     expect(html).toMatch(/href="\/projects"/);
     expect(html).toMatch(/href="\/resume\/ada\.pdf"[^>]*download/);
     expect(html).toContain('alt="Ada at her desk"');
+    expect(html).toContain('sizes="(max-width: 1000px) 100vw, 440px"');
+    expect(html).toMatch(/srcset=/);
     expect(html).toContain('Now: Building an SDK');
     expect(html).toContain('has-photo');
     expect(html).toMatch(/<nav aria-label="Profiles"/);

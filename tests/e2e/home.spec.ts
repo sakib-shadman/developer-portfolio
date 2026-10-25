@@ -114,6 +114,18 @@ test.describe('home', () => {
     await expect(page.locator('body')).not.toContainText(/\[[^\]]+\]/);
   });
 
+  test('experience rows stay aligned at every width', async ({ page }) => {
+    for (const width of [390, 559, 600, 680, 720, 900, 1440]) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto('/');
+      const lefts = await page
+        .locator('#experience ol > li h3')
+        .evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().left)));
+      if (lefts.length < 2) test.skip(true, 'needs at least two experience rows (drafts build)');
+      expect(new Set(lefts).size, `h3 left edges at ${width}px: ${lefts}`).toBe(1);
+    }
+  });
+
   test('no horizontal overflow at 320px', async ({ page }) => {
     await page.setViewportSize({ width: 320, height: 640 });
     await page.goto('/');

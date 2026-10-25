@@ -19,6 +19,7 @@ import {
   toSkillGroup,
   type SkillNames,
 } from './mappers';
+import { composeHomeSections, type HomeSections } from '../home';
 import type { ArticleCard, ExperienceItem, Profile, ProjectCard, SkillGroup } from './types';
 
 // Drafts render in `astro dev` and in e2e/test builds (PUBLIC_INCLUDE_DRAFTS=true) so pages can be
@@ -67,4 +68,10 @@ export async function getArticles(): Promise<ArticleCard[]> {
 
 export async function getHomeArticles(n = 6): Promise<ArticleCard[]> {
   return pickHomeArticles(await getArticles(), n);
+}
+
+/** Home sections that actually render (shared by PageLayout nav, home page and numbering). */
+export async function getHomeSections(): Promise<HomeSections> {
+  const [skillGroups, experience] = await Promise.all([getSkillGroups(), getExperience()]);
+  return composeHomeSections({ skillGroups, experience });
 }

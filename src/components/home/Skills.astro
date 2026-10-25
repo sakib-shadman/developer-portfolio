@@ -1,5 +1,5 @@
 ---
-/** Technology stack (FR-04): one card per skill group, rendered from data. Hidden when empty. */
+/** Technology stack (FR-04): one card per skill group (non-empty, from getHomeSections). Hidden when none. */
 import type { SkillGroup } from '../../lib/content/types';
 import Card from '../ui/Card.astro';
 import ChipList from '../ui/ChipList.astro';
@@ -9,8 +9,7 @@ interface Props {
   groups: SkillGroup[];
   eyebrow: string;
 }
-const { eyebrow } = Astro.props;
-const groups = Astro.props.groups.filter((g) => g.items.length > 0);
+const { eyebrow, groups } = Astro.props;
 ---
 
 {groups.length > 0 && (

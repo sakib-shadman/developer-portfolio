@@ -5,31 +5,17 @@ import Stats from '../components/home/Stats.astro';
 import Skills from '../components/home/Skills.astro';
 import Experience from '../components/home/Experience.astro';
 import ContactCta from '../components/home/ContactCta.astro';
-import { getExperience, getProfile, getSkillGroups } from '../lib/content/queries';
-import { numberSections } from '../lib/home';
+import { getHomeSections, getProfile } from '../lib/content/queries';
 
-const [profile, skillGroups, experience] = await Promise.all([
-  getProfile(),
-  getSkillGroups(),
-  getExperience(),
-]);
-
-// Eyebrow numbers follow what is actually rendered. Projects/Writing (PF-14/PF-33) flip `visible`
-// to their real condition when they land, so numbering stays gap-free.
-const eyebrows = numberSections([
-  { id: 'skills', label: 'Skills', visible: skillGroups.some((g) => g.items.length > 0) },
-  { id: 'experience', label: 'Experience', visible: experience.length > 0 },
-  { id: 'projects', label: 'Projects', visible: false },
-  { id: 'writing', label: 'Writing', visible: false },
-]);
+const [profile, home] = await Promise.all([getProfile(), getHomeSections()]);
 ---
 
 <PageLayout title={`${profile.name} — ${profile.title}`} description={profile.intro}>
   <Hero profile={profile} />
   <Stats stats={profile.stats} />
-  <Skills groups={skillGroups} eyebrow={eyebrows.skills ?? ''} />
-  <Experience items={experience} eyebrow={eyebrows.experience ?? ''} />
-  {/* PF-14 insertion point: <FeaturedProjects eyebrow={eyebrows.projects} /> (section#work, "03 — Projects") */}
-  {/* PF-33 insertion point: <HomeWriting eyebrow={eyebrows.writing} /> (section#writing, "04 — Writing") */}
+  <Skills groups={home.skillGroups} eyebrow={home.eyebrows.skills ?? ''} />
+  <Experience items={home.experience} eyebrow={home.eyebrows.experience ?? ''} />
+  {/* PF-14 insertion point: <FeaturedProjects eyebrow={home.eyebrows.projects} /> (section#work, "03 — Projects") */}
+  {/* PF-33 insertion point: <HomeWriting eyebrow={home.eyebrows.writing} /> (section#writing, "04 — Writing") */}
   <ContactCta profile={profile} />
 </PageLayout>

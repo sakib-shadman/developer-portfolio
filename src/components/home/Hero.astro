@@ -2,6 +2,7 @@
 /** Home hero (FR-01): focus pill, location, headline, intro, CTAs, profile tiles, optional photo. */
 import type { Profile } from '../../lib/content/types';
 import { splitHeadline } from '../../lib/home';
+import { Image } from 'astro:assets';
 import Button from '../ui/Button.astro';
 import Icon from '../ui/Icon.astro';
 import ProfileLinks from '../ui/ProfileLinks.astro';
@@ -69,7 +70,16 @@ const photo = profile.photo;
     <div class="frame">
       <div class="outline" aria-hidden="true" />
       <figure>
-        <img src={photo.src} width={photo.width} height={photo.height} alt={photo.alt} fetchpriority="high" />
+        <Image
+          src={photo.src}
+          alt={photo.alt}
+          width={800}
+          height={1000}
+          widths={[400, 800]}
+          sizes="(max-width: 1000px) 100vw, 440px"
+          loading="eager"
+          fetchpriority="high"
+        />
         {profile.now && (
           <figcaption>
             <span class="dot" aria-hidden="true" />

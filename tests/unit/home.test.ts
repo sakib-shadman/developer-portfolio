@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { formatDateRange, formatMonthYear } from '../../src/lib/date-range';
-import { numberSections, splitHeadline } from '../../src/lib/home';
+import { composeHomeSections, numberSections, splitHeadline } from '../../src/lib/home';
 
 const d = (s: string) => new Date(s);
 
@@ -64,5 +64,39 @@ describe('splitHeadline', () => {
   it('undefined without or with a non-matching accent', () => {
     expect(splitHeadline('Hello')).toBeUndefined();
     expect(splitHeadline('Hello', 'nope')).toBeUndefined();
+  });
+});
+
+describe('composeHomeSections', () => {
+  const group = (id: string, n: number) => ({
+    id,
+    title: id,
+    items: Array.from({ length: n }, (_, i) => ({ id: `${id}${i}`, name: `${id}${i}` })),
+  });
+  const exp = [
+    {
+      id: 'a',
+      company: 'A',
+      current: false,
+      responsibilities: [],
+      achievements: [],
+      technologies: [],
+      draft: false,
+    },
+  ];
+
+  it('numbers and nav agree: both sections present', () => {
+    const r = composeHomeSections({ skillGroups: [group('g', 2)], experience: exp });
+    expect(r.rendered).toEqual({ skills: true, experience: true });
+    expect(r.eyebrows).toMatchObject({ skills: '01 — Skills', experience: '02 — Experience' });
+  });
+  it('drops empty skill groups; hides skills when none have items', () => {
+    const r = composeHomeSections({ skillGroups: [group('empty', 0), group('g', 1)], experience: [] });
+    expect(r.skillGroups.map((g) => g.id)).toEqual(['g']);
+    expect(r.rendered).toEqual({ skills: true, experience: false });
+    expect(r.eyebrows.experience).toBeUndefined();
+    const none = composeHomeSections({ skillGroups: [group('empty', 0)], experience: exp });
+    expect(none.rendered.skills).toBe(false);
+    expect(none.eyebrows.experience).toBe('01 — Experience');
   });
 });
