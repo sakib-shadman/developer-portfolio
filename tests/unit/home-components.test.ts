@@ -39,6 +39,9 @@ const full: Profile = {
   availability: 'Open to work.',
   bio: [],
   principles: [],
+  expertise: [],
+  community: [],
+  interests: [],
 };
 const bare: Profile = {
   ...full,
