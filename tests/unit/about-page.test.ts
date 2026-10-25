@@ -29,7 +29,12 @@ const full: Profile = {
   bio: ['First paragraph.', 'Second paragraph.'],
   yearsExperience: 12,
   resume: '/resume/ada.pdf',
-  photo: { src: '/p.jpg', width: 800, height: 1000, alt: 'Ada at a desk' },
+  photo: {
+    src: { src: '/p.jpg', width: 800, height: 1000, format: 'jpg' },
+    width: 800,
+    height: 1000,
+    alt: 'Ada at a desk',
+  },
   links: { github: 'https://github.com/ada', linkedin: 'https://linkedin.com/in/ada' },
   expertise: [{ title: 'Mobile', text: 'Apps end to end.', items: ['Flutter', 'Dart'] }],
   principles: [
@@ -85,7 +90,11 @@ describe('about page (populated)', () => {
 
   it('community links use linkAttrs; unsafe hrefs render as plain text', async () => {
     const html = main(await render(full));
-    expect(html).toMatch(/<a[^>]*href="https:\/\/medium\.com\/@ada"[^>]*target="_blank"/);
+    const a = html.match(/<a[^>]*href="https:\/\/medium\.com\/@ada"[^>]*>[\s\S]*?<\/a>/)?.[0] ?? '';
+    expect(a).toMatch(/target="_blank"/);
+    expect(a).toMatch(/rel="noopener noreferrer"/);
+    expect(a).toMatch(/<span class="sr-only"[^>]*> \(opens in a new tab\)<\/span>/);
+    expect(a).toMatch(/<span aria-hidden="true"[^>]*> ↗<\/span>/);
     const bad = main(await render({ ...full, community: [{ text: 'Sneaky', href: 'javascript:alert(1)' }] }));
     expect(bad).toContain('Sneaky');
     expect(bad).not.toContain('javascript:');

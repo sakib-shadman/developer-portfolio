@@ -1,5 +1,6 @@
 ---
 /** /about (FR-02, design: About.dc.html). Every section renders only when its data exists. */
+import { Image } from 'astro:assets';
 import PageLayout from '../layouts/PageLayout.astro';
 import Breadcrumbs from '../components/layout/Breadcrumbs.astro';
 import SectionHeading from '../components/ui/SectionHeading.astro';
@@ -74,7 +75,13 @@ const hasBeyond = about.community.length > 0 || Boolean(about.objective) || abou
         <div class="photo">
           <span class="frame-outline" aria-hidden="true"></span>
           <figure>
-            <img src={photo.src} width={photo.width} height={photo.height} alt={photo.alt} />
+            <Image
+              src={photo.src}
+              alt={photo.alt}
+              widths={[440, 880]}
+              sizes="(max-width: 480px) 90vw, 440px"
+              loading="eager"
+            />
           </figure>
         </div>
       )}
@@ -128,7 +135,12 @@ const hasBeyond = about.community.length > 0 || Boolean(about.objective) || abou
                   {c.link ? (
                     <a href={c.link.href} target={c.link.target} rel={c.link.rel} class="inline-link">
                       {c.text}
-                      {c.link.external && <span class="sr-only"> (opens in a new tab)</span>}
+                      {c.link.external && (
+                        <>
+                          <span aria-hidden="true"> ↗</span>
+                          <span class="sr-only"> (opens in a new tab)</span>
+                        </>
+                      )}
                     </a>
                   ) : (
                     c.text
