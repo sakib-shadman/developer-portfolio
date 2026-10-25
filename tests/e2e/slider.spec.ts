@@ -96,6 +96,19 @@ test.describe('featured projects slider', () => {
     await expect.poll(() => scrollLeft(page), { timeout: 8000 }).toBeGreaterThan(100);
   });
 
+  test('touch: tapping Resume or a dot does not leave autoplay held', async ({ page, isMobile }) => {
+    test.skip(!isMobile, 'touch test runs on the mobile project');
+    await open(page);
+    await toggle(page).tap(); // Pause
+    await toggle(page).tap(); // Resume
+    await expect(toggle(page)).toHaveAttribute('aria-label', 'Pause automatic project scrolling');
+    await expect.poll(() => scrollLeft(page), { timeout: 9000 }).toBeGreaterThan(100);
+
+    await dots(page).first().tap();
+    await expect.poll(() => scrollLeft(page)).toBe(0);
+    await expect.poll(() => scrollLeft(page), { timeout: 9000 }).toBeGreaterThan(100);
+  });
+
   test('focus inside the track holds autoplay', async ({ page, isMobile }) => {
     test.skip(isMobile, 'timing test runs on desktop only');
     await open(page);

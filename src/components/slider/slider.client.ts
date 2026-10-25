@@ -104,8 +104,14 @@ function init(root: HTMLElement): void {
     restartTimer();
   });
   track.addEventListener('scroll', sync, { passive: true });
-  root.addEventListener('mouseenter', () => (state.hovered = true));
-  root.addEventListener('mouseleave', () => (state.hovered = false));
+  // Hover means a mouse pointer only: a tap fires enter without a matching leave on touch screens,
+  // which would hold autoplay forever.
+  root.addEventListener('pointerenter', (e) => {
+    if (e.pointerType === 'mouse') state.hovered = true;
+  });
+  root.addEventListener('pointerleave', (e) => {
+    if (e.pointerType === 'mouse') state.hovered = false;
+  });
   // Hold only for focus inside the track (HANDOFF §6.1), not the dots/Pause buttons: a clicked
   // button keeps focus and would otherwise stop autoplay for good.
   track.addEventListener('focusin', () => (state.focusWithin = true));
