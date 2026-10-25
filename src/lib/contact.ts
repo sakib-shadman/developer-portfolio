@@ -27,7 +27,8 @@ export const placeLine = (location?: string, timezone?: string): string | undefi
 export interface Scheduler {
   frame: (cb: () => void) => unknown;
   later: (cb: () => void, ms: number) => unknown;
-  cancel: (handle: unknown) => void;
+  cancelFrame: (handle: unknown) => void;
+  cancelLater: (handle: unknown) => void;
 }
 export const CLEAR_AFTER_MS = 4000;
 
@@ -43,8 +44,9 @@ export function createAnnouncer(
   let frame: unknown;
   let timer: unknown;
   return (message) => {
-    sched.cancel(frame);
-    sched.cancel(timer);
+    if (frame !== undefined) sched.cancelFrame(frame);
+    if (timer !== undefined) sched.cancelLater(timer);
+    frame = timer = undefined;
     region.textContent = '';
     frame = sched.frame(() => {
       region.textContent = message;

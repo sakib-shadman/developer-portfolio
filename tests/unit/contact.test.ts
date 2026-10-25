@@ -47,16 +47,18 @@ describe('createAnnouncer', () => {
   function fake() {
     const frames: (() => void)[] = [];
     const timers: { cb: () => void; ms: number; live: boolean }[] = [];
-    const cancelled: unknown[] = [];
+    const cancelledFrames: unknown[] = [];
+    const cancelledTimers: unknown[] = [];
     const sched: Scheduler = {
       frame: (cb) => frames.push(cb) - 1,
       later: (cb, ms) => timers.push({ cb, ms, live: true }) - 1,
-      cancel: (h) => {
-        cancelled.push(h);
+      cancelFrame: (h) => cancelledFrames.push(h),
+      cancelLater: (h) => {
+        cancelledTimers.push(h);
         if (typeof h === 'number' && timers[h]) timers[h].live = false;
       },
     };
-    return { frames, timers, cancelled, sched };
+    return { frames, timers, cancelledFrames, cancelledTimers, sched };
   }
 
   it('clears, sets on the next frame, clears after the delay', () => {
@@ -85,6 +87,9 @@ describe('createAnnouncer', () => {
     f.frames[1]!();
     seen.push(region.textContent);
     expect(seen).toEqual([COPIED, '', COPIED]);
-    expect(f.cancelled.length).toBeGreaterThan(0);
+    expect(f.cancelledFrames).toEqual([0]); // the first frame id, not a timer id
+    expect(f.cancelledTimers).toEqual([0]); // the first timer id, cancelled through cancelLater
+    expect(f.timers[0]!.live).toBe(false);
+    expect(f.timers[1]!.live).toBe(true); // the new announcement's timer is armed
   });
 });

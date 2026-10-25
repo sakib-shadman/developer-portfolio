@@ -77,6 +77,15 @@ describe('contact page: email', () => {
     // Without JS the copy button would be dead: it ships hidden and the script reveals it.
     expect(html).toMatch(/<button[^>]*data-copy=[^>]*\bhidden\b/);
   });
+  it('markup contract for the script: one [data-contact-direct] holding the copy button and #copy-status', async () => {
+    const html = await render(profile);
+    expect(html.match(/data-contact-direct/g)).toHaveLength(1);
+    const block = html.match(/<div[^>]*data-contact-direct[\s\S]*?<p id="copy-status"[^>]*><\/p>/)?.[0] ?? '';
+    expect(block).toMatch(/<button[^>]*data-copy="ada@example\.dev"/);
+    expect(block.match(/data-copy=/g)).toHaveLength(1);
+    expect(block).toMatch(/<p id="copy-status" role="status"/);
+    expect(html.match(/id="copy-status"/g)).toHaveLength(1);
+  });
   it('facts are a valid dl: dt/dd only inside each group, icon inside dt', async () => {
     const html = await render({ ...profile, location: 'Dhaka' });
     expect(html).toMatch(/<div class="fact[^"]*"[^>]*><dt[^>]*><svg[\s\S]*?<\/svg>\s*Location<\/dt><dd/);

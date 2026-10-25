@@ -54,12 +54,8 @@ const showForm = formEnabled && Astro.slots.has('form');
   const sched = {
     frame: (cb: () => void) => requestAnimationFrame(cb),
     later: (cb: () => void, ms: number) => setTimeout(cb, ms),
-    cancel: (h: unknown) => {
-      if (typeof h === 'number') {
-        cancelAnimationFrame(h);
-        clearTimeout(h);
-      }
-    },
+    cancelFrame: (h: unknown) => cancelAnimationFrame(h as number),
+    cancelLater: (h: unknown) => clearTimeout(h as number),
   };
   // The button is rendered hidden: without JS it would do nothing.
   document.querySelectorAll<HTMLButtonElement>('[data-copy]').forEach((btn) => {
@@ -95,9 +91,6 @@ const showForm = formEnabled && Astro.slots.has('form');
     display: flex;
     flex-wrap: wrap;
     gap: 12px;
-  }
-  .actions :global([hidden]) {
-    display: none;
   }
   .status {
     margin: 0;
