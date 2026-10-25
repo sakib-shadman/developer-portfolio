@@ -40,12 +40,13 @@ test.describe('home', () => {
     const ids = await page
       .locator('main > section')
       .evaluateAll((els) => els.map((e) => e.id || e.getAttribute('aria-label')));
-    expect(ids).toEqual(['hero', 'At a glance', 'skills', 'experience', 'contact']);
+    expect(ids).toEqual(['hero', 'At a glance', 'skills', 'experience', 'work', 'contact']);
 
     await expect(page.locator('#skills .eyebrow')).toHaveText('01 — Skills');
     await expect(page.locator('#experience .eyebrow')).toHaveText('02 — Experience');
-    // Projects/Writing sliders are not built yet: no "03"/"04" eyebrows anywhere.
-    await expect(page.locator('main')).not.toContainText(/0[34] — /);
+    await expect(page.locator('#work .eyebrow')).toHaveText('03 — Projects');
+    // The writing slider is not built yet: no "04" eyebrow.
+    await expect(page.locator('main')).not.toContainText(/04 — /);
   });
 
   test('heading order never skips a level', async ({ page }) => {
@@ -134,7 +135,8 @@ test.describe('home', () => {
     const wide = await page.evaluate(
       () =>
         [...document.querySelectorAll('main *')].filter(
-          (e) => e.getBoundingClientRect().right > window.innerWidth + 1,
+          // Slider cards intentionally extend past the viewport inside their own scroll track.
+          (e) => !e.closest('[data-slider-track]') && e.getBoundingClientRect().right > window.innerWidth + 1,
         ).length,
     );
     expect(wide).toBe(0);

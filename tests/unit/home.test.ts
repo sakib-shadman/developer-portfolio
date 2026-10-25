@@ -87,16 +87,29 @@ describe('composeHomeSections', () => {
 
   it('numbers and nav agree: both sections present', () => {
     const r = composeHomeSections({ skillGroups: [group('g', 2)], experience: exp });
-    expect(r.rendered).toEqual({ skills: true, experience: true });
+    expect(r.rendered).toEqual({ skills: true, experience: true, projects: false });
     expect(r.eyebrows).toMatchObject({ skills: '01 — Skills', experience: '02 — Experience' });
   });
   it('drops empty skill groups; hides skills when none have items', () => {
     const r = composeHomeSections({ skillGroups: [group('empty', 0), group('g', 1)], experience: [] });
     expect(r.skillGroups.map((g) => g.id)).toEqual(['g']);
-    expect(r.rendered).toEqual({ skills: true, experience: false });
+    expect(r.rendered).toEqual({ skills: true, experience: false, projects: false });
     expect(r.eyebrows.experience).toBeUndefined();
     const none = composeHomeSections({ skillGroups: [group('empty', 0)], experience: exp });
     expect(none.rendered.skills).toBe(false);
     expect(none.eyebrows.experience).toBe('01 — Experience');
+  });
+});
+
+describe('composeHomeSections with featured projects', () => {
+  const proj = { slug: 'p' } as never;
+  it('numbers Projects after the sections before it and hides it when none', () => {
+    const r = composeHomeSections({ skillGroups: [], experience: [], featuredProjects: [proj] });
+    expect(r.rendered).toEqual({ skills: false, experience: false, projects: true });
+    expect(r.eyebrows.projects).toBe('01 — Projects');
+    const none = composeHomeSections({ skillGroups: [], experience: [] });
+    expect(none.rendered.projects).toBe(false);
+    expect(none.eyebrows.projects).toBeUndefined();
+    expect(none.featuredProjects).toEqual([]);
   });
 });

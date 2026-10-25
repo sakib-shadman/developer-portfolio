@@ -1,0 +1,169 @@
+---
+/**
+ * Generic card slider (HANDOFF §6.1). Slot `<article>` cards directly.
+ * Without JS it is a keyboard-focusable scroll-snap track; slider.client.ts reveals the dots,
+ * counter and Pause/Play toggle. `id` namespaces element ids so instances can coexist.
+ */
+interface Props {
+  id: string;
+  /** Singular noun for labels: "project" → "Show project 3 of 6". */
+  noun: string;
+  /** Accessible name of the scroll region. */
+  label: string;
+}
+const { id, noun, label } = Astro.props;
+---
+
+<div class="slider" data-slider data-noun={noun} id={id}>
+  {/* eslint-disable-next-line astro/jsx-a11y/no-noninteractive-tabindex -- scrollable region must be keyboard-focusable (WCAG 2.1.1) */}
+  <div class="track" data-slider-track role="region" tabindex="0" aria-label={label}>
+    <slot />
+  </div>
+  <div class="controls" data-slider-controls hidden>
+    <div class="dots" data-slider-dots></div>
+    <div class="right">
+      <span class="counter" data-slider-counter></span>
+      <button
+        type="button"
+        class="toggle"
+        data-slider-toggle
+        aria-label={`Pause automatic ${noun} scrolling`}
+        hidden
+      >
+        <svg
+          class="i-pause"
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="currentColor"
+          aria-hidden="true"
+        >
+          <rect x="6" y="5" width="4" height="14" rx="1"></rect>
+          <rect x="14" y="5" width="4" height="14" rx="1"></rect>
+        </svg>
+        <svg class="i-play" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M8 5v14l11-7z"></path>
+        </svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  import { initSliders } from './slider.client';
+  initSliders();
+</script>
+
+<style>
+  .track {
+    display: flex;
+    gap: var(--grid-gap);
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    padding-bottom: 16px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+  .track:focus-visible {
+    outline: var(--focus-ring);
+    outline-offset: 6px;
+    border-radius: var(--radius-md);
+  }
+  .track > :global(article) {
+    flex: 0 0 calc((100% - 2 * var(--grid-gap)) / 3);
+    scroll-snap-align: start;
+    min-width: 0;
+  }
+  @media (max-width: 1024px) {
+    .track > :global(article) {
+      flex-basis: calc((100% - var(--grid-gap)) / 2);
+    }
+  }
+  @media (max-width: 640px) {
+    .track > :global(article) {
+      flex-basis: 85%;
+    }
+  }
+  .controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-top: -16px;
+  }
+  .controls[hidden] {
+    display: none;
+  }
+  .dots {
+    display: flex;
+    align-items: center;
+    margin-left: -9px;
+  }
+  .dots :global(.dot) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 44px;
+    min-width: 24px; /* WCAG 2.5.8 target size */
+    padding: 0 9px;
+    border: 0;
+    background: none;
+    cursor: pointer;
+  }
+  .dots :global(.dot:focus-visible) {
+    outline: var(--focus-ring);
+    outline-offset: -8px;
+    border-radius: var(--radius-sm);
+  }
+  .dots :global(.pip) {
+    display: block;
+    width: var(--dot);
+    height: var(--dot);
+    border-radius: 3px;
+    background: var(--muted);
+    transition: width 0.2s;
+  }
+  .dots :global(.dot[aria-current='true'] .pip) {
+    width: var(--dot-active-w);
+    background: var(--acc);
+  }
+  .right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .counter {
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    color: var(--muted);
+  }
+  .toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--control-sm);
+    height: var(--control-sm);
+    padding: 0;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    cursor: pointer;
+  }
+  .toggle[hidden] {
+    display: none;
+  }
+  .toggle:hover {
+    border-color: var(--acc);
+    color: var(--acc-text);
+  }
+  .toggle[data-state='paused'] .i-pause,
+  .toggle:not([data-state='paused']) .i-play {
+    display: none;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .dots :global(.pip) {
+      transition: none;
+    }
+  }
+</style>

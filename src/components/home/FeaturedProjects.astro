@@ -1,0 +1,47 @@
+---
+/** Featured projects on the home page (FR-01.4, FR-05.7/05.10): slider of ProjectCards. Hidden when none. */
+import type { ProjectCard as Project } from '../../lib/content/types';
+import ProjectCard from '../projects/ProjectCard.astro';
+import Slider from '../slider/Slider.astro';
+import Button from '../ui/Button.astro';
+import SectionHeading from '../ui/SectionHeading.astro';
+
+interface Props {
+  projects: Project[];
+  eyebrow: string;
+}
+const { projects, eyebrow } = Astro.props;
+---
+
+{projects.length > 0 && (
+  <section id="work" class="wrap" aria-labelledby="work-title">
+    <div class="head">
+      <SectionHeading eyebrow={eyebrow} title="Featured projects" id="work-title" />
+      <Button variant="soft" href="/projects" iconEnd="arrow-right">
+        All projects
+      </Button>
+    </div>
+    <Slider id="projects-slider" noun="project" label="Featured projects — scroll sideways">
+      {projects.map((p) => (
+        <ProjectCard project={p} idPrefix="work" />
+      ))}
+    </Slider>
+  </section>
+)}
+
+<style>
+  section {
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+    padding-top: var(--section-gap);
+    padding-bottom: 56px;
+  }
+  .head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+  }
+</style>
