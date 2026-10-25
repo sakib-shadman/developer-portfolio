@@ -31,6 +31,11 @@ export interface Profile {
   bio: string[];
   principles: { title: string; text: string }[];
   objective?: string;
+  yearsExperience?: number;
+  aboutTitle?: string;
+  expertise: { title: string; text?: string; items: string[] }[];
+  community: { text: string; href?: string }[];
+  interests: string[];
   replyTime?: string;
 }
 
