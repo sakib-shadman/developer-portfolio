@@ -1,5 +1,14 @@
 import { describe, expect, it, vi } from 'vitest';
-import { COPIED, COPY_FAILED, copyAddress, mailtoHref, placeLine } from '../../src/lib/contact';
+import {
+  CLEAR_AFTER_MS,
+  COPIED,
+  COPY_FAILED,
+  copyAddress,
+  createAnnouncer,
+  mailtoHref,
+  placeLine,
+  type Scheduler,
+} from '../../src/lib/contact';
 import { linkAttrs } from '../../src/lib/link';
 
 describe('mailtoHref', () => {
@@ -31,5 +40,51 @@ describe('placeLine', () => {
     expect(placeLine('Dhaka')).toBe('Dhaka');
     expect(placeLine(undefined, 'GMT+6')).toBe('GMT+6');
     expect(placeLine()).toBeUndefined();
+  });
+});
+
+describe('createAnnouncer', () => {
+  function fake() {
+    const frames: (() => void)[] = [];
+    const timers: { cb: () => void; ms: number; live: boolean }[] = [];
+    const cancelled: unknown[] = [];
+    const sched: Scheduler = {
+      frame: (cb) => frames.push(cb) - 1,
+      later: (cb, ms) => timers.push({ cb, ms, live: true }) - 1,
+      cancel: (h) => {
+        cancelled.push(h);
+        if (typeof h === 'number' && timers[h]) timers[h].live = false;
+      },
+    };
+    return { frames, timers, cancelled, sched };
+  }
+
+  it('clears, sets on the next frame, clears after the delay', () => {
+    const region = { textContent: 'old' as string | null };
+    const f = fake();
+    const announce = createAnnouncer(region, f.sched);
+    announce(COPIED);
+    expect(region.textContent).toBe('');
+    f.frames[0]!();
+    expect(region.textContent).toBe(COPIED);
+    expect(f.timers[0]!.ms).toBe(CLEAR_AFTER_MS);
+    f.timers[0]!.cb();
+    expect(region.textContent).toBe('');
+  });
+
+  it('re-announces an identical message: text is emptied before it is set again', () => {
+    const region = { textContent: '' as string | null };
+    const seen: (string | null)[] = [];
+    const f = fake();
+    const announce = createAnnouncer(region, f.sched);
+    announce(COPIED);
+    f.frames[0]!();
+    seen.push(region.textContent);
+    announce(COPIED);
+    seen.push(region.textContent);
+    f.frames[1]!();
+    seen.push(region.textContent);
+    expect(seen).toEqual([COPIED, '', COPIED]);
+    expect(f.cancelled.length).toBeGreaterThan(0);
   });
 });

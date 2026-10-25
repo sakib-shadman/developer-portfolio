@@ -74,6 +74,13 @@ describe('contact page: email', () => {
     expect(html).toMatch(/<button[^>]*data-copy="ada@example\.dev"[^>]*aria-describedby="copy-status"/);
     expect(html).toMatch(/<p id="copy-status" role="status"/);
     expect(html).toContain('ada@example.dev</span>');
+    // Without JS the copy button would be dead: it ships hidden and the script reveals it.
+    expect(html).toMatch(/<button[^>]*data-copy=[^>]*\bhidden\b/);
+  });
+  it('facts are a valid dl: dt/dd only inside each group, icon inside dt', async () => {
+    const html = await render({ ...profile, location: 'Dhaka' });
+    expect(html).toMatch(/<div class="fact[^"]*"[^>]*><dt[^>]*><svg[\s\S]*?<\/svg>\s*Location<\/dt><dd/);
+    expect(html).not.toMatch(/<div class="fact[^"]*"[^>]*><svg/);
   });
   it('reply time only when provided', async () => {
     expect(await render(profile)).toMatch(/Reply time<\/dt>\s*<dd[^>]*>within 2 days/);

@@ -28,7 +28,14 @@ const showForm = formEnabled && Astro.slots.has('form');
       <Button variant="solid" href={mail.href}>
         Email me
       </Button>
-      <Button variant="outline" size="lg" type="button" data-copy={email} aria-describedby="copy-status">
+      <Button
+        variant="outline"
+        size="lg"
+        type="button"
+        data-copy={email}
+        aria-describedby="copy-status"
+        hidden
+      >
         <Icon name="copy" color="var(--acc)" />
         Copy address
       </Button>
@@ -43,14 +50,26 @@ const showForm = formEnabled && Astro.slots.has('form');
 )}
 
 <script>
-  import { copyAddress } from '../../lib/contact';
-  document.querySelectorAll<HTMLButtonElement>('[data-copy]').forEach((btn) =>
+  import { copyAddress, createAnnouncer } from '../../lib/contact';
+  const sched = {
+    frame: (cb: () => void) => requestAnimationFrame(cb),
+    later: (cb: () => void, ms: number) => setTimeout(cb, ms),
+    cancel: (h: unknown) => {
+      if (typeof h === 'number') {
+        cancelAnimationFrame(h);
+        clearTimeout(h);
+      }
+    },
+  };
+  // The button is rendered hidden: without JS it would do nothing.
+  document.querySelectorAll<HTMLButtonElement>('[data-copy]').forEach((btn) => {
+    const region = btn.closest('[data-contact-direct]')?.querySelector('[role="status"]');
+    const announce = region ? createAnnouncer(region, sched) : undefined;
+    btn.hidden = false;
     btn.addEventListener('click', async () => {
-      const status = btn.closest('[data-contact-direct]')?.querySelector('[role="status"]');
-      const msg = await copyAddress(btn.dataset.copy ?? '', navigator.clipboard);
-      if (status) status.textContent = msg;
-    }),
-  );
+      announce?.(await copyAddress(btn.dataset.copy ?? '', navigator.clipboard));
+    });
+  });
 </script>
 
 <style>
@@ -76,6 +95,9 @@ const showForm = formEnabled && Astro.slots.has('form');
     display: flex;
     flex-wrap: wrap;
     gap: 12px;
+  }
+  .actions :global([hidden]) {
+    display: none;
   }
   .status {
     margin: 0;

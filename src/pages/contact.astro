@@ -42,15 +42,19 @@ const place = placeLine(profile.location, profile.timezone);
         <dl class="facts">
           {place && (
             <div class="fact">
-              <Icon name="pin" size={20} color="var(--acc)" />
-              <dt>Location</dt>
+              <dt>
+                <Icon name="pin" size={20} color="var(--acc)" />
+                Location
+              </dt>
               <dd>{place}</dd>
             </div>
           )}
           {profile.replyTime && (
             <div class="fact">
-              <Icon name="mail" size={20} color="var(--acc)" />
-              <dt>Reply time</dt>
+              <dt>
+                <Icon name="mail" size={20} color="var(--acc)" />
+                Reply time
+              </dt>
               <dd>{profile.replyTime}</dd>
             </div>
           )}
@@ -82,22 +86,22 @@ const place = placeLine(profile.location, profile.timezone);
     border-bottom: 1px solid var(--border);
   }
   .fact {
-    display: grid;
-    grid-template-columns: auto 1fr;
-    column-gap: 14px;
-    align-items: center;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
     padding: 16px 0;
     border-top: 1px solid var(--border);
   }
-  .fact :global(svg) {
-    grid-row: span 2;
-  }
   dt {
+    display: flex;
+    align-items: center;
+    gap: 10px;
     font-size: var(--text-sm);
     color: var(--muted);
   }
   dd {
     margin: 0;
+    padding-left: 30px;
     font-weight: 500;
   }
 </style>
