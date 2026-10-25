@@ -1,0 +1,70 @@
+---
+// Client-side category filter for /projects. Rendered only when there are projects.
+---
+
+<script>
+  import {
+    CATEGORY_PARAM,
+    categoryQuery,
+    counterParts,
+    filterByCategory,
+    parseCategory,
+    type CategoryFilter,
+  } from '../../lib/projects';
+  import type { ProjectCategory } from '../../lib/content/types';
+
+  const root = document.querySelector<HTMLElement>('[data-projects]');
+  const filters = root?.querySelector<HTMLElement>('[data-filters]');
+  const empty = root?.querySelector<HTMLElement>('[data-empty]');
+  const shownEl = root?.querySelector('[data-counter-shown]');
+  const restEl = root?.querySelector('[data-counter-rest]');
+
+  if (root && filters && empty && shownEl && restEl) {
+    const pills = [...filters.querySelectorAll<HTMLButtonElement>('[data-filter]')];
+    const items = [...root.querySelectorAll<HTMLElement>('[data-grid] > li')].map((el) => ({
+      el,
+      category: el.dataset.category as ProjectCategory,
+    }));
+
+    const apply = (filter: CategoryFilter) => {
+      const visible = new Set(filterByCategory(items, filter));
+      for (const item of items) item.el.hidden = !visible.has(item);
+      for (const pill of pills) pill.setAttribute('aria-pressed', String(pill.dataset.filter === filter));
+      const parts = counterParts(visible.size, items.length);
+      // Write only on change so the live region doesn't re-announce identical text.
+      if (shownEl.textContent !== parts.shown) shownEl.textContent = parts.shown;
+      if (restEl.textContent !== parts.rest) restEl.textContent = parts.rest;
+      empty.hidden = visible.size > 0;
+    };
+
+    // Only categories that have a pill count: anything else falls back to All, so the pressed pill
+    // always matches what is shown.
+    const available = pills.map((p) => p.dataset.filter as CategoryFilter);
+    const fromUrl = () => parseCategory(new URLSearchParams(location.search).get(CATEGORY_PARAM), available);
+
+    const sync = (filter: CategoryFilter) => {
+      const url = `${location.pathname}${categoryQuery(filter)}${location.hash}`;
+      if (url !== `${location.pathname}${location.search}${location.hash}`)
+        history.replaceState(history.state, '', url);
+    };
+    const select = (filter: CategoryFilter) => {
+      apply(filter);
+      sync(filter);
+    };
+
+    filters.hidden = false;
+    filters.addEventListener('click', (e) => {
+      const pill = (e.target as Element).closest<HTMLButtonElement>('[data-filter]');
+      if (pill) select(pill.dataset.filter as CategoryFilter);
+    });
+    empty.querySelector('[data-show-all]')?.addEventListener('click', () => {
+      select('all');
+      pills.find((p) => p.dataset.filter === 'all')?.focus();
+    });
+    // Back/Forward and bfcache restores re-read the URL.
+    window.addEventListener('popstate', () => apply(fromUrl()));
+    window.addEventListener('pageshow', (e) => e.persisted && apply(fromUrl()));
+
+    select(fromUrl()); // also normalises an unknown ?category= to the clean URL
+  }
+</script>

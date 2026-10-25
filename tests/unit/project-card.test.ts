@@ -72,7 +72,7 @@ describe('ProjectCard', () => {
     expect(both).not.toContain('Featured');
     expect(both).toMatch(/class="card highlight/);
     const featured = await render({ featured: true });
-    expect(featured).toContain('★ Featured');
+    expect(featured).toContain('Featured');
     expect(featured).not.toContain('class="dot"');
     expect(featured).not.toMatch(/class="card highlight/);
   });
@@ -114,17 +114,32 @@ describe('ProjectCard', () => {
     expect(html).not.toMatch(/Screenshot|Media/);
   });
 
-  it('with media renders the first image with its alt text', async () => {
+  it('with media renders the first image with alt, srcset and sizes (optimised, not passthrough)', async () => {
+    const shot = (src: string) => ({ src: { src, width: 1200, height: 800, format: 'png' as const } });
     const html = await render({
       media: [
-        { src: '/a.png', width: 800, height: 600, alt: 'Scoreboard screen' },
-        { src: '/b.png', width: 800, height: 600, alt: 'Second' },
+        { ...shot('/a.png'), width: 1200, height: 800, alt: 'Scoreboard screen' },
+        { ...shot('/b.png'), width: 1200, height: 800, alt: 'Second' },
       ],
     });
     expect(html).toContain('<img');
     expect(html).toContain('alt="Scoreboard screen"');
+    expect(html).toMatch(/srcset="[^"]+ 360w, [^"]+ 720w"/);
+    expect(html).toContain('sizes="(max-width: 640px) 85vw, 380px"');
     expect(html).not.toContain('Second');
     expect(html).not.toContain('class="glyph');
+  });
+
+  it('hides the star from assistive tech and prefixes heading ids', async () => {
+    const html = await render({ featured: true }, { idPrefix: 'home' });
+    expect(html).toMatch(/<span[^>]*aria-hidden="true"[^>]*>★<\/span>\s*Featured/);
+    expect(html).toContain('id="home-lms-cricket"');
+    expect(html).toContain('aria-labelledby="home-lms-cricket"');
+  });
+
+  it('size sm uses the 200px media well', async () => {
+    expect(await render({}, { size: 'sm' })).toContain('height:200px');
+    expect(await render({})).toContain('height:220px');
   });
 });
 

@@ -2,8 +2,11 @@
  * Domain types — the only data shapes components and pages consume (ADR-0008).
  * They must not depend on astro:content so the source (files today, an API later) can change.
  */
+import type { ImageMetadata } from 'astro';
+
 export interface Img {
-  src: string;
+  /** astro:assets metadata (not a URL string) so <Image> can resize/convert; width/height mirror it. */
+  src: ImageMetadata;
   width: number;
   height: number;
   alt: string;

@@ -3,6 +3,7 @@
  * Pure and DOM-free so the page script and unit tests share it. The filter helpers are generic
  * over `{ category }` so the script can run them on DOM-backed items.
  */
+import { compareFeatured, countByCategory } from './content/logic';
 import { categoryLabel } from './content/mappers';
 import type { ProjectCard, ProjectCategory } from './content/types';
 
@@ -27,14 +28,17 @@ export const CATEGORY_ORDER: readonly ProjectCategory[] = [
 /** Query-string key used to deep-link a category (`/projects?category=sdk`). */
 export const CATEGORY_PARAM = 'category';
 
-/** Featured first (by featuredOrder, then name), then the rest by name. */
+/** Featured first (shared comparator with the home page), then the rest by name. */
 export function sortProjects(items: ProjectCard[]): ProjectCard[] {
-  const order = (p: ProjectCard) => (p.featured ? (p.featuredOrder ?? Number.MAX_SAFE_INTEGER) : Infinity);
-  return [...items].sort((a, b) => {
-    if (a.featured !== b.featured) return a.featured ? -1 : 1;
-    const byOrder = order(a) - order(b);
-    return (Number.isNaN(byOrder) ? 0 : byOrder) || a.name.localeCompare(b.name);
-  });
+  return [...items].sort((a, b) =>
+    a.featured !== b.featured
+      ? a.featured
+        ? -1
+        : 1
+      : a.featured
+        ? compareFeatured(a, b)
+        : a.name.localeCompare(b.name),
+  );
 }
 
 const UNCOUNTABLE: ReadonlySet<ProjectCategory> = new Set(['backend', 'open-source']);
@@ -48,8 +52,7 @@ export function pluralCategoryLabel(c: ProjectCategory): string {
 
 /** "All" first, then only the categories that have projects, each with its count. */
 export function buildFilters(items: readonly { category: ProjectCategory }[]): FilterOption[] {
-  const counts = new Map<ProjectCategory, number>();
-  for (const p of items) counts.set(p.category, (counts.get(p.category) ?? 0) + 1);
+  const counts = countByCategory(items);
   return [
     { value: 'all', label: 'All', count: items.length },
     ...CATEGORY_ORDER.filter((c) => counts.has(c)).map((c) => ({
@@ -67,9 +70,12 @@ export function filterByCategory<T extends { category: ProjectCategory }>(
   return filter === 'all' ? [...items] : items.filter((p) => p.category === filter);
 }
 
-/** Any known category is accepted (a link to an emptied category shows the empty state); junk → "all". */
-export function parseCategory(raw: string | null | undefined): CategoryFilter {
-  return CATEGORY_ORDER.find((c) => c === raw) ?? 'all';
+/** Only a category that has a pill is accepted (so the pressed pill always shows the active filter). */
+export function parseCategory(
+  raw: string | null | undefined,
+  available: readonly CategoryFilter[] = ['all', ...CATEGORY_ORDER],
+): CategoryFilter {
+  return available.find((c) => c === raw) ?? 'all';
 }
 
 /** Query string for the filter ("" for All, so the clean URL is kept). */

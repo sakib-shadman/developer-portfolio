@@ -5,6 +5,7 @@ import ProjectCard from '../../components/projects/ProjectCard.astro';
 import Button from '../../components/ui/Button.astro';
 import Card from '../../components/ui/Card.astro';
 import FilterChip from '../../components/ui/FilterChip.astro';
+import ProjectsFilter from '../../components/projects/ProjectsFilter.astro';
 import SectionHeading from '../../components/ui/SectionHeading.astro';
 import { getProjects } from '../../lib/content/queries';
 import { buildFilters, counterParts, sortProjects } from '../../lib/projects';
@@ -13,6 +14,8 @@ const projects = sortProjects(await getProjects());
 const filters = buildFilters(projects);
 const total = projects.length;
 const counter = counterParts(total, total);
+const EMPTY_ICON =
+  '<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18"/></svg>';
 ---
 
 <PageLayout
@@ -37,7 +40,7 @@ const counter = counterParts(total, total);
         class="intro-text"
       />
       {total > 0 && (
-        <p class="counter" aria-live="polite" data-counter>
+        <p class="counter" aria-live="polite" aria-atomic="true" data-counter>
           <span class="shown" data-counter-shown>
             {counter.shown}
           </span>
@@ -57,40 +60,33 @@ const counter = counterParts(total, total);
       </div>
     )}
 
-    <h2 class="sr-only">Project list</h2>
-    <ul class="grid" role="list" data-grid>
-      {projects.map((p) => (
-        <li data-category={p.category}>
-          <ProjectCard project={p} />
-        </li>
-      ))}
-    </ul>
+    {total > 0 ? (
+      <>
+        <ul class="grid" role="list" data-grid>
+          {projects.map((p) => (
+            <li data-category={p.category}>
+              <ProjectCard project={p} headingLevel="h2" size="sm" idPrefix="projects" />
+            </li>
+          ))}
+        </ul>
 
-    <Card as="div" class="empty" data-empty hidden={total > 0} tabindex="-1">
-      <svg
-        width="40"
-        height="40"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="var(--acc)"
-        stroke-width="1.6"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        aria-hidden="true"
-      >
-        <rect x="3" y="4" width="18" height="16" rx="2"></rect>
-        <path d="M3 9h18"></path>
-      </svg>
-      <h2>{total > 0 ? 'No projects in this category yet' : 'No projects yet'}</h2>
-      {total > 0 && (
-        <>
+        {/* Defensive: shown by the script only if a filter ever matches nothing. */}
+        <Card as="div" class="empty" data-empty hidden tabindex="-1">
+          <Fragment set:html={EMPTY_ICON} />
+          <h2>No projects in this category yet</h2>
           <p>Try another filter, or see everything.</p>
           <Button variant="soft" data-show-all>
             Show all projects
           </Button>
-        </>
-      )}
-    </Card>
+        </Card>
+        <ProjectsFilter />
+      </>
+    ) : (
+      <Card as="div" class="empty">
+        <Fragment set:html={EMPTY_ICON} />
+        <h2>No projects yet</h2>
+      </Card>
+    )}
   </section>
 </PageLayout>
 
@@ -147,6 +143,10 @@ const counter = counterParts(total, total);
   .grid li {
     display: flex;
   }
+  .grid li > :global(.project-card) {
+    flex: 1;
+    min-width: 0;
+  }
   .page :global(.empty .body) {
     align-items: center;
     padding: 64px 24px;
@@ -160,61 +160,3 @@ const counter = counterParts(total, total);
     color: var(--muted);
   }
 </style>
-
-<script>
-  import {
-    CATEGORY_PARAM,
-    categoryQuery,
-    counterParts,
-    filterByCategory,
-    parseCategory,
-    type CategoryFilter,
-  } from '../../lib/projects';
-  import type { ProjectCategory } from '../../lib/content/types';
-
-  const root = document.querySelector<HTMLElement>('[data-projects]');
-  const filters = root?.querySelector<HTMLElement>('[data-filters]');
-  const empty = root?.querySelector<HTMLElement>('[data-empty]');
-  const shownEl = root?.querySelector('[data-counter-shown]');
-  const restEl = root?.querySelector('[data-counter-rest]');
-
-  if (root && filters && empty && shownEl && restEl) {
-    const pills = [...filters.querySelectorAll<HTMLButtonElement>('[data-filter]')];
-    const items = [...root.querySelectorAll<HTMLElement>('[data-grid] > li')].map((el) => ({
-      el,
-      category: el.dataset.category as ProjectCategory,
-    }));
-
-    const apply = (filter: CategoryFilter) => {
-      const visible = new Set(filterByCategory(items, filter));
-      for (const item of items) item.el.hidden = !visible.has(item);
-      for (const pill of pills) pill.setAttribute('aria-pressed', String(pill.dataset.filter === filter));
-      const parts = counterParts(visible.size, items.length);
-      shownEl.textContent = parts.shown;
-      restEl.textContent = parts.rest;
-      empty.hidden = visible.size > 0;
-    };
-
-    const fromUrl = () => parseCategory(new URLSearchParams(location.search).get(CATEGORY_PARAM));
-
-    const select = (filter: CategoryFilter) => {
-      apply(filter);
-      history.replaceState(history.state, '', `${location.pathname}${categoryQuery(filter)}${location.hash}`);
-    };
-
-    filters.hidden = false;
-    filters.addEventListener('click', (e) => {
-      const pill = (e.target as Element).closest<HTMLButtonElement>('[data-filter]');
-      if (pill) select(pill.dataset.filter as CategoryFilter);
-    });
-    empty.querySelector('[data-show-all]')?.addEventListener('click', () => {
-      select('all');
-      pills.find((p) => p.dataset.filter === 'all')?.focus();
-    });
-    // Back/Forward and bfcache restores re-read the URL.
-    window.addEventListener('popstate', () => apply(fromUrl()));
-    window.addEventListener('pageshow', (e) => e.persisted && apply(fromUrl()));
-
-    apply(fromUrl());
-  }
-</script>

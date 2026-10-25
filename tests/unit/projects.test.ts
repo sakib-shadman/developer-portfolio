@@ -86,6 +86,8 @@ describe('filterByCategory / parseCategory / categoryQuery', () => {
   it('parses known categories and falls back to all for junk or missing values', () => {
     expect(parseCategory('sdk')).toBe('sdk');
     expect(parseCategory('library')).toBe('library');
+    expect(parseCategory('library', ['all', 'sdk'])).toBe('all');
+    expect(parseCategory('sdk', ['all', 'sdk'])).toBe('sdk');
     expect(parseCategory('nope')).toBe('all');
     expect(parseCategory('all')).toBe('all');
     expect(parseCategory(null)).toBe('all');
