@@ -16,9 +16,12 @@ export function neighbours<T extends { slug: string }>(
   return { prev: list[i - 1], next: list[i + 1] };
 }
 
-/** Ids of the skills in the "Platforms" group (iOS, Android, …). */
+/** Id of the skill group (src/content/skill-groups.json) whose items count as platforms. */
+export const PLATFORMS_GROUP_ID = 'platforms';
+
+/** Ids of the skills in the platforms group (iOS, Android, …). */
 export const platformIds = (groups: readonly SkillGroup[]): Set<string> =>
-  new Set(groups.find((g) => g.id === 'platforms')?.items.map((t) => t.id));
+  new Set(groups.find((g) => g.id === PLATFORMS_GROUP_ID)?.items.map((t) => t.id));
 
 /** Splits a project's technologies into platforms and the rest of the stack. */
 export function splitTech(technologies: readonly Tech[], platforms: ReadonlySet<string>) {

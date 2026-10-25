@@ -12,7 +12,13 @@ interface Props extends Omit<HTMLAttributes<'section'>, 'title'> {
   title: string;
   id?: string;
 }
-const { eyebrow, title, id = `cs-${slugify(title)}`, class: className, ...rest } = Astro.props;
+const {
+  eyebrow,
+  title,
+  id = `cs-${slugify(eyebrow)}-${slugify(title)}`,
+  class: className,
+  ...rest
+} = Astro.props;
 ---
 
 <section class:list={['sec', className]} aria-labelledby={id} {...rest}>

@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import {
   detailDescription,
@@ -5,6 +6,7 @@ import {
   detailLinks,
   detailPageProjects,
   neighbours,
+  PLATFORMS_GROUP_ID,
   platformIds,
   slugify,
   splitTech,
@@ -101,5 +103,15 @@ describe('detailDescription / slugify', () => {
   it('slugifies headings', () => {
     expect(slugify("How it's built")).toBe('how-it-s-built');
     expect(slugify('!!!')).toBe('section');
+  });
+});
+
+describe('PLATFORMS_GROUP_ID', () => {
+  it('names a group that exists in skill-groups.json and has items', () => {
+    const groups = JSON.parse(readFileSync('src/content/skill-groups.json', 'utf8')) as {
+      id: string;
+      items: string[];
+    }[];
+    expect(groups.find((g) => g.id === PLATFORMS_GROUP_ID)?.items.length).toBeGreaterThan(0);
   });
 });

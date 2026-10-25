@@ -12,6 +12,7 @@ import Prose from '../../components/case-study/Prose.astro';
 import Section from '../../components/case-study/Section.astro';
 import { caseStudyComponents } from '../../components/case-study';
 import { getCaseStudy, getProjects, getSkillGroups } from '../../lib/content/queries';
+import { linkAttrs } from '../../lib/link';
 import type { CaseStudy, ProjectCard } from '../../lib/content/types';
 import {
   detailDescription,
@@ -49,6 +50,10 @@ const { Content } = caseStudy;
 const { platforms, stack } = splitTech(project.technologies, platformIds(await getSkillGroups()));
 const facts = detailFacts(project, platforms, stack);
 const links = detailLinks(project.links);
+const neighbourLink = (p?: ProjectCard) =>
+  p ? { p, href: linkAttrs(`/projects/${p.slug}`)?.href } : undefined;
+const prevLink = neighbourLink(prev);
+const nextLink = neighbourLink(next);
 ---
 
 <PageLayout
@@ -95,13 +100,7 @@ const links = detailLinks(project.links);
     <section class="wrap" aria-label="Screenshots">
       <div class="shots">
         {project.media.map((m) => (
-          <Image
-            src={m.src}
-            alt={m.alt}
-            widths={[320, 640]}
-            sizes="(max-width: 640px) 80vw, 320px"
-            loading="lazy"
-          />
+          <Image src={m.src} alt={m.alt} widths={[240, 480]} sizes="240px" loading="lazy" />
         ))}
       </div>
     </section>
@@ -134,23 +133,23 @@ const links = detailLinks(project.links);
     )}
   </article>
 
-  {(prev || next) && (
+  {(prevLink?.href || nextLink?.href) && (
     <nav aria-label="More projects" class="more">
       <div class="wrap more-grid">
-        {prev && (
-          <a href={`/projects/${prev.slug}`} class="more-card">
+        {prevLink?.href && (
+          <a href={prevLink.href} class="more-card">
             <span class="dir">
               <span aria-hidden="true">←</span> Previous
             </span>
-            <span class="more-name">{prev.name}</span>
+            <span class="more-name">{prevLink.p.name}</span>
           </a>
         )}
-        {next && (
-          <a href={`/projects/${next.slug}`} class="more-card next">
+        {nextLink?.href && (
+          <a href={nextLink.href} class="more-card next">
             <span class="dir">
               Next <span aria-hidden="true">→</span>
             </span>
-            <span class="more-name">{next.name}</span>
+            <span class="more-name">{nextLink.p.name}</span>
           </a>
         )}
       </div>
@@ -242,7 +241,7 @@ const links = detailLinks(project.links);
     background: var(--acc-soft);
   }
   .shots :global(img) {
-    max-width: 100%;
+    width: min(240px, 100%);
     height: auto;
     border-radius: 32px 32px 0 0;
     border: 7px solid var(--text);
@@ -264,7 +263,7 @@ const links = detailLinks(project.links);
   }
   .more-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+    grid-template-columns: 1fr;
     gap: 16px;
     padding-block: 40px;
   }
@@ -282,7 +281,7 @@ const links = detailLinks(project.links);
     opacity: 1;
   }
   .next {
-    grid-column: 2;
+    grid-column: -2 / -1;
     align-items: flex-end;
     text-align: right;
   }
@@ -297,9 +296,9 @@ const links = detailLinks(project.links);
     font-weight: 600;
     font-size: 22px;
   }
-  @media (max-width: 700px) {
-    .next {
-      grid-column: auto;
+  @media (min-width: 701px) {
+    .more-grid {
+      grid-template-columns: 1fr 1fr;
     }
   }
 </style>

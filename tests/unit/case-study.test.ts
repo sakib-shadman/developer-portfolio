@@ -39,15 +39,35 @@ beforeAll(async () => {
   c.addServerRenderer({ name: '@astrojs/mdx', renderer: mdxRenderer });
 });
 
+describe('case-study links', () => {
+  it('MDX links go through linkAttrs: unsafe → plain text, external → new tab with hint, internal untouched', async () => {
+    const html = await renderPage({ project: base, caseStudy: study() });
+    expect(html).not.toContain('javascript:');
+    expect(html).toContain('a bad link');
+    expect(html).not.toMatch(/<a[^>]*>\s*a bad link/);
+    expect(html).toMatch(
+      /<a href="https:\/\/example\.dev\/repo"[^>]*target="_blank"[^>]*rel="noopener noreferrer"[^>]*>\s*the repo\s*<span class="sr-only">\(opens in a new tab\)/,
+    );
+    expect(html).toMatch(/<a href="\/projects"(?![^>]*target)[^>]*>\s*home\s*<\/a>/);
+  });
+});
+
 describe('case-study components', () => {
   it('Section numbers via a counter class and labels its heading', async () => {
     const html = await c.renderToString(Section, {
       props: { eyebrow: 'Context', title: 'The problem' },
       slots: { default: '<p>x</p>' },
     });
-    expect(html).toContain('aria-labelledby="cs-the-problem"');
-    expect(html).toMatch(/<h2 id="cs-the-problem"[^>]*>The problem<\/h2>/);
+    expect(html).toContain('aria-labelledby="cs-context-the-problem"');
+    expect(html).toMatch(/<h2 id="cs-context-the-problem"[^>]*>The problem<\/h2>/);
     expect(html).toContain('Context');
+  });
+
+  it('Sections with different eyebrows get distinct ids even with the same title', async () => {
+    const a = await c.renderToString(Section, { props: { eyebrow: 'Decisions', title: 'Overview' } });
+    const b = await c.renderToString(Section, { props: { eyebrow: 'Challenges', title: 'Overview' } });
+    expect(a).toContain('id="cs-decisions-overview"');
+    expect(b).toContain('id="cs-challenges-overview"');
   });
 
   it('Diagram renders an ordered flow with decorative arrows and a caption; empty renders nothing', async () => {
@@ -208,6 +228,7 @@ describe('caseStudyComponents', () => {
       'Figure',
       'Metrics',
       'Section',
+      'a',
     ]);
   });
 });

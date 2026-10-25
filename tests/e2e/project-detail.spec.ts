@@ -79,8 +79,11 @@ test('detail pages: external links are safe, keyboard reachable and ≥ 40px', a
   const paths = await detailPaths(page);
   test.skip(paths.length === 0, 'no project has a case study in this build');
   await page.goto(paths[0] as string);
+  // Every external link is safe; the hero buttons (not inline prose links) must also be >= 40px tall.
   for (const a of await page.locator('main a[target="_blank"]').all()) {
     await expect(a).toHaveAttribute('rel', /noopener/);
+  }
+  for (const a of await page.locator('#project-title ~ .actions a').all()) {
     expect((await a.boundingBox())?.height ?? 0).toBeGreaterThanOrEqual(40);
   }
   await page.keyboard.press('Tab');

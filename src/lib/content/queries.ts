@@ -20,7 +20,15 @@ import {
   type SkillNames,
 } from './mappers';
 import { composeHomeSections, type HomeSections } from '../home';
-import type { ArticleCard, CaseStudy, ExperienceItem, Profile, ProjectCard, SkillGroup } from './types';
+import type {
+  ArticleCard,
+  CaseStudy,
+  CaseStudyContent,
+  ExperienceItem,
+  Profile,
+  ProjectCard,
+  SkillGroup,
+} from './types';
 
 // Drafts render in `astro dev` and in e2e/test builds (PUBLIC_INCLUDE_DRAFTS=true) so pages can be
 // built and tested before the owner's real content is complete. Never set it for live deploys.
@@ -62,8 +70,18 @@ export async function getCaseStudy(project: ProjectCard): Promise<CaseStudy | un
   if (!project.caseStudyId) return undefined;
   const entry = await getEntry('caseStudies', project.caseStudyId);
   if (!entry) return undefined;
+  if (entry.data.project.id !== project.slug) {
+    throw new Error(
+      `Case study "${entry.id}" belongs to project "${entry.data.project.id}" but is linked from "${project.slug}"`,
+    );
+  }
   const { Content } = await render(entry);
-  return { id: entry.id, problem: entry.data.problem, outcomes: entry.data.outcomes, Content };
+  return {
+    id: entry.id,
+    problem: entry.data.problem,
+    outcomes: entry.data.outcomes,
+    Content: Content as unknown as CaseStudyContent,
+  };
 }
 
 export async function getFeaturedProjects(): Promise<ProjectCard[]> {
