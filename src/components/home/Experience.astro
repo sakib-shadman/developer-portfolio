@@ -28,12 +28,11 @@ const { items, eyebrow } = Astro.props;
         const dates = formatDateRange(e);
         return (
           <li class="row">
-            {(dates || e.current) && (
-              <div class="when">
-                {dates && <span class="dates">{dates}</span>}
-                {e.current && <Badge>Current</Badge>}
-              </div>
-            )}
+            {/* Always rendered so the content column stays aligned across rows; children are conditional. */}
+            <div class="when">
+              {dates && <span class="dates">{dates}</span>}
+              {e.current && <Badge>Current</Badge>}
+            </div>
             <div class="what">
               <h3>
                 {e.title && <>{e.title} </>}
@@ -43,8 +42,15 @@ const { items, eyebrow } = Astro.props;
                 </span>
               </h3>
               {e.description && <p class="desc">{e.description}</p>}
+              {e.responsibilities.length > 0 && (
+                <ul class="bullets">
+                  {e.responsibilities.map((r) => (
+                    <li>{r}</li>
+                  ))}
+                </ul>
+              )}
               {e.achievements.length > 0 && (
-                <ul class="ach">
+                <ul class="bullets">
                   {e.achievements.map((a) => (
                     <li>{a}</li>
                   ))}
@@ -53,8 +59,8 @@ const { items, eyebrow } = Astro.props;
               <ChipList items={e.technologies.map((t) => t.name)} label={`Technologies at ${e.company}`} />
               {e.companyUrl && (
                 <div>
-                  <LinkPill variant="secondary" href={e.companyUrl} aria-label={`${e.company} website`}>
-                    Company site
+                  <LinkPill variant="secondary" href={e.companyUrl}>
+                    Company site<span class="sr-only">: {e.company}</span>
                   </LinkPill>
                 </div>
               )}
@@ -106,6 +112,11 @@ const { items, eyebrow } = Astro.props;
     font-size: var(--text-sm);
     color: var(--muted);
   }
+  @media (max-width: 720px) {
+    .when:empty {
+      display: none;
+    }
+  }
   .what {
     flex: 3 1 320px;
     min-width: 0;
@@ -121,11 +132,11 @@ const { items, eyebrow } = Astro.props;
     color: var(--acc-text);
   }
   .desc,
-  .ach {
+  .bullets {
     margin: 0;
     color: var(--muted);
   }
-  .ach {
+  .bullets {
     padding-left: 18px;
   }
 </style>

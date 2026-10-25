@@ -1,0 +1,112 @@
+---
+/**
+ * Profile links as a real list (HANDOFF §3): `tile` = 44px/12px-radius hero tiles,
+ * `pill` = 52px pills for the contact panel. Only configured, safe links render (via linkAttrs);
+ * nothing renders when none qualify. Email: tile → "#contact" (hero), pill → mailto.
+ */
+import type { HTMLAttributes } from 'astro/types';
+import { linkAttrs } from '../../lib/link';
+import Icon, { type IconName } from './Icon.astro';
+
+export type ProfileLinkKind = 'github' | 'linkedin' | 'medium' | 'email';
+
+interface Props extends HTMLAttributes<'ul'> {
+  links: { github?: string; linkedin?: string; medium?: string };
+  email?: string | undefined;
+  /** Which links to show, in order. */
+  kinds: ProfileLinkKind[];
+  variant?: 'tile' | 'pill';
+  /** Wrap the list in <nav aria-label=…> (hero); omit inside another landmark. */
+  navLabel?: string;
+}
+
+const { links, email, kinds, variant = 'tile', navLabel, class: className, ...rest } = Astro.props;
+
+const META: Record<ProfileLinkKind, { label: string; icon: IconName }> = {
+  github: { label: 'GitHub', icon: 'code' },
+  linkedin: { label: 'LinkedIn', icon: 'briefcase' },
+  medium: { label: 'Medium', icon: 'article' },
+  email: { label: 'Email', icon: 'mail' },
+};
+const hrefFor = (k: ProfileLinkKind): string | undefined =>
+  k === 'email' ? (email ? (variant === 'tile' ? '#contact' : `mailto:${email}`) : undefined) : links[k];
+
+const items = kinds.flatMap((k) => {
+  const link = linkAttrs(hrefFor(k));
+  return link ? [{ ...META[k], link }] : [];
+});
+---
+
+{items.length > 0 && navLabel && (
+  <nav aria-label={navLabel}>
+    <ul class:list={['links', variant, className]} role="list" {...rest}>
+      {items.map((i) => (
+        <li>
+          <a class="item" href={i.link.href} target={i.link.target} rel={i.link.rel}>
+            <Icon name={i.icon} size={18} color="var(--acc)" />
+            {i.label}
+            {i.link.external && <span class="sr-only">(opens in a new tab)</span>}
+          </a>
+        </li>
+      ))}
+    </ul>
+  </nav>
+)}
+{items.length > 0 && !navLabel && (
+  <ul class:list={['links', variant, className]} role="list" {...rest}>
+    {items.map((i) => (
+      <li>
+        <a class="item" href={i.link.href} target={i.link.target} rel={i.link.rel}>
+          <Icon name={i.icon} size={18} color="var(--acc)" />
+          {i.label}
+          {i.link.external && <span class="sr-only">(opens in a new tab)</span>}
+        </a>
+      </li>
+    ))}
+  </ul>
+)}
+
+<style>
+  .links {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .item {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    max-width: 100%;
+    color: var(--text);
+    font-weight: 500;
+    background: var(--surface);
+    border: 1px solid var(--border);
+  }
+  .item:focus-visible {
+    outline-color: var(--pill-focus, var(--acc));
+  }
+  .tile {
+    gap: 10px;
+  }
+  .tile .item {
+    min-height: var(--control-md);
+    padding: 0 16px;
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+  }
+  .tile .item:hover {
+    opacity: 1;
+    border-color: var(--acc);
+  }
+  .pill {
+    gap: 12px;
+  }
+  .pill .item {
+    min-height: var(--control-lg);
+    padding: 0 22px;
+    border-radius: var(--radius-pill);
+    font-size: 15px;
+  }
+</style>

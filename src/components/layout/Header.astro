@@ -1,12 +1,14 @@
 ---
-import { PRIMARY_NAV, isCurrent } from '../../lib/nav';
+import { PRIMARY_NAV, isCurrent, visibleNav, type HomeAnchor } from '../../lib/nav';
 
 interface Props {
   name: string;
   resume?: string | undefined;
+  /** Which home sections exist; anchor links to missing ones are dropped. Default: all. */
+  sections?: Record<HomeAnchor, boolean>;
 }
 
-const { name, resume } = Astro.props;
+const { name, resume, sections = { skills: true, experience: true } } = Astro.props;
 const pathname = Astro.url.pathname;
 ---
 
@@ -19,7 +21,7 @@ const pathname = Astro.url.pathname;
       <span>{name}</span>
     </a>
     <ul class="links" role="list">
-      {PRIMARY_NAV.map((item) => {
+      {visibleNav(PRIMARY_NAV, sections).map((item) => {
         const current = isCurrent(pathname, item.match);
         return (
           <li>

@@ -94,9 +94,24 @@ test.describe('home', () => {
     await expect(cta.locator('a[href^="mailto:"]')).toHaveCount(0);
   });
 
-  test('header anchors resolve to sections', async ({ page }) => {
+  // Passes with and without draft content: experience exists only in drafts builds.
+  test('@smoke home is consistent whether or not experience is published', async ({ page }) => {
     await page.goto('/');
-    for (const id of ['skills', 'experience', 'contact']) await expect(page.locator(`#${id}`)).toHaveCount(1);
+    await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1);
+    await expect(page.locator('#skills .eyebrow')).toHaveText('01 — Skills');
+    await expect(page.locator('#contact')).toHaveCount(1);
+    const hasExperience = (await page.locator('#experience').count()) > 0;
+    if (hasExperience) await expect(page.locator('#experience .eyebrow')).toHaveText('02 — Experience');
+    // Every in-page header anchor must have a target, and Experience is listed only if it renders.
+    const nav = page.getByRole('navigation', { name: 'Primary' });
+    await expect(nav.getByRole('link', { name: 'Experience', exact: true })).toHaveCount(
+      hasExperience ? 1 : 0,
+    );
+    const hrefs = await nav
+      .locator('a[href^="/#"]')
+      .evaluateAll((els) => els.map((e) => e.getAttribute('href')));
+    for (const href of hrefs) await expect(page.locator(href!.slice(1))).toHaveCount(1);
+    await expect(page.locator('body')).not.toContainText(/\[[^\]]+\]/);
   });
 
   test('no horizontal overflow at 320px', async ({ page }) => {

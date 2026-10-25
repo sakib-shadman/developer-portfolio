@@ -2,7 +2,7 @@
 /** Contact CTA panel (FR-01). Email button and profile pills render only when configured. */
 import type { Profile } from '../../lib/content/types';
 import { linkAttrs } from '../../lib/link';
-import Icon, { type IconName } from '../ui/Icon.astro';
+import ProfileLinks from '../ui/ProfileLinks.astro';
 
 interface Props {
   profile: Profile;
@@ -10,15 +10,7 @@ interface Props {
 const { profile } = Astro.props;
 
 const email = profile.email ? linkAttrs(`mailto:${profile.email}`) : null;
-const pills = (
-  [
-    { label: 'LinkedIn', href: profile.links.linkedin, icon: 'briefcase' },
-    { label: 'GitHub', href: profile.links.github, icon: 'code' },
-  ] as { label: string; href?: string; icon: IconName }[]
-).flatMap((p) => {
-  const link = linkAttrs(p.href);
-  return link ? [{ ...p, link }] : [];
-});
+const hasPills = [profile.links.linkedin, profile.links.github].some((h) => linkAttrs(h));
 ---
 
 <section id="contact" class="wrap" aria-labelledby="contact-title">
@@ -27,20 +19,14 @@ const pills = (
       <h2 id="contact-title">Let's build something together.</h2>
       {profile.availability && <p>{profile.availability}</p>}
     </div>
-    {(email || pills.length > 0) && (
+    {(email || hasPills) && (
       <div class="actions">
         {email && (
           <a class="email" href={email.href}>
             {profile.email}
           </a>
         )}
-        {pills.map((p) => (
-          <a class="pill" href={p.link.href} target={p.link.target} rel={p.link.rel}>
-            <Icon name={p.icon} size={18} color="var(--acc)" />
-            {p.label}
-            {p.link.external && <span class="sr-only">(opens in a new tab)</span>}
-          </a>
-        ))}
+        <ProfileLinks class="pills" variant="pill" links={profile.links} kinds={['linkedin', 'github']} />
       </div>
     )}
   </div>
@@ -84,11 +70,9 @@ const pills = (
     gap: 12px;
     min-width: 0;
   }
-  .email,
-  .pill {
+  .email {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
     min-height: var(--control-lg);
     border-radius: var(--radius-pill);
     max-width: 100%;
@@ -100,16 +84,11 @@ const pills = (
     color: var(--acc);
     font-weight: 600;
   }
-  .pill {
-    padding: 0 22px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    font-size: 15px;
-    font-weight: 500;
-    color: var(--text);
-  }
-  .email:focus-visible,
-  .pill:focus-visible {
+  .email:focus-visible {
     outline-color: var(--on-acc);
+  }
+  .actions :global(.pills) {
+    gap: 12px;
+    --pill-focus: var(--on-acc);
   }
 </style>
