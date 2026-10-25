@@ -1,0 +1,36 @@
+---
+/** A key technical decision: what was chosen (title) and why / what it traded off (body). */
+interface Props {
+  title: string;
+}
+const { title } = Astro.props;
+---
+
+<div class="card">
+  <h3 class="title">{title}</h3>
+  <div class="text">
+    <slot />
+  </div>
+</div>
+
+<style>
+  .card {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 24px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 19px;
+    color: var(--text);
+  }
+  .text :global(p) {
+    margin: 0;
+  }
+</style>

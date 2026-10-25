@@ -1,0 +1,32 @@
+Plain paragraph with a [link](https://example.dev) and `inline code`.
+
+<Section eyebrow="Architecture" title="How it's built">
+
+Layers are kept thin.
+
+<Diagram
+  nodes={[{ label: 'App', highlight: true }, { label: 'Repository' }, { label: 'API' }]}
+  caption="Fixture diagram"
+/>
+
+</Section>
+
+<Section eyebrow="Decisions" title="Key technical decisions">
+
+<Decision title="Use Riverpod">Trade-off text.</Decision>
+
+<Callout title="Note">A callout body.</Callout>
+
+</Section>
+
+<Section eyebrow="Challenges" title="Hard problems">
+
+<Challenge challenge="Slow list" resolution="Windowed rendering" />
+
+```dart
+void main() => print('hi');
+```
+
+<Metrics items={[{ label: 'Crash-free', value: '99.9%' }]} />
+
+</Section>

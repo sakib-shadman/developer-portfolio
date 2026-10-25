@@ -3,6 +3,7 @@
  * They must not depend on astro:content so the source (files today, an API later) can change.
  */
 import type { ImageMetadata } from 'astro';
+import type { AstroComponentFactory } from 'astro/runtime/server/index.js';
 
 export interface Img {
   /** astro:assets metadata (not a URL string) so <Image> can resize/convert; width/height mirror it. */
@@ -84,7 +85,18 @@ export interface ProjectCard {
   featured: boolean;
   featuredOrder?: number;
   hasCaseStudy: boolean;
+  /** Id of the linked case study entry (set when hasCaseStudy). */
+  caseStudyId?: string;
   draft: boolean;
+}
+
+/** A case study with its rendered MDX body (ADR-0008: pages never touch astro:content). */
+export interface CaseStudy {
+  id: string;
+  problem: string;
+  outcomes: string[];
+  /** Renders the MDX body; pass `components` for the case-study MDX components. */
+  Content: AstroComponentFactory;
 }
 
 export interface ArticleCard {

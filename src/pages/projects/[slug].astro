@@ -1,0 +1,305 @@
+---
+/**
+ * /projects/[slug] (FR-05.11, FR-06; design: ProjectDetail.dc.html). Pages exist only for projects
+ * that have a case study (FR-06.8: a short summary stays on the card); every section renders only
+ * when its data exists. The MDX body is rendered by getCaseStudy (ADR-0008).
+ */
+import { Image } from 'astro:assets';
+import PageLayout from '../../layouts/PageLayout.astro';
+import Breadcrumbs from '../../components/layout/Breadcrumbs.astro';
+import Button from '../../components/ui/Button.astro';
+import Prose from '../../components/case-study/Prose.astro';
+import Section from '../../components/case-study/Section.astro';
+import { caseStudyComponents } from '../../components/case-study';
+import { getCaseStudy, getProjects, getSkillGroups } from '../../lib/content/queries';
+import type { CaseStudy, ProjectCard } from '../../lib/content/types';
+import {
+  detailDescription,
+  detailFacts,
+  detailLinks,
+  detailPageProjects,
+  neighbours,
+  platformIds,
+  splitTech,
+} from '../../lib/project-detail';
+import { sortProjects } from '../../lib/projects';
+
+export async function getStaticPaths() {
+  const pages = detailPageProjects(sortProjects(await getProjects()));
+  const studies = await Promise.all(pages.map((p) => getCaseStudy(p)));
+  const ready = pages.flatMap((project, i) =>
+    studies[i] ? [{ project, caseStudy: studies[i] as CaseStudy }] : [],
+  );
+  const order = ready.map((r) => r.project);
+  return ready.map(({ project, caseStudy }) => ({
+    params: { slug: project.slug },
+    props: { project, caseStudy, ...neighbours(order, project.slug) },
+  }));
+}
+
+interface Props {
+  project: ProjectCard;
+  caseStudy: CaseStudy;
+  prev?: ProjectCard;
+  next?: ProjectCard;
+}
+const { project, caseStudy, prev, next } = Astro.props;
+const { Content } = caseStudy;
+
+const { platforms, stack } = splitTech(project.technologies, platformIds(await getSkillGroups()));
+const facts = detailFacts(project, platforms, stack);
+const links = detailLinks(project.links);
+---
+
+<PageLayout
+  title={`${project.name} — Case study — Shadman Sakib`}
+  description={detailDescription(project.summary, caseStudy.problem)}
+  path={`/projects/${project.slug}`}
+>
+  <section class="wrap hero" aria-labelledby="project-title">
+    <Breadcrumbs
+      items={[
+        { label: 'Home', href: '/' },
+        { label: 'Projects', href: '/projects' },
+        { label: project.name },
+      ]}
+    />
+    <span class="kind">
+      <span class="dot" aria-hidden="true"></span>
+      {project.label} · Case study
+    </span>
+    <h1 id="project-title">{project.name}</h1>
+    {project.summary && <p class="lead">{project.summary}</p>}
+    {links.length > 0 && (
+      <div class="actions">
+        {links.map((l, i) => (
+          <Button href={l.href} variant={i === 0 ? 'solid' : 'outline'} size="lg" iconEnd="external">
+            {l.label}
+          </Button>
+        ))}
+      </div>
+    )}
+    {facts.length > 0 && (
+      <dl class="facts">
+        {facts.map((f) => (
+          <div>
+            <dt>{f.label}</dt>
+            <dd>{f.value}</dd>
+          </div>
+        ))}
+      </dl>
+    )}
+  </section>
+
+  {project.media.length > 0 && (
+    <section class="wrap" aria-label="Screenshots">
+      <div class="shots">
+        {project.media.map((m) => (
+          <Image
+            src={m.src}
+            alt={m.alt}
+            widths={[320, 640]}
+            sizes="(max-width: 640px) 80vw, 320px"
+            loading="lazy"
+          />
+        ))}
+      </div>
+    </section>
+  )}
+
+  <article class="narrow body">
+    <Section eyebrow="Context" title="The problem">
+      <p>{caseStudy.problem}</p>
+    </Section>
+    {project.contributions.length > 0 && (
+      <Section eyebrow="Role" title="What I did">
+        <ul>
+          {project.contributions.map((c) => (
+            <li>{c}</li>
+          ))}
+        </ul>
+      </Section>
+    )}
+    <Prose>
+      <Content components={caseStudyComponents} />
+    </Prose>
+    {caseStudy.outcomes.length > 0 && (
+      <Section eyebrow="Outcome" title="Results">
+        <ul>
+          {caseStudy.outcomes.map((o) => (
+            <li>{o}</li>
+          ))}
+        </ul>
+      </Section>
+    )}
+  </article>
+
+  {(prev || next) && (
+    <nav aria-label="More projects" class="more">
+      <div class="wrap more-grid">
+        {prev && (
+          <a href={`/projects/${prev.slug}`} class="more-card">
+            <span class="dir">
+              <span aria-hidden="true">←</span> Previous
+            </span>
+            <span class="more-name">{prev.name}</span>
+          </a>
+        )}
+        {next && (
+          <a href={`/projects/${next.slug}`} class="more-card next">
+            <span class="dir">
+              Next <span aria-hidden="true">→</span>
+            </span>
+            <span class="more-name">{next.name}</span>
+          </a>
+        )}
+      </div>
+    </nav>
+  )}
+</PageLayout>
+
+<style>
+  .hero {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    padding-top: var(--page-top);
+    padding-bottom: 56px;
+  }
+  .kind {
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    border-radius: var(--radius-pill);
+    background: var(--acc-soft);
+    color: var(--acc-text);
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+  }
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--acc);
+  }
+  h1 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(44px, 6vw, 80px);
+    line-height: 1.02;
+    letter-spacing: var(--tracking-display);
+    overflow-wrap: anywhere;
+  }
+  .lead {
+    max-width: 720px;
+    font-size: 21px;
+    color: var(--muted);
+  }
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .facts {
+    margin: 16px 0 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+  }
+  .facts div {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 20px 24px;
+    background: var(--surface);
+  }
+  .facts dt {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .facts dd {
+    margin: 0;
+    font-weight: 500;
+  }
+  .shots {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: flex-end;
+    gap: 32px;
+    padding: 56px 24px 0;
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+    background: var(--acc-soft);
+  }
+  .shots :global(img) {
+    max-width: 100%;
+    height: auto;
+    border-radius: 32px 32px 0 0;
+    border: 7px solid var(--text);
+    border-bottom: 0;
+  }
+  .narrow {
+    max-width: 800px;
+    margin-inline: auto;
+    padding-inline: var(--gutter);
+    padding-bottom: 96px;
+    counter-reset: case-section;
+  }
+  .body > :global(.prose),
+  .body > :global(.sec) {
+    min-width: 0;
+  }
+  .more {
+    border-top: 1px solid var(--border);
+  }
+  .more-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+    gap: 16px;
+    padding-block: 40px;
+  }
+  .more-card {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 24px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .more-card:hover {
+    border-color: var(--acc);
+    opacity: 1;
+  }
+  .next {
+    grid-column: 2;
+    align-items: flex-end;
+    text-align: right;
+  }
+  .dir {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .more-name {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 22px;
+  }
+  @media (max-width: 700px) {
+    .next {
+      grid-column: auto;
+    }
+  }
+</style>

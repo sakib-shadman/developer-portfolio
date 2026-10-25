@@ -1,0 +1,47 @@
+---
+/**
+ * A numbered case-study section (design: "01 — Context" eyebrow + h2). The number comes from a CSS
+ * counter on the article, so sections written in MDX and those rendered by the page stay in sequence.
+ */
+import type { HTMLAttributes } from 'astro/types';
+import Prose from './Prose.astro';
+import { slugify } from '../../lib/project-detail';
+
+interface Props extends Omit<HTMLAttributes<'section'>, 'title'> {
+  eyebrow: string;
+  title: string;
+  id?: string;
+}
+const { eyebrow, title, id = `cs-${slugify(title)}`, class: className, ...rest } = Astro.props;
+---
+
+<section class:list={['sec', className]} aria-labelledby={id} {...rest}>
+  <span class="eyebrow label">{eyebrow}</span>
+  <h2 id={id} class="title">
+    {title}
+  </h2>
+  <Prose>
+    <slot />
+  </Prose>
+</section>
+
+<style>
+  .sec {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding-top: 72px;
+    counter-increment: case-section;
+  }
+  .label::before {
+    content: counter(case-section, decimal-leading-zero) ' — ';
+  }
+  .title {
+    color: var(--text);
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(28px, 3.4vw, 40px);
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+  }
+</style>
