@@ -103,7 +103,8 @@ describe('mappers', () => {
         photo: { src: { src: '/me.jpg', width: 800, height: 1000, format: 'jpg' }, alt: 'Portrait' },
       },
     } as never);
-    expect(p.photo).toEqual({ src: '/me.jpg', width: 800, height: 1000, alt: 'Portrait' });
+    const meta = { src: '/me.jpg', width: 800, height: 1000, format: 'jpg' };
+    expect(p.photo).toEqual({ src: meta, width: 800, height: 1000, alt: 'Portrait' });
     const noPhoto = toProfile({
       id: 'main',
       collection: 'profile',
@@ -149,6 +150,11 @@ describe('mappers', () => {
         status: 'published',
       },
     } as never);
-    expect(card.thumbnail).toEqual({ src: '/b.png', width: 10, height: 10, alt: 'Diagram' });
+    expect(card.thumbnail).toEqual({
+      src: { src: '/b.png', width: 10, height: 10, format: 'png' },
+      width: 10,
+      height: 10,
+      alt: 'Diagram',
+    });
   });
 });

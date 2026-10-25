@@ -1,0 +1,162 @@
+---
+import PageLayout from '../../layouts/PageLayout.astro';
+import Breadcrumbs from '../../components/layout/Breadcrumbs.astro';
+import ProjectCard from '../../components/projects/ProjectCard.astro';
+import Button from '../../components/ui/Button.astro';
+import Card from '../../components/ui/Card.astro';
+import FilterChip from '../../components/ui/FilterChip.astro';
+import ProjectsFilter from '../../components/projects/ProjectsFilter.astro';
+import SectionHeading from '../../components/ui/SectionHeading.astro';
+import { getProjects } from '../../lib/content/queries';
+import { buildFilters, counterParts, sortProjects } from '../../lib/projects';
+
+const projects = sortProjects(await getProjects());
+const filters = buildFilters(projects);
+const total = projects.length;
+const counter = counterParts(total, total);
+const EMPTY_ICON =
+  '<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18"/></svg>';
+---
+
+<PageLayout
+  title="Projects — Shadman Sakib"
+  description="Mobile apps, SDKs and backend services Shadman Sakib has built or contributed to."
+  path="/projects"
+>
+  <section class="wrap page" aria-labelledby="projects-title" data-projects>
+    <Breadcrumbs
+      items={[
+        { label: 'Home', href: '/' },
+        { label: 'Projects', href: '/projects' },
+      ]}
+    />
+
+    <div class="intro">
+      <SectionHeading
+        level="h1"
+        id="projects-title"
+        title="Projects"
+        lead="Mobile apps, SDKs and backend services I've built or contributed to."
+        class="intro-text"
+      />
+      {total > 0 && (
+        <p class="counter" aria-live="polite" aria-atomic="true" data-counter>
+          <span class="shown" data-counter-shown>
+            {counter.shown}
+          </span>
+          <span data-counter-rest>{counter.rest}</span>
+        </p>
+      )}
+    </div>
+
+    {/* Hidden until the script runs: without JS every card shows and there is nothing to click. */}
+    {total > 0 && (
+      <div role="group" aria-label="Filter by category" class="filters" data-filters hidden>
+        {filters.map((f) => (
+          <FilterChip group="projects-category" value={f.value} count={f.count} pressed={f.value === 'all'}>
+            {f.label}
+          </FilterChip>
+        ))}
+      </div>
+    )}
+
+    {total > 0 ? (
+      <>
+        <ul class="grid" role="list" data-grid>
+          {projects.map((p) => (
+            <li data-category={p.category}>
+              <ProjectCard project={p} headingLevel="h2" size="sm" idPrefix="projects" />
+            </li>
+          ))}
+        </ul>
+
+        {/* Defensive: shown by the script only if a filter ever matches nothing. */}
+        <Card as="div" class="empty" data-empty hidden tabindex="-1">
+          <Fragment set:html={EMPTY_ICON} />
+          <h2>No projects in this category yet</h2>
+          <p>Try another filter, or see everything.</p>
+          <Button variant="soft" data-show-all>
+            Show all projects
+          </Button>
+        </Card>
+        <ProjectsFilter />
+      </>
+    ) : (
+      <Card as="div" class="empty">
+        <Fragment set:html={EMPTY_ICON} />
+        <h2>No projects yet</h2>
+      </Card>
+    )}
+  </section>
+</PageLayout>
+
+<style>
+  .page {
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+    padding-top: var(--page-top);
+    padding-bottom: 112px;
+  }
+  .intro {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+  }
+  .intro-text {
+    gap: 16px;
+    max-width: 680px;
+  }
+  .intro-text :global(.lead) {
+    font-size: 19px;
+  }
+  .counter {
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    color: var(--muted);
+  }
+  .shown {
+    color: var(--text);
+  }
+  .filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding-bottom: 28px;
+    border-bottom: 1px solid var(--border);
+  }
+  .filters[hidden],
+  .grid li[hidden],
+  .page :global([data-empty][hidden]) {
+    display: none;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
+    gap: var(--grid-gap);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .grid li {
+    display: flex;
+  }
+  .grid li > :global(.project-card) {
+    flex: 1;
+    min-width: 0;
+  }
+  .page :global(.empty .body) {
+    align-items: center;
+    padding: 64px 24px;
+    text-align: center;
+  }
+  .page :global(.empty h2) {
+    font-family: var(--font-display);
+    font-size: 24px;
+  }
+  .page :global(.empty p) {
+    color: var(--muted);
+  }
+</style>

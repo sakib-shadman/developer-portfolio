@@ -1,0 +1,166 @@
+---
+/**
+ * Project card (Main.dc.html "03 — Projects"; reused by the home slider in PF-14 and /projects).
+ * Every missing field is hidden: no summary → no paragraph, no role → no "Role:" line, and so on.
+ * Hrefs go through LinkPill (linkAttrs). Root renders as <article>; wrap it in <li> in lists.
+ */
+import { Image } from 'astro:assets';
+import type { HTMLAttributes } from 'astro/types';
+import Badge from '../ui/Badge.astro';
+import Card from '../ui/Card.astro';
+import ChipList from '../ui/ChipList.astro';
+import LinkPill from '../ui/LinkPill.astro';
+import type { ProjectCard } from '../../lib/content/types';
+import { linkAttrs } from '../../lib/link';
+
+interface Props extends Omit<HTMLAttributes<'article'>, 'title'> {
+  project: ProjectCard;
+  /** Heading level for the name; /projects nests it under a visually hidden h2. */
+  headingLevel?: 'h2' | 'h3';
+  /** md: 220px media well, 26px name (home slider). sm: 200px / 24px (/projects grid). */
+  size?: 'md' | 'sm';
+  /** Prefix for the heading id so the same project can appear twice on a page. */
+  idPrefix?: string;
+}
+
+const {
+  project,
+  headingLevel: Heading = 'h3',
+  size = 'md',
+  idPrefix = 'project',
+  class: className,
+  ...rest
+} = Astro.props;
+
+const image = project.media[0];
+const inProgress = project.progress === 'in-progress';
+const SECONDARY = [
+  ['store', 'App listing'],
+  ['demo', 'Live demo'],
+  ['repo', 'Source'],
+  ['docs', 'Docs'],
+] as const;
+const secondary = SECONDARY.flatMap(([key, label]) => {
+  const href = project.links[key];
+  // Skip unsafe hrefs here so the link row never renders empty.
+  return linkAttrs(href) ? [{ href, label }] : [];
+})[0];
+const nameId = `${idPrefix}-${project.slug}`;
+---
+
+<Card
+  as="article"
+  highlight={inProgress}
+  mediaHeight={size === 'sm' ? 200 : 220}
+  class:list={['project-card', size, className]}
+  aria-labelledby={nameId}
+  {...rest}
+>
+  <Fragment slot="media">
+    {image ? (
+      <Image
+        src={image.src}
+        alt={image.alt}
+        widths={[360, 720]}
+        sizes="(max-width: 640px) 85vw, 380px"
+        loading="lazy"
+        class="shot"
+      />
+    ) : (
+      <svg class="glyph" viewBox="0 0 120 120" fill="none" aria-hidden="true" focusable="false">
+        {project.category === 'mobile-app' ? (
+          <>
+            <rect x="38" y="14" width="44" height="92" rx="9" />
+            <path d="M54 22h12" />
+          </>
+        ) : (
+          <>
+            <rect x="16" y="26" width="88" height="68" rx="9" />
+            <path d="M16 42h88M52 62l-10 8 10 8M68 62l10 8-10 8" />
+          </>
+        )}
+      </svg>
+    )}
+  </Fragment>
+
+  <div class="meta">
+    <span class="label">{project.label}</span>
+    {inProgress && <Badge variant="status">In progress</Badge>}
+    {!inProgress && project.featured && (
+      <Badge variant="status" dot={false}>
+        <span aria-hidden="true">★</span> Featured
+      </Badge>
+    )}
+  </div>
+  <Heading id={nameId} class="name">
+    {project.name}
+  </Heading>
+  {project.summary && <p class="summary">{project.summary}</p>}
+  <ChipList items={project.technologies.map((t) => t.name)} label="Technologies" />
+  {project.role && (
+    <p class="role">
+      <span class="role-label">Role:</span> {project.role}
+    </p>
+  )}
+  {(project.hasCaseStudy || secondary) && (
+    <div class="links">
+      {project.hasCaseStudy && <LinkPill href={`/projects/${project.slug}`}>Case study</LinkPill>}
+      {secondary && (
+        <LinkPill href={secondary.href} variant="secondary">
+          {secondary.label}
+        </LinkPill>
+      )}
+    </div>
+  )}
+</Card>
+
+<style>
+  .shot {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .glyph {
+    width: 120px;
+    height: 120px;
+    stroke: var(--acc);
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    opacity: 0.45;
+  }
+  .meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+  .name {
+    font-family: var(--font-display);
+    font-size: 26px;
+    line-height: 1.2;
+  }
+  .sm .name {
+    font-size: 24px;
+  }
+  .summary {
+    color: var(--muted);
+  }
+  .role {
+    font-size: 14px;
+  }
+  .role-label {
+    color: var(--muted);
+  }
+  .links {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    margin-top: auto;
+    padding-top: 8px;
+  }
+</style>

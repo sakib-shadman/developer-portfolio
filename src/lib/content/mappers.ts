@@ -1,4 +1,5 @@
 /** Collection entry → domain type. The only place that knows Astro's entry shape (ADR-0008). */
+import type { ImageMetadata } from 'astro';
 import type { CollectionEntry } from 'astro:content';
 import type { ArticleCard, ExperienceItem, Img, Profile, ProjectCard, SkillGroup, Tech } from './types';
 
@@ -16,8 +17,8 @@ const CATEGORY_LABEL: Record<ProjectCard['category'], string> = {
 
 export const categoryLabel = (c: ProjectCard['category']): string => CATEGORY_LABEL[c];
 
-const toImg = (img: { src: string; width: number; height: number }, alt: string): Img => ({
-  src: img.src,
+const toImg = (img: ImageMetadata, alt: string): Img => ({
+  src: img,
   width: img.width,
   height: img.height,
   alt,

@@ -38,20 +38,26 @@ export function sortExperience(items: ExperienceItem[]): ExperienceItem[] {
   return [...items].sort((a, b) => Number(b.current) - Number(a.current) || start(b) - start(a));
 }
 
+/** Featured projects by featuredOrder (unordered last), then name. */
+export function compareFeatured(a: ProjectCard, b: ProjectCard): number {
+  return (
+    (a.featuredOrder ?? Number.MAX_SAFE_INTEGER) - (b.featuredOrder ?? Number.MAX_SAFE_INTEGER) ||
+    a.name.localeCompare(b.name)
+  );
+}
+
 /** FR-05.7/05.10: featured only, by featuredOrder then name, capped. */
 export function pickFeaturedProjects(items: ProjectCard[], max = MAX_FEATURED_PROJECTS): ProjectCard[] {
   return items
     .filter((p) => p.featured)
-    .sort(
-      (a, b) =>
-        (a.featuredOrder ?? Number.MAX_SAFE_INTEGER) - (b.featuredOrder ?? Number.MAX_SAFE_INTEGER) ||
-        a.name.localeCompare(b.name),
-    )
+    .sort(compareFeatured)
     .slice(0, max);
 }
 
 /** Category counts for /projects filter pills (FR-05.8); zero-count categories omitted. */
-export function countByCategory(items: ProjectCard[]): Map<ProjectCard['category'], number> {
+export function countByCategory(
+  items: readonly { category: ProjectCard['category'] }[],
+): Map<ProjectCard['category'], number> {
   const counts = new Map<ProjectCard['category'], number>();
   for (const p of items) counts.set(p.category, (counts.get(p.category) ?? 0) + 1);
   return counts;
