@@ -138,12 +138,60 @@
       "exclusiveMinimum": 0,
       "maximum": 60
     },
+    "aboutTitle": {
+      "type": "string",
+      "minLength": 1
+    },
+    "expertise": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1
+          },
+          "items": {
+            "default": [],
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "required": ["title"]
+      }
+    },
     "community": {
       "default": [],
       "type": "array",
       "items": {
-        "type": "string",
-        "minLength": 1
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "minLength": 1
+          },
+          "href": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uri"
+              },
+              {
+                "type": "string",
+                "pattern": "^\\/(?!\\/)[^\\s\\\\]*$"
+              }
+            ]
+          }
+        },
+        "required": ["text"]
       }
     },
     "interests": {

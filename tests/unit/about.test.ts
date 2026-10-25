@@ -12,6 +12,7 @@ const profile: Profile = {
   stats: [],
   bio: [],
   principles: [],
+  expertise: [],
   community: [],
   interests: [],
 };
@@ -41,6 +42,20 @@ describe('expertiseCards', () => {
   it('maps non-empty groups to cards', () => {
     expect(expertiseCards(groups, ['x'])).toEqual([{ title: 'Languages', items: ['Dart'] }]);
   });
+  it('prefers curated expertise, keeps text, drops empty cards', () => {
+    const curated = [
+      { title: 'Mobile', text: ' Apps. ', items: ['Flutter', ' '] },
+      { title: 'Text only', items: [] as string[], text: 'Just text' },
+      { title: 'Nothing', items: [] as string[] },
+    ];
+    expect(expertiseCards(groups, ['x'], curated)).toEqual([
+      { title: 'Mobile', text: 'Apps.', items: ['Flutter'] },
+      { title: 'Text only', text: 'Just text', items: [] },
+    ]);
+  });
+  it('falls back to groups when curated is all empty', () => {
+    expect(expertiseCards(groups, [], [{ title: 'N', items: [] }])).toHaveLength(1);
+  });
   it('falls back to focus, then to nothing', () => {
     expect(expertiseCards([], [' Flutter ', ''])).toEqual([{ title: 'Focus', items: ['Flutter'] }]);
     expect(expertiseCards([], [])).toEqual([]);
@@ -51,6 +66,7 @@ describe('buildAbout', () => {
   it('with minimal content falls back to intro/focus/availability and omits the rest', () => {
     const m = buildAbout({ ...profile, availability: 'Open to roles.' }, []);
     expect(m).toEqual({
+      title: 'About A B',
       lead: ['Short intro.'],
       years: undefined,
       expertise: [{ title: 'Focus', items: ['Flutter', 'iOS'] }],
@@ -73,7 +89,8 @@ describe('buildAbout', () => {
           { title: 'P1', text: 't1' },
           { title: 'P2', text: 't2' },
         ],
-        community: ['Mentoring'],
+        community: [{ text: ' Mentoring ', href: '/blog' }, { text: 'Talks' }, { text: ' ' }],
+        aboutTitle: ' Hi there ',
         interests: ['Chess'],
       },
       groups,
@@ -82,7 +99,8 @@ describe('buildAbout', () => {
     expect(m.objective).toBe('Senior mobile roles.');
     expect(m.years).toBe('10 years');
     expect(m.principles.map((p) => p.num)).toEqual(['01', '02']);
-    expect(m.community).toEqual(['Mentoring']);
+    expect(m.community).toEqual([{ text: 'Mentoring', href: '/blog' }, { text: 'Talks' }]);
+    expect(m.title).toBe('Hi there');
     expect(m.interests).toEqual(['Chess']);
     expect(m.expertise).toHaveLength(1);
   });

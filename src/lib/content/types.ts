@@ -32,7 +32,9 @@ export interface Profile {
   principles: { title: string; text: string }[];
   objective?: string;
   yearsExperience?: number;
-  community: string[];
+  aboutTitle?: string;
+  expertise: { title: string; text?: string; items: string[] }[];
+  community: { text: string; href?: string }[];
   interests: string[];
   replyTime?: string;
 }

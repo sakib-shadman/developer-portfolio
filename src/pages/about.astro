@@ -20,6 +20,7 @@ const PROFILE_LINKS = [
   ['Medium', profile.links.medium],
 ] as const;
 const profileLinks = PROFILE_LINKS.filter(([, href]) => linkAttrs(href));
+const community = about.community.map((c) => ({ text: c.text, link: linkAttrs(c.href) }));
 const resume = profile.resume;
 const photo = profile.photo;
 const hasBeyond = about.community.length > 0 || Boolean(about.objective) || about.interests.length > 0;
@@ -40,7 +41,7 @@ const hasBeyond = about.community.length > 0 || Boolean(about.objective) || abou
             { label: 'About', href: '/about' },
           ]}
         />
-        <SectionHeading level="h1" id="about-title" title={`About ${profile.name}`} />
+        <SectionHeading level="h1" id="about-title" title={about.title} />
         {about.years && <p class="years">{about.years} of professional experience</p>}
         <div class="lead">
           {about.lead.map((p) => (
@@ -49,7 +50,7 @@ const hasBeyond = about.community.length > 0 || Boolean(about.objective) || abou
         </div>
         <div class="actions">
           {resume && (
-            <Button variant="solid" href={resume} icon="download">
+            <Button variant="solid" href={resume} icon="download" download>
               Download resume
             </Button>
           )}
@@ -87,6 +88,7 @@ const hasBeyond = about.community.length > 0 || Boolean(about.objective) || abou
             <li>
               <Card as="div" class="fill">
                 <h3>{card.title}</h3>
+                {card.text && <p class="muted">{card.text}</p>}
                 <ChipList items={card.items} aria-label={`${card.title} technologies`} />
               </Card>
             </li>
@@ -113,7 +115,7 @@ const hasBeyond = about.community.length > 0 || Boolean(about.objective) || abou
     )}
 
     {hasBeyond && (
-      <section class="sec grid beyond" aria-label="Beyond the day job">
+      <div class="sec grid beyond">
         {about.community.length > 0 && (
           <Card as="section" class="pad" aria-labelledby="community-title">
             <span class="eyebrow">Beyond the day job</span>
@@ -121,15 +123,24 @@ const hasBeyond = about.community.length > 0 || Boolean(about.objective) || abou
               Community &amp; writing
             </h2>
             <ul class="bullets">
-              {about.community.map((c) => (
-                <li>{c}</li>
+              {community.map((c) => (
+                <li>
+                  {c.link ? (
+                    <a href={c.link.href} target={c.link.target} rel={c.link.rel} class="inline-link">
+                      {c.text}
+                      {c.link.external && <span class="sr-only"> (opens in a new tab)</span>}
+                    </a>
+                  ) : (
+                    c.text
+                  )}
+                </li>
               ))}
             </ul>
           </Card>
         )}
         {(about.objective || about.interests.length > 0) && (
           <Card as="section" class="pad" aria-labelledby="next-title">
-            <span class="eyebrow">What's next</span>
+            {about.objective && <span class="eyebrow">What's next</span>}
             <h2 id="next-title" class="card-title">
               {about.objective ? 'Looking for' : 'Outside work'}
             </h2>
@@ -142,7 +153,7 @@ const hasBeyond = about.community.length > 0 || Boolean(about.objective) || abou
             )}
           </Card>
         )}
-      </section>
+      </div>
     )}
 
     <section class="sec cta-sec" aria-labelledby="cta-title">
@@ -153,9 +164,9 @@ const hasBeyond = about.community.length > 0 || Boolean(about.objective) || abou
         </div>
         <div class="cta-actions">
           {resume && (
-            <a class="cta-btn dark" href={resume} download>
+            <Button variant="solid" href={resume} download class="cta-dark">
               Download resume
-            </a>
+            </Button>
           )}
           <Button variant="outline" size="lg" href="/contact" icon="mail">
             Contact me
@@ -311,6 +322,10 @@ const hasBeyond = about.community.length > 0 || Boolean(about.objective) || abou
     font-family: var(--font-display);
     font-size: 26px;
   }
+  .inline-link {
+    color: var(--acc-text);
+    font-weight: 600;
+  }
   .bullets {
     margin: 0;
     padding-left: 20px;
@@ -348,13 +363,7 @@ const hasBeyond = about.community.length > 0 || Boolean(about.objective) || abou
   .cta p {
     font-size: 18px;
   }
-  .cta-btn {
-    display: inline-flex;
-    align-items: center;
-    min-height: var(--control-lg);
-    padding: 0 26px;
-    border-radius: var(--radius-pill);
-    font-weight: 600;
+  .cta-actions :global(.cta-dark) {
     background: var(--on-acc);
     color: var(--acc);
   }
