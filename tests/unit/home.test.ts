@@ -111,5 +111,7 @@ describe('composeHomeSections with featured projects', () => {
     expect(none.rendered.projects).toBe(false);
     expect(none.eyebrows.projects).toBeUndefined();
     expect(none.featuredProjects).toEqual([]);
+    expect(r.projectsHref).toBe('#work');
+    expect(none.projectsHref).toBe('/projects');
   });
 });

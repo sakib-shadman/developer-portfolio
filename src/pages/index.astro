@@ -12,7 +12,7 @@ const [profile, home] = await Promise.all([getProfile(), getHomeSections()]);
 ---
 
 <PageLayout title={`${profile.name} — ${profile.title}`} description={profile.intro}>
-  <Hero profile={profile} />
+  <Hero profile={profile} projectsHref={home.projectsHref} />
   <Stats stats={profile.stats} />
   <Skills groups={home.skillGroups} eyebrow={home.eyebrows.skills ?? ''} />
   <Experience items={home.experience} eyebrow={home.eyebrows.experience ?? ''} />

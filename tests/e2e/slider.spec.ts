@@ -76,6 +76,35 @@ test.describe('featured projects slider', () => {
     await expect(counter(page)).toHaveText(/^01 \//);
   });
 
+  test('Resume after Pause resumes autoplay without blurring; a dot click does not stop it', async ({
+    page,
+    isMobile,
+  }) => {
+    test.skip(isMobile, 'timing test runs on desktop only');
+    await open(page);
+    const t = toggle(page);
+    await t.click(); // Pause (button keeps focus)
+    await t.click(); // Resume
+    await expect(t).toHaveAttribute('aria-label', 'Pause automatic project scrolling');
+    await page.mouse.move(0, 0);
+    await expect.poll(() => scrollLeft(page), { timeout: 8000 }).toBeGreaterThan(100);
+
+    // Click the first dot: goes back to card 1, then autoplay carries on from there.
+    await dots(page).first().click();
+    await expect.poll(() => scrollLeft(page)).toBe(0);
+    await page.mouse.move(0, 0);
+    await expect.poll(() => scrollLeft(page), { timeout: 8000 }).toBeGreaterThan(100);
+  });
+
+  test('focus inside the track holds autoplay', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'timing test runs on desktop only');
+    await open(page);
+    await track(page).focus();
+    await page.mouse.move(0, 0);
+    await page.waitForTimeout(5800);
+    expect(await scrollLeft(page)).toBe(0);
+  });
+
   test('auto-advances one card after 5s, then holds while hovered', async ({ page, isMobile }) => {
     test.skip(isMobile, 'timing test runs on desktop only');
     await open(page);
@@ -98,6 +127,20 @@ test.describe('featured projects slider', () => {
     expect(await scrollLeft(page)).toBe(0);
     await dots(page).nth(1).click(); // manual navigation still works
     await expect.poll(() => scrollLeft(page)).toBeGreaterThan(100);
+  });
+
+  test('the track is a tab stop only when it can scroll', async ({ page }) => {
+    await open(page); // 900px: overflows
+    await expect(track(page)).toHaveAttribute('tabindex', '0');
+    await page.setViewportSize({ width: 1440, height: 900 }); // 3 cards fit
+    await expect(track(page)).toHaveAttribute('tabindex', '-1');
+    await page.setViewportSize({ width: 900, height: 900 });
+    await expect(track(page)).toHaveAttribute('tabindex', '0');
+  });
+
+  test('hero "View projects" jumps to the slider section', async ({ page }) => {
+    await open(page);
+    await expect(page.getByRole('link', { name: /View projects/ })).toHaveAttribute('href', '#work');
   });
 
   test('cards per view: 3 → 2 → 1 and gap 24px', async ({ page }) => {

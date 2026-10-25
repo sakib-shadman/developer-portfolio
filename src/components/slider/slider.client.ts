@@ -8,6 +8,7 @@ import { activeIndex, nextIndex, pad2, scrollTarget, shouldAutoAdvance } from '.
 const INTERVAL_MS = 5000;
 
 function init(root: HTMLElement): void {
+  if (root.dataset.ready) return; // idempotent: never double-wire dots/listeners
   const track = root.querySelector<HTMLElement>('[data-slider-track]');
   const controls = root.querySelector<HTMLElement>('[data-slider-controls]');
   const dotsEl = root.querySelector<HTMLElement>('[data-slider-dots]');
@@ -38,7 +39,10 @@ function init(root: HTMLElement): void {
     b.className = 'dot';
     b.setAttribute('aria-label', `Show ${noun} ${i + 1} of ${count}`);
     b.append(Object.assign(document.createElement('span'), { className: 'pip' }));
-    b.addEventListener('click', () => goTo(i));
+    b.addEventListener('click', () => {
+      goTo(i);
+      restartTimer();
+    });
     dotsEl.append(b);
     return b;
   });
@@ -52,6 +56,8 @@ function init(root: HTMLElement): void {
     const { cardW, gap, maxScroll } = metrics();
     // Nothing to slide (all cards fit): hide the controls rather than show dead ones.
     controls!.hidden = maxScroll <= 1;
+    // Nothing to scroll → not a tab stop (the no-JS markup keeps tabindex=0).
+    track!.tabIndex = maxScroll > 1 ? 0 : -1;
     active = activeIndex(track!.scrollLeft, maxScroll, cardW, gap, count);
     render();
   }
@@ -73,12 +79,18 @@ function init(root: HTMLElement): void {
     goTo(nextIndex(active, count));
   }
 
-  function applyMotionPreference(): void {
+  /** (Re)starts the 5s clock so a full interval passes after any user action. */
+  function restartTimer(): void {
     window.clearInterval(timer);
     timer = undefined;
-    // Reduced motion: no timer at all, and the Pause control would control nothing.
-    toggle!.hidden = reduced.matches;
+    // Reduced motion: no timer at all.
     if (!reduced.matches) timer = window.setInterval(tick, INTERVAL_MS);
+  }
+
+  function applyMotionPreference(): void {
+    // The Pause control would control nothing under reduced motion.
+    toggle!.hidden = reduced.matches;
+    restartTimer();
   }
 
   function setPaused(paused: boolean): void {
@@ -87,14 +99,22 @@ function init(root: HTMLElement): void {
     toggle!.dataset.state = paused ? 'paused' : 'playing';
   }
 
-  toggle.addEventListener('click', () => setPaused(!state.paused));
+  toggle.addEventListener('click', () => {
+    setPaused(!state.paused);
+    restartTimer();
+  });
   track.addEventListener('scroll', sync, { passive: true });
   root.addEventListener('mouseenter', () => (state.hovered = true));
   root.addEventListener('mouseleave', () => (state.hovered = false));
-  root.addEventListener('focusin', () => (state.focusWithin = true));
-  root.addEventListener('focusout', (e) => {
-    if (!root.contains((e as FocusEvent).relatedTarget as Node | null)) state.focusWithin = false;
+  // Hold only for focus inside the track (HANDOFF §6.1), not the dots/Pause buttons: a clicked
+  // button keeps focus and would otherwise stop autoplay for good.
+  track.addEventListener('focusin', () => (state.focusWithin = true));
+  track.addEventListener('focusout', (e) => {
+    if (!track.contains(e.relatedTarget as Node | null)) state.focusWithin = false;
   });
+  // User navigation (swipe, wheel, drag, keys) restarts the clock so a tick can't yank the cards away.
+  for (const type of ['pointerdown', 'wheel', 'touchstart', 'keydown'] as const)
+    track.addEventListener(type, restartTimer, { passive: true });
   reduced.addEventListener('change', applyMotionPreference);
   new ResizeObserver(sync).observe(track);
 

@@ -9,8 +9,10 @@ import ProfileLinks from '../ui/ProfileLinks.astro';
 
 interface Props {
   profile: Profile;
+  /** "View projects" target; defaults to the projects page. */
+  projectsHref?: string;
 }
-const { profile } = Astro.props;
+const { profile, projectsHref = '/projects' } = Astro.props;
 
 const headline = splitHeadline(profile.headline, profile.headlineAccent);
 const place = [profile.location, profile.timezone].filter(Boolean).join(' · ');
@@ -49,7 +51,7 @@ const photo = profile.photo;
     </h1>
     <p class="intro">{profile.intro}</p>
     <div class="ctas">
-      <Button variant="solid" href="/projects" iconEnd="arrow-right">
+      <Button variant="solid" href={projectsHref} iconEnd="arrow-right">
         View projects
       </Button>
       {profile.resume && (

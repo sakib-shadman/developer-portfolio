@@ -42,6 +42,8 @@ export interface HomeSections {
   featuredProjects: ProjectCard[];
   /** Which home anchors exist — drives the header nav. */
   rendered: { skills: boolean; experience: boolean; projects: boolean };
+  /** Hero "View projects" target: the home slider when it renders, otherwise the projects page. */
+  projectsHref: '#work' | '/projects';
   /** "01 — Skills" etc., keyed by section id; absent for sections not rendered. */
   eyebrows: Record<string, string>;
 }
@@ -70,5 +72,6 @@ export function composeHomeSections(input: {
     { id: 'projects', label: 'Projects', visible: rendered.projects },
     { id: 'writing', label: 'Writing', visible: false },
   ]);
-  return { skillGroups, experience, featuredProjects, rendered, eyebrows };
+  const projectsHref = rendered.projects ? '#work' : '/projects';
+  return { skillGroups, experience, featuredProjects, rendered, eyebrows, projectsHref };
 }

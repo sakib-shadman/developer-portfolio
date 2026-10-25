@@ -1,20 +1,22 @@
 ---
+import type { HTMLAttributes } from 'astro/types';
+
 /**
  * Generic card slider (HANDOFF §6.1). Slot `<article>` cards directly.
  * Without JS it is a keyboard-focusable scroll-snap track; slider.client.ts reveals the dots,
  * counter and Pause/Play toggle. `id` namespaces element ids so instances can coexist.
  */
-interface Props {
+interface Props extends Omit<HTMLAttributes<'div'>, 'id'> {
   id: string;
   /** Singular noun for labels: "project" → "Show project 3 of 6". */
   noun: string;
   /** Accessible name of the scroll region. */
   label: string;
 }
-const { id, noun, label } = Astro.props;
+const { id, noun, label, class: className, ...rest } = Astro.props;
 ---
 
-<div class="slider" data-slider data-noun={noun} id={id}>
+<div class:list={['slider', className]} data-slider data-noun={noun} id={id} {...rest}>
   {/* eslint-disable-next-line astro/jsx-a11y/no-noninteractive-tabindex -- scrollable region must be keyboard-focusable (WCAG 2.1.1) */}
   <div class="track" data-slider-track role="region" tabindex="0" aria-label={label}>
     <slot />
