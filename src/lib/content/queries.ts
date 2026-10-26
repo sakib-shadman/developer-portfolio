@@ -2,7 +2,7 @@
  * Data access for pages (ADR-0008). Thin I/O over astro:content; logic lives in logic.ts.
  * Swapping files for a backend means changing loaders in content.config.ts, not this API.
  */
-import { getCollection, getEntry } from 'astro:content';
+import { getCollection, getEntry, render } from 'astro:content';
 import {
   isVisible,
   pickFeaturedProjects,
@@ -20,7 +20,15 @@ import {
   type SkillNames,
 } from './mappers';
 import { composeHomeSections, type HomeSections } from '../home';
-import type { ArticleCard, ExperienceItem, Profile, ProjectCard, SkillGroup } from './types';
+import type {
+  ArticleCard,
+  CaseStudy,
+  CaseStudyContent,
+  ExperienceItem,
+  Profile,
+  ProjectCard,
+  SkillGroup,
+} from './types';
 
 // Drafts render in `astro dev` and in e2e/test builds (PUBLIC_INCLUDE_DRAFTS=true) so pages can be
 // built and tested before the owner's real content is complete. Never set it for live deploys.
@@ -55,6 +63,25 @@ export async function getProjects(): Promise<ProjectCard[]> {
     getSkillNames(),
   ]);
   return entries.map((p) => toProjectCard(p, names)).sort((a, b) => a.name.localeCompare(b.name));
+}
+
+/** The case study linked from a project, with its MDX rendered; undefined when there is none. */
+export async function getCaseStudy(project: ProjectCard): Promise<CaseStudy | undefined> {
+  if (!project.caseStudyId) return undefined;
+  const entry = await getEntry('caseStudies', project.caseStudyId);
+  if (!entry) return undefined;
+  if (entry.data.project.id !== project.slug) {
+    throw new Error(
+      `Case study "${entry.id}" belongs to project "${entry.data.project.id}" but is linked from "${project.slug}"`,
+    );
+  }
+  const { Content } = await render(entry);
+  return {
+    id: entry.id,
+    problem: entry.data.problem,
+    outcomes: entry.data.outcomes,
+    Content: Content as unknown as CaseStudyContent,
+  };
 }
 
 export async function getFeaturedProjects(): Promise<ProjectCard[]> {

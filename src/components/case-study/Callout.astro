@@ -1,0 +1,37 @@
+---
+/** Highlighted aside inside a case study. */
+interface Props {
+  title?: string;
+}
+const { title } = Astro.props;
+---
+
+<aside class="callout">
+  {title && <strong class="title">{title}</strong>}
+  <div>
+    <slot />
+  </div>
+</aside>
+
+<style>
+  .callout {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 18px 22px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--acc);
+    border-left-width: 4px;
+    background: var(--acc-soft);
+    color: var(--text);
+    font-size: 16px;
+    line-height: 1.65;
+  }
+  .title {
+    font-family: var(--font-display);
+    font-size: 18px;
+  }
+  .callout :global(p) {
+    margin: 0;
+  }
+</style>

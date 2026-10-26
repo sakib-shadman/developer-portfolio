@@ -75,6 +75,7 @@ export const toProjectCard = ({ id, data }: CollectionEntry<'projects'>, names: 
   featured: data.featured,
   featuredOrder: data.featuredOrder,
   hasCaseStudy: Boolean(data.caseStudy),
+  caseStudyId: data.caseStudy?.id,
   draft: data.status === 'draft',
 });
 

@@ -84,7 +84,21 @@ export interface ProjectCard {
   featured: boolean;
   featuredOrder?: number;
   hasCaseStudy: boolean;
+  /** Id of the linked case study entry (set when hasCaseStudy). */
+  caseStudyId?: string;
   draft: boolean;
+}
+
+/** Structural type of a rendered MDX body (avoids depending on Astro's internal component types). */
+export type CaseStudyContent = (props: { components?: Record<string, unknown> }) => unknown;
+
+/** A case study with its rendered MDX body (ADR-0008: pages never touch astro:content). */
+export interface CaseStudy {
+  id: string;
+  problem: string;
+  outcomes: string[];
+  /** Renders the MDX body; pass `components` for the case-study MDX components. */
+  Content: CaseStudyContent;
 }
 
 export interface ArticleCard {

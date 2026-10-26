@@ -50,6 +50,28 @@ describe('mappers', () => {
     expect(categoryLabel('sdk')).toBe('SDK');
   });
 
+  it('toProjectCard exposes the linked case study id', () => {
+    const card = toProjectCard(
+      {
+        id: 'lms-cricket',
+        collection: 'projects',
+        data: {
+          name: 'LMS Cricket',
+          category: 'mobile-app',
+          technologies: [],
+          contributions: [],
+          links: {},
+          media: [],
+          featured: false,
+          status: 'published',
+          caseStudy: { id: 'lms-cricket-study', collection: 'caseStudies' },
+        },
+      } as never,
+      names,
+    );
+    expect(card).toMatchObject({ hasCaseStudy: true, caseStudyId: 'lms-cricket-study' });
+  });
+
   it('toExperienceItem: endDate null means current', () => {
     const item = toExperienceItem(
       {

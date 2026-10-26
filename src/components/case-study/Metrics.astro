@@ -1,0 +1,51 @@
+---
+/** Measured results as a <dl>. Only pass figures that can be backed up (FR-06.6). */
+interface Props {
+  items: { label: string; value: string }[];
+}
+const { items } = Astro.props;
+---
+
+{items.length > 0 && (
+  <dl>
+    {items.map((m) => (
+      <div class="metric">
+        <dt>{m.label}</dt>
+        <dd>{m.value}</dd>
+      </div>
+    ))}
+  </dl>
+)}
+
+<style>
+  dl {
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+    gap: 16px;
+  }
+  .metric {
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 4px;
+    padding: 24px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+    background: var(--surface);
+  }
+  dt {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  dd {
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 36px;
+    line-height: 1.2;
+    color: var(--text);
+  }
+</style>

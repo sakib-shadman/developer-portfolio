@@ -9,7 +9,7 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { parse as parseYaml } from 'yaml';
-import { findPlaceholders } from '../src/lib/content/guards';
+import { findPlaceholders, looseMdxContent } from '../src/lib/content/guards';
 
 const ROOT = new URL('..', import.meta.url).pathname;
 const CONTENT = join(ROOT, 'src/content');
@@ -82,6 +82,9 @@ for (const id of caseStudyIds) {
   const rel = `src/content/case-studies/${id}.mdx`;
   const fm = frontmatter(readFileSync(join(ROOT, rel), 'utf8')) as { project?: unknown };
   checkRefs(`${rel} project`, fm.project, projectIds, 'project');
+  for (const hit of looseMdxContent(readFileSync(join(ROOT, rel), 'utf8'))) {
+    errors.push(`${rel}:${hit.line}: content outside a <Section> ("${hit.text.slice(0, 40)}")`);
+  }
 }
 
 if (errors.length) {

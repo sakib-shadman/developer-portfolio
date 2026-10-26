@@ -1,0 +1,90 @@
+---
+/**
+ * Simple flow diagram: boxes joined by arrows (design: Architecture figure). The list is the
+ * accessible form (read in order); arrows are decorative. `highlight` marks the focal box.
+ */
+interface Node {
+  label: string;
+  highlight?: boolean;
+}
+interface Props {
+  nodes: Node[];
+  caption?: string;
+}
+const { nodes, caption } = Astro.props;
+---
+
+{nodes.length > 0 && (
+  <figure>
+    <ol role="list">
+      {nodes.map((n, i) => (
+        <>
+          {i > 0 && (
+            <li class="arrow" aria-hidden="true">
+              <svg
+                width="40"
+                height="16"
+                viewBox="0 0 40 16"
+                fill="none"
+                stroke="var(--muted)"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M2 8h34M30 2l6 6-6 6" />
+              </svg>
+            </li>
+          )}
+          <li class:list={['node', { highlight: n.highlight }]}>{n.label}</li>
+        </>
+      ))}
+    </ol>
+    {caption && <figcaption>{caption}</figcaption>}
+  </figure>
+)}
+
+<style>
+  figure {
+    margin: 8px 0 0;
+    padding: 32px 24px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+    background: var(--surface);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  ol {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .node {
+    min-width: 160px;
+    box-sizing: border-box;
+    padding: 18px 20px;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    text-align: center;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .highlight {
+    border-color: var(--acc);
+    background: var(--acc-soft);
+  }
+  .arrow {
+    display: flex;
+  }
+  figcaption {
+    text-align: center;
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--muted);
+  }
+</style>
