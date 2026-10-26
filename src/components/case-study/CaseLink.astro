@@ -4,7 +4,8 @@
  * render as plain text, external links open in a new tab with rel and a screen-reader hint.
  */
 import type { HTMLAttributes } from 'astro/types';
-import { linkAttrs } from '../../lib/link';
+import { linkAttrs, opensInNewTab } from '../../lib/link';
+import NewTabHint from '../ui/NewTabHint.astro';
 
 type Props = Omit<HTMLAttributes<'a'>, 'target' | 'rel'>;
 const { href, ...rest } = Astro.props;
@@ -14,7 +15,7 @@ const link = linkAttrs(href?.toString());
 {link ? (
   <a href={link.href} target={link.target} rel={link.rel} {...rest}>
     <slot />
-    {link.external && <span class="sr-only">(opens in a new tab)</span>}
+    {opensInNewTab(link) && <NewTabHint />}
   </a>
 ) : (
   <span>

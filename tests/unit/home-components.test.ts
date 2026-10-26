@@ -76,6 +76,10 @@ describe('Hero', () => {
     expect(html).toContain('Dhaka · GMT+6');
     expect(html).toMatch(/href="\/projects"/);
     expect(html).toMatch(/href="\/resume\/ada\.pdf"[^>]*download/);
+    // The photo outline must not use a class the Button variants share ("outline"): scoped styles
+    // would leak onto the Download button and stretch it over the page.
+    expect(html).toMatch(/<div class="frame-outline"/);
+    expect(html).not.toMatch(/<div class="outline"/);
     expect(html).toContain('alt="Ada at her desk"');
     expect(html).toContain('sizes="(max-width: 1000px) 100vw, 440px"');
     expect(html).toMatch(/srcset=/);

@@ -51,9 +51,14 @@ const hasBeyond = about.community.length > 0 || Boolean(about.objective) || abou
         </div>
         <div class="actions">
           {resume && (
-            <Button variant="solid" href={resume} icon="download" download>
-              Download resume
-            </Button>
+            <>
+              <Button variant="solid" href={resume} icon="download" download>
+                Download resume
+              </Button>
+              <Button variant="outline" size="lg" href={resume} newTab>
+                View resume
+              </Button>
+            </>
           )}
           <Button variant="outline" size="lg" href="/contact">
             Get in touch

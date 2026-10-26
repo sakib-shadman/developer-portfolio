@@ -8,7 +8,8 @@
  */
 import type { HTMLAttributes } from 'astro/types';
 import Icon, { type IconName } from './Icon.astro';
-import { linkAttrs } from '../../lib/link';
+import { linkAttrs, opensInNewTab } from '../../lib/link';
+import NewTabHint from './NewTabHint.astro';
 
 type Common = Omit<
   HTMLAttributes<'a'> & HTMLAttributes<'button'>,
@@ -19,8 +20,8 @@ type Common = Omit<
 };
 /** Links can't be disabled (no such attribute on <a>); only buttons take `disabled`/`type`. */
 type Element =
-  | { href: string | undefined; download?: boolean; disabled?: never; type?: never }
-  | { href?: never; download?: never; disabled?: boolean; type?: 'button' | 'submit' };
+  | { href: string | undefined; download?: boolean; newTab?: boolean; disabled?: never; type?: never }
+  | { href?: never; download?: never; newTab?: never; disabled?: boolean; type?: 'button' | 'submit' };
 type Variant = { variant: 'solid'; size?: 'lg' } | { variant?: 'outline' | 'soft'; size?: 'md' | 'lg' };
 type Props = Common & Element & Variant;
 
@@ -32,17 +33,18 @@ const {
   icon,
   iconEnd,
   download,
+  newTab,
   disabled,
   class: className,
   'aria-label': ariaLabel,
   ...rest
 } = Astro.props;
 
-const link = href === undefined ? undefined : linkAttrs(href);
+const link = href === undefined ? undefined : linkAttrs(href, { newTab });
 const iconColor = variant === 'outline' ? 'var(--acc)' : 'currentColor';
 const classes = ['btn', variant, size, className];
 // An aria-label replaces the content name, so the sr-only new-tab hint must be part of it.
-const linkLabel = ariaLabel && link?.external ? `${ariaLabel} (opens in a new tab)` : ariaLabel;
+const linkLabel = ariaLabel && opensInNewTab(link) ? `${ariaLabel} (opens in a new tab)` : ariaLabel;
 ---
 
 {href === undefined ? (
@@ -65,7 +67,7 @@ const linkLabel = ariaLabel && link?.external ? `${ariaLabel} (opens in a new ta
       {icon && <Icon name={icon} color={iconColor} />}
       <slot />
       {iconEnd && <Icon name={iconEnd} color={iconColor} />}
-      {link.external && !ariaLabel && <span class="sr-only">(opens in a new tab)</span>}
+      {opensInNewTab(link) && !ariaLabel && <NewTabHint />}
     </a>
   )
 )}

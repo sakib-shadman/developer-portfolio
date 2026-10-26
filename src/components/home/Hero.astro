@@ -68,7 +68,7 @@ const photo = profile.photo;
   </div>
   {photo && (
     <div class="frame">
-      <div class="outline" aria-hidden="true" />
+      <div class="frame-outline" aria-hidden="true" />
       <figure>
         <Image
           src={photo.src}
@@ -173,7 +173,7 @@ const photo = profile.photo;
     max-width: 440px;
     padding: 0 20px 20px 0;
   }
-  .outline {
+  .frame-outline {
     position: absolute;
     inset: 20px 0 0 20px;
     border: 2px solid var(--acc);

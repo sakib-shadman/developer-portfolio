@@ -5,7 +5,8 @@
  * nothing renders when none qualify. Email: tile → "#contact" (hero), pill → mailto.
  */
 import type { HTMLAttributes } from 'astro/types';
-import { linkAttrs } from '../../lib/link';
+import { linkAttrs, opensInNewTab } from '../../lib/link';
+import NewTabHint from './NewTabHint.astro';
 import Icon, { type IconName } from './Icon.astro';
 
 export type ProfileLinkKind = 'github' | 'linkedin' | 'medium' | 'email';
@@ -45,7 +46,7 @@ const items = kinds.flatMap((k) => {
           <a class="item" href={i.link.href} target={i.link.target} rel={i.link.rel}>
             <Icon name={i.icon} size={18} color="var(--acc)" />
             {i.label}
-            {i.link.external && <span class="sr-only">(opens in a new tab)</span>}
+            {opensInNewTab(i.link) && <NewTabHint />}
           </a>
         </li>
       ))}
@@ -59,7 +60,7 @@ const items = kinds.flatMap((k) => {
         <a class="item" href={i.link.href} target={i.link.target} rel={i.link.rel}>
           <Icon name={i.icon} size={18} color="var(--acc)" />
           {i.label}
-          {i.link.external && <span class="sr-only">(opens in a new tab)</span>}
+          {opensInNewTab(i.link) && <NewTabHint />}
         </a>
       </li>
     ))}

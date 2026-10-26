@@ -80,8 +80,20 @@ describe('about page (populated)', () => {
   it('both resume links go through linkAttrs and carry download', async () => {
     const html = main(await render(full));
     const links = [...html.matchAll(/<a\b[^>]*href="\/resume\/ada\.pdf"[^>]*>/g)].map((m) => m[0]);
-    expect(links).toHaveLength(2);
-    for (const l of links) expect(l).toMatch(/\bdownload\b/);
+    expect(links).toHaveLength(3);
+    expect(links.filter((l) => /\bdownload\b/.test(l))).toHaveLength(2);
+  });
+
+  it('offers View resume in a new tab (no download attribute) beside the Download button', async () => {
+    const html = main(await render(full));
+    const view =
+      html.match(
+        /<a\b[^>]*href="\/resume\/ada\.pdf"[^>]*>(?:(?!<\/a>)[\s\S])*View resume[\s\S]*?<\/a>/,
+      )?.[0] ?? '';
+    expect(view).toContain('target="_blank"');
+    expect(view).toContain('rel="noopener noreferrer"');
+    expect(view).not.toMatch(/\bdownload\b/);
+    expect(view).toContain(' (opens in a new tab)');
   });
 
   it('principles are an ordered list numbered 01, 02', async () => {
