@@ -42,6 +42,36 @@ describe('Button', () => {
     expect(html).toContain('btn solid lg');
   });
 
+  it('hint is separated from the label by a space', async () => {
+    const html = await c.renderToString(Button, { props: { href: 'https://x.dev' }, ...label('Site') });
+    expect(html).toMatch(/Site[\s\S]*<span class="sr-only"> \(opens in a new tab\)<\/span>/);
+  });
+
+  it('newTab opens an internal PDF in a new tab with the notice, and download is independent', async () => {
+    const view = await c.renderToString(Button, {
+      props: { href: '/resume/cv.pdf', newTab: true },
+      ...label('View'),
+    });
+    expect(view).toContain('target="_blank"');
+    expect(view).toContain('rel="noopener noreferrer"');
+    expect(view).toContain(' (opens in a new tab)');
+    const dl = await c.renderToString(Button, {
+      props: { href: '/resume/cv.pdf', download: true },
+      ...label('Get'),
+    });
+    expect(dl).toMatch(/<a href="\/resume\/cv\.pdf"[^>]*download/);
+    expect(dl).not.toContain('target=');
+    expect(dl).not.toContain('opens in a new tab');
+  });
+
+  it('newTab with an aria-label puts the notice in the name', async () => {
+    const html = await c.renderToString(Button, {
+      props: { href: '/resume/cv.pdf', newTab: true, 'aria-label': 'View resume' },
+      ...label('View'),
+    });
+    expect(html).toContain('aria-label="View resume (opens in a new tab)"');
+  });
+
   it('external link with aria-label keeps the new-tab notice in the name', async () => {
     const html = await c.renderToString(Button, {
       props: { href: 'https://github.com/sakib-shadman', 'aria-label': 'GitHub profile' },
@@ -90,6 +120,16 @@ describe('LinkPill', () => {
     expect(external).toContain('↗');
     expect(external).toContain('target="_blank"');
     expect(external).toContain('pill secondary');
+    expect(external).toMatch(/App listing[\s\S]*<span class="sr-only"> \(opens in a new tab\)<\/span>/);
+    const pdf = await c.renderToString(LinkPill, {
+      props: { href: '/resume/cv.pdf', newTab: true },
+      ...label('Resume'),
+    });
+    expect(pdf).toContain('↗');
+    expect(pdf).toContain('target="_blank"');
+    expect(pdf).toContain('rel="noopener noreferrer"');
+    expect(pdf).toContain(' (opens in a new tab)');
+    expect(internal).not.toContain('opens in a new tab');
     const none = await c.renderToString(LinkPill, { props: { href: undefined }, ...label('Docs') });
     expect(none.trim()).toBe('');
   });

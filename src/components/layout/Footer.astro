@@ -1,5 +1,7 @@
 ---
 import Icon from '../ui/Icon.astro';
+import NewTabHint from '../ui/NewTabHint.astro';
+import { linkAttrs, opensInNewTab } from '../../lib/link';
 
 interface Props {
   name: string;
@@ -10,6 +12,7 @@ interface Props {
 }
 
 const { name, location, resume, rss = false } = Astro.props;
+const resumeLink = linkAttrs(resume, { newTab: true });
 const year = new Date().getFullYear();
 ---
 
@@ -20,11 +23,12 @@ const year = new Date().getFullYear();
       {location && ` · ${location}`}
     </p>
     <ul class="actions" role="list">
-      {resume && (
+      {resumeLink && (
         <li>
-          <a class="pill" href={resume} target="_blank" rel="noopener noreferrer">
+          <a class="pill" href={resumeLink.href} target={resumeLink.target} rel={resumeLink.rel}>
             <Icon name="download" color="var(--acc)" />
-            Resume<span class="sr-only"> (opens in a new tab)</span>
+            Resume
+            {opensInNewTab(resumeLink) && <NewTabHint />}
           </a>
         </li>
       )}

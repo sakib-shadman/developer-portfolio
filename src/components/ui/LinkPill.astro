@@ -4,22 +4,25 @@
  * render identically. External links get "↗" and open in a new tab. Unsafe hrefs render nothing.
  */
 import type { HTMLAttributes } from 'astro/types';
-import { linkAttrs } from '../../lib/link';
+import { linkAttrs, opensInNewTab } from '../../lib/link';
+import NewTabHint from './NewTabHint.astro';
 
 interface Props extends Omit<HTMLAttributes<'a'>, 'href' | 'target' | 'rel'> {
   href: string | undefined;
   variant?: 'primary' | 'secondary';
+  /** Open an internal link (e.g. a PDF) in a new tab. */
+  newTab?: boolean;
 }
 
-const { href, variant = 'primary', class: className, ...rest } = Astro.props;
-const link = linkAttrs(href);
+const { href, variant = 'primary', newTab, class: className, ...rest } = Astro.props;
+const link = linkAttrs(href, { newTab });
 ---
 
 {link && (
   <a href={link.href} target={link.target} rel={link.rel} class:list={['pill', variant, className]} {...rest}>
     <slot />
-    <span aria-hidden="true">{link.external ? '↗' : '→'}</span>
-    {link.external && <span class="sr-only">(opens in a new tab)</span>}
+    <span aria-hidden="true">{opensInNewTab(link) ? '↗' : '→'}</span>
+    {opensInNewTab(link) && <NewTabHint />}
   </a>
 )}
 

@@ -23,10 +23,9 @@ test('only sections backed by content render; no placeholders or empty headings'
   // Present with today's content: expertise (skill groups) and "Looking for" (availability).
   await expect(main.getByRole('heading', { level: 2, name: 'Areas of expertise' })).toBeVisible();
   await expect(main.getByRole('heading', { level: 2, name: 'Looking for' })).toBeVisible();
-  // Absent: no principles / community / photo / resume / email in profile.json.
+  // Absent: no principles / community / photo / email in profile.json (resume: see resume.spec.ts).
   await expect(main.getByRole('heading', { name: 'Engineering principles' })).toHaveCount(0);
   await expect(main.getByRole('heading', { name: 'Community & writing' })).toHaveCount(0);
-  await expect(main.getByRole('link', { name: /resume/i })).toHaveCount(0);
   await expect(main.locator('img')).toHaveCount(0);
   await expect(main).not.toContainText(/\[[^\]]+\]/);
   for (const h of await main.getByRole('heading').all()) {

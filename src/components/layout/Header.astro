@@ -1,4 +1,6 @@
 ---
+import { linkAttrs, opensInNewTab } from '../../lib/link';
+import NewTabHint from '../ui/NewTabHint.astro';
 import { PRIMARY_NAV, isCurrent, visibleNav, type HomeAnchor } from '../../lib/nav';
 
 interface Props {
@@ -10,6 +12,8 @@ interface Props {
 
 const { name, resume, sections = { skills: true, experience: true } } = Astro.props;
 const pathname = Astro.url.pathname;
+// The resume is a PDF: View opens it in a new tab (FR-10.2).
+const resumeLink = linkAttrs(resume, { newTab: true });
 ---
 
 <header class="site-header" id="top">
@@ -35,10 +39,11 @@ const pathname = Astro.url.pathname;
           </li>
         );
       })}
-      {resume && (
+      {resumeLink && (
         <li>
-          <a href={resume} class="resume" target="_blank" rel="noopener noreferrer">
-            Resume<span class="sr-only"> (opens in a new tab)</span>
+          <a href={resumeLink.href} class="resume" target={resumeLink.target} rel={resumeLink.rel}>
+            Resume
+            {opensInNewTab(resumeLink) && <NewTabHint />}
           </a>
         </li>
       )}

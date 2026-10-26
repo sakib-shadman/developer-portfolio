@@ -18,7 +18,25 @@ const INTERNAL_BASE = 'https://internal.invalid';
 // eslint-disable-next-line no-control-regex
 const UNSAFE_CHARS = /[\u0000- \u007f\\]/;
 
-export function linkAttrs(href: string | undefined | null): LinkAttrs | null {
+export interface LinkOptions {
+  /**
+   * Open an internal link (e.g. a PDF under /resume/) in a new tab. Gets the same target/rel as
+   * external links; callers show the sr-only notice via opensInNewTab(). No effect on external links.
+   */
+  newTab?: boolean;
+}
+
+/** True when the link opens in a new tab (external, or internal with `newTab`): show the notice. */
+export const opensInNewTab = (link: LinkAttrs | null | undefined): boolean => link?.target === '_blank';
+
+const NEW_TAB = { target: '_blank', rel: 'noopener noreferrer' } as const;
+
+export function linkAttrs(href: string | undefined | null, options: LinkOptions = {}): LinkAttrs | null {
+  const link = parseLink(href);
+  return link && options.newTab && !link.external ? { ...link, ...NEW_TAB } : link;
+}
+
+function parseLink(href: string | undefined | null): LinkAttrs | null {
   if (!href || UNSAFE_CHARS.test(href)) return null;
 
   if (href.startsWith('#') || (href.startsWith('/') && !href.startsWith('//'))) {
@@ -33,7 +51,7 @@ export function linkAttrs(href: string | undefined | null): LinkAttrs | null {
     try {
       const u = new URL(href);
       if (u.protocol === 'http:' || u.protocol === 'https:') {
-        return { href: u.href, target: '_blank', rel: 'noopener noreferrer', external: true };
+        return { href: u.href, ...NEW_TAB, external: true };
       }
     } catch {
       return null;

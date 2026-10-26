@@ -46,7 +46,7 @@ describe('case-study links', () => {
     expect(html).toContain('a bad link');
     expect(html).not.toMatch(/<a[^>]*>\s*a bad link/);
     expect(html).toMatch(
-      /<a href="https:\/\/example\.dev\/repo"[^>]*target="_blank"[^>]*rel="noopener noreferrer"[^>]*>\s*the repo\s*<span class="sr-only">\(opens in a new tab\)/,
+      /<a href="https:\/\/example\.dev\/repo"[^>]*target="_blank"[^>]*rel="noopener noreferrer"[^>]*>\s*the repo\s*<span class="sr-only"> \(opens in a new tab\)/,
     );
     expect(html).toMatch(/<a href="\/projects"(?![^>]*target)[^>]*>\s*home\s*<\/a>/);
   });

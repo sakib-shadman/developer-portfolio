@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { findPlaceholders, isPlaceholder, looseMdxContent } from '../../src/lib/content/guards';
+import { findPlaceholders, isPlaceholder, looseMdxContent, resumeError } from '../../src/lib/content/guards';
 
 describe('placeholder guard', () => {
   it.each(['[Project name]', '[X]', 'Built with [Tech]', 'TODO: write bio', 'TBD', 'Lorem ipsum dolor'])(
@@ -27,14 +27,14 @@ describe('looseMdxContent', () => {
     expect(looseMdxContent(ok)).toEqual([]);
   });
 
-  it('flags text, headings and components outside a Section with their body line numbers', () => {
+  it('flags text, headings and components outside a Section with their file line numbers (frontmatter included)', () => {
     const bad = doc(
       `Loose paragraph\n\n<Section eyebrow="A" title="B">\nin\n</Section>\n\n## Heading\n<Callout>x</Callout>\n`,
     );
     expect(looseMdxContent(bad)).toEqual([
-      { line: 1, text: 'Loose paragraph' },
-      { line: 7, text: '## Heading' },
-      { line: 8, text: '<Callout>x</Callout>' },
+      { line: 5, text: 'Loose paragraph' },
+      { line: 11, text: '## Heading' },
+      { line: 12, text: '<Callout>x</Callout>' },
     ]);
   });
 
@@ -44,5 +44,36 @@ describe('looseMdxContent', () => {
         '<Section\n  eyebrow="A"\n  title="B"\n>\nbody\n</Section>\n<Section eyebrow="C" title="D">x</Section>',
       ),
     ).toEqual([]);
+  });
+
+  it('a self-closing Section opens nothing, so content after it is still loose', () => {
+    expect(looseMdxContent('<Section eyebrow="A" title="B" />\nloose\n')).toEqual([
+      { line: 2, text: 'loose' },
+    ]);
+    expect(looseMdxContent('<Section\n  eyebrow="A"\n  title="B"\n/>\nloose\n')).toEqual([
+      { line: 5, text: 'loose' },
+    ]);
+    expect(
+      looseMdxContent('<Section eyebrow="A" title="B" />\n<Section eyebrow="C" title="D">\nok\n</Section>\n'),
+    ).toEqual([]);
+  });
+
+  it('reports lines of a file without frontmatter from 1', () => {
+    expect(looseMdxContent('loose')).toEqual([{ line: 1, text: 'loose' }]);
+  });
+});
+
+describe('resumeError', () => {
+  it('reports a configured resume that is missing from public/', () => {
+    expect(resumeError('/resume/cv.pdf', () => false)).toBe(
+      'src/content/profile.json $.main.resume: file public/resume/cv.pdf does not exist',
+    );
+  });
+  it('rejects a path without a leading slash', () => {
+    expect(resumeError('resume/cv.pdf', () => true)).toContain('must start with "/"');
+  });
+  it('is silent when there is no resume or the file exists', () => {
+    expect(resumeError(undefined, () => false)).toBeUndefined();
+    expect(resumeError('/resume/cv.pdf', (p) => p === 'public/resume/cv.pdf')).toBeUndefined();
   });
 });

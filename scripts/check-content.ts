@@ -9,7 +9,7 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { parse as parseYaml } from 'yaml';
-import { findPlaceholders, looseMdxContent } from '../src/lib/content/guards';
+import { findPlaceholders, looseMdxContent, resumeError } from '../src/lib/content/guards';
 
 const ROOT = new URL('..', import.meta.url).pathname;
 const CONTENT = join(ROOT, 'src/content');
@@ -43,9 +43,8 @@ const profile = JSON.parse(readFileSync(join(CONTENT, 'profile.json'), 'utf8')) 
   main?: { resume?: string };
 };
 const resume = profile.main?.resume;
-if (resume && !existsSync(join(ROOT, 'public', resume))) {
-  errors.push(`src/content/profile.json $.main.resume: file public${resume} does not exist`);
-}
+const missing = resumeError(resume, (p) => existsSync(join(ROOT, p)));
+if (missing) errors.push(missing);
 
 // ---------- Reference integrity ----------
 const readJson = <T>(rel: string): T => JSON.parse(readFileSync(join(ROOT, rel), 'utf8')) as T;

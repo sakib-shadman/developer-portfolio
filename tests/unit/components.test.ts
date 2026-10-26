@@ -26,8 +26,20 @@ describe('Header', () => {
       props: { name: 'Shadman Sakib', resume: '/resume/cv.pdf' },
       request: new Request('http://localhost/'),
     });
-    expect(html).toMatch(/href="\/resume\/cv\.pdf"[^>]*>\s*Resume/);
+    expect(html).toMatch(
+      /<a href="\/resume\/cv\.pdf" class="resume[^"]*"[^>]*target="_blank"[^>]*rel="noopener noreferrer"[^>]*>\s*Resume/,
+    );
+    expect(html).toMatch(/Resume\s*<span class="sr-only"[^>]*> \(opens in a new tab\)<\/span>/);
     expect(html).not.toContain('aria-current');
+  });
+
+  it('drops an unsafe resume href instead of rendering a link', async () => {
+    const html = await container.renderToString(Header, {
+      props: { name: 'Shadman Sakib', resume: 'javascript:alert(1)' },
+      request: new Request('http://localhost/'),
+    });
+    expect(html).not.toContain('Resume');
+    expect(html).not.toContain('javascript:');
   });
 });
 
@@ -45,7 +57,11 @@ describe('Footer', () => {
       props: { name: 'S', location: 'Dhaka, Bangladesh', resume: '/resume/cv.pdf', rss: true },
     });
     expect(html).toContain('S · Dhaka, Bangladesh');
-    expect(html).toContain('href="/resume/cv.pdf"');
+    expect(html).toMatch(
+      /<a[^>]*class="pill[^"]*"[^>]*href="\/resume\/cv\.pdf"|<a[^>]*href="\/resume\/cv\.pdf"[^>]*class="pill/,
+    );
+    expect(html).toMatch(/href="\/resume\/cv\.pdf"[^>]*target="_blank"[^>]*rel="noopener noreferrer"/);
+    expect(html).toMatch(/Resume\s*<span class="sr-only"[^>]*> \(opens in a new tab\)<\/span>/);
     expect(html).toContain('href="/rss.xml"');
   });
 });

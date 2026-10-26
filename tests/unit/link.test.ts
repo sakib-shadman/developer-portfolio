@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { linkAttrs } from '../../src/lib/link';
+import { linkAttrs, opensInNewTab } from '../../src/lib/link';
 
 describe('linkAttrs', () => {
   it.each(['/projects', '/projects/lms-cricket#role', '/blog?tag=flutter', '#top'])(
@@ -47,4 +47,35 @@ describe('linkAttrs', () => {
     'relative/path',
     'http://[::1', // URL constructor throws → caught
   ])('rejects %j', (href) => expect(linkAttrs(href)).toBeNull());
+});
+
+describe('linkAttrs newTab option', () => {
+  it('internal PDF path opens in a new tab with noopener noreferrer, still not "external"', () => {
+    expect(linkAttrs('/resume/cv.pdf', { newTab: true })).toEqual({
+      href: '/resume/cv.pdf',
+      target: '_blank',
+      rel: 'noopener noreferrer',
+      external: false,
+    });
+    expect(linkAttrs('/resume/cv.pdf')).toEqual({ href: '/resume/cv.pdf', external: false });
+    expect(linkAttrs('/resume/cv.pdf', { newTab: false })).toEqual({
+      href: '/resume/cv.pdf',
+      external: false,
+    });
+  });
+
+  it('external links are unchanged by the option; unsafe hrefs stay rejected', () => {
+    expect(linkAttrs('https://x.dev', { newTab: true })).toEqual(linkAttrs('https://x.dev'));
+    expect(linkAttrs('javascript:alert(1)', { newTab: true })).toBeNull();
+    expect(linkAttrs('//evil.com/x.pdf', { newTab: true })).toBeNull();
+    expect(linkAttrs(undefined, { newTab: true })).toBeNull();
+  });
+
+  it('opensInNewTab is true for external and newTab links only', () => {
+    expect(opensInNewTab(linkAttrs('https://x.dev'))).toBe(true);
+    expect(opensInNewTab(linkAttrs('/resume/cv.pdf', { newTab: true }))).toBe(true);
+    expect(opensInNewTab(linkAttrs('/resume/cv.pdf'))).toBe(false);
+    expect(opensInNewTab(linkAttrs('mailto:me@example.com'))).toBe(false);
+    expect(opensInNewTab(null)).toBe(false);
+  });
 });
