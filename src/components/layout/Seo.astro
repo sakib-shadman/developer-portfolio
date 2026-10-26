@@ -10,25 +10,34 @@ interface Props {
   path?: string;
   image?: string;
   type?: 'website' | 'article' | 'profile';
+  /** Always emit noindex and no canonical, regardless of PUBLIC_INDEXABLE (404 page). */
+  noindex?: boolean;
 }
 
-const { title, description, path = Astro.url.pathname, image, type = 'website' } = Astro.props;
+const {
+  title,
+  description,
+  path = Astro.url.pathname,
+  image,
+  type = 'website',
+  noindex = false,
+} = Astro.props;
 const site = Astro.site ?? new URL('http://localhost:4321');
 const canonical = new URL(path === '/' ? '/' : path.replace(/\/$/, ''), site).toString();
 // OG images arrive in PF-40; until then omit the tag rather than point at a missing file.
 const ogImage = image ? new URL(image, site).toString() : undefined;
-const indexable = import.meta.env.PUBLIC_INDEXABLE === 'true';
+const indexable = !noindex && import.meta.env.PUBLIC_INDEXABLE === 'true';
 ---
 
 <title>{title}</title>
 <meta name="description" content={description} />
-<link rel="canonical" href={canonical} />
+{!noindex && <link rel="canonical" href={canonical} />}
 {!indexable && <meta name="robots" content="noindex, nofollow" />}
 
 <meta property="og:type" content={type} />
 <meta property="og:title" content={title} />
 <meta property="og:description" content={description} />
-<meta property="og:url" content={canonical} />
+{!noindex && <meta property="og:url" content={canonical} />}
 {ogImage && <meta property="og:image" content={ogImage} />}
 <meta name="twitter:card" content={ogImage ? 'summary_large_image' : 'summary'} />
 <meta name="twitter:title" content={title} />
