@@ -10,6 +10,18 @@ const counter = (page: Page) => root(page).locator('[data-slider-counter]');
 const toggle = (page: Page) => root(page).locator('[data-slider-toggle]');
 const scrollLeft = (page: Page) => track(page).evaluate((e) => e.scrollLeft);
 
+/** Fails with the slider's own diagnostics (data-holds / data-ticks / data-tick) when autoplay stalls. */
+async function expectAutoplayMoves(page: Page, timeout = 9000): Promise<void> {
+  const diag = () => root(page).evaluate((el) => JSON.stringify({ ...el.dataset }));
+  await expect(root(page), `holds: ${await diag()}`).toHaveAttribute('data-holds', '');
+  const deadline = Date.now() + timeout;
+  while (Date.now() < deadline) {
+    if ((await scrollLeft(page)) > 100) return;
+    await page.waitForTimeout(250);
+  }
+  throw new Error(`autoplay did not move the track within ${timeout}ms; slider state: ${await diag()}`);
+}
+
 async function open(page: Page): Promise<void> {
   await page.setViewportSize({ width: 900, height: 900 }); // 2 cards per view, 3 cards → scrolls
   await page.goto('/');
@@ -124,12 +136,34 @@ test.describe('featured projects slider', () => {
     expect(await scrollLeft(page)).toBe(0);
   });
 
+  test('the slider publishes its autoplay state', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'timing test runs on desktop only');
+    await open(page);
+    await page.mouse.move(1, 1);
+    await expect(root(page)).toHaveAttribute('data-holds', '');
+    await expect(root(page)).toHaveAttribute('data-autoplay', 'running');
+    await expect(root(page)).toHaveAttribute('data-ticks', '0');
+    await toggle(page).click(); // the pointer is now over the slider too
+    await expect(root(page)).toHaveAttribute('data-holds', 'hover paused');
+    await page.mouse.move(1, 1);
+    await expect(root(page)).toHaveAttribute('data-holds', 'paused');
+    await expect(root(page)).toHaveAttribute('data-autoplay', 'stopped');
+    await toggle(page).click();
+    await track(page).hover();
+    await expect(root(page)).toHaveAttribute('data-holds', 'hover');
+    await page.mouse.move(1, 1);
+    await expect(root(page)).toHaveAttribute('data-holds', '');
+    await expect
+      .poll(async () => Number(await root(page).getAttribute('data-ticks')), { timeout: 8000 })
+      .toBeGreaterThan(0);
+  });
+
   test('autoplay wraps back to the first card after the end', async ({ page, isMobile }) => {
     test.skip(isMobile, 'timing test runs on desktop only');
     test.setTimeout(30_000);
     await open(page);
     await page.mouse.move(1, 1);
-    await expect.poll(() => scrollLeft(page), { timeout: 8000 }).toBeGreaterThan(100);
+    await expectAutoplayMoves(page);
     await expect(counter(page)).toHaveText(/^02 \//);
     await expect.poll(() => scrollLeft(page), { timeout: 9000 }).toBe(0);
     await expect(counter(page)).toHaveText(/^01 \//);
@@ -140,7 +174,7 @@ test.describe('featured projects slider', () => {
     await open(page);
     await page.mouse.move(1, 1); // pointer parked away from the slider
     // 3 cards at 2 per view: one step already reaches the end of the track.
-    await expect.poll(() => scrollLeft(page), { timeout: 8000 }).toBeGreaterThan(100);
+    await expectAutoplayMoves(page);
     await expect(counter(page)).not.toHaveText(/^01 \//);
     // Hover pauses: park the pointer on the track and make sure the next tick does nothing.
     await track(page).hover();

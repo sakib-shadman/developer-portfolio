@@ -1,5 +1,8 @@
 /** Pure slider maths (HANDOFF §6.1, plan §2.6) — the DOM glue in slider.client.ts only measures and calls these. */
 
+/** Scroll-position tolerance in px: Gecko/WebKit report fractional or rounded scroll metrics. */
+export const EPS = 2;
+
 /**
  * Active card.
  *  - With an explicit `target` (the user clicked a dot, or autoplay stepped to a card) that card is
@@ -16,9 +19,9 @@ export function activeIndex(
   count: number,
   target?: number,
 ): number {
-  if (count <= 0 || maxScroll <= 1) return 0;
+  if (count <= 0 || maxScroll <= EPS) return 0;
   if (target !== undefined) return Math.max(0, Math.min(count - 1, target));
-  if (scrollLeft >= maxScroll - 1) return count - 1;
+  if (scrollLeft >= maxScroll - EPS) return count - 1;
   const step = cardW + gap;
   return Math.max(0, Math.min(count - 1, Math.round(scrollLeft / step)));
 }
@@ -37,7 +40,7 @@ export function nextStop(
 ): number {
   const step = cardW + gap;
   for (let i = 1; i < count; i++) {
-    if (Math.min(i * step, maxScroll) > scrollLeft + 1) return i;
+    if (Math.min(i * step, maxScroll) > scrollLeft + EPS) return i;
   }
   return 0;
 }
@@ -56,9 +59,28 @@ export interface AutoAdvanceState {
   hidden: boolean;
 }
 
+export type Hold = 'hover' | 'focus' | 'paused' | 'reduced' | 'hidden';
+
+/** Every reason autoplay is currently held (empty = running). Order is stable for diagnostics. */
+export function holdReasons(s: AutoAdvanceState): Hold[] {
+  const out: Hold[] = [];
+  if (s.hovered) out.push('hover');
+  if (s.focusWithin) out.push('focus');
+  if (s.paused) out.push('paused');
+  if (s.reducedMotion) out.push('reduced');
+  if (s.hidden) out.push('hidden');
+  return out;
+}
+
 /** Auto-advance only when nothing (pointer, focus, user, OS, tab visibility) asks it to hold. */
-export const shouldAutoAdvance = (s: AutoAdvanceState): boolean =>
-  !(s.hovered || s.focusWithin || s.paused || s.reducedMotion || s.hidden);
+export const shouldAutoAdvance = (s: AutoAdvanceState): boolean => holdReasons(s).length === 0;
+
+/** Where a programmatic scroll to card `i` should land: its offset, clamped to the track end. */
+export const destination = (i: number, cardW: number, gap: number, maxScroll: number): number =>
+  Math.max(0, Math.min(scrollTarget(i, cardW, gap), maxScroll));
+
+/** True when a smooth scroll was cut short (e.g. by scroll-snap) and must be finished instantly. */
+export const needsSettle = (current: number, dest: number): boolean => Math.abs(current - dest) > EPS;
 
 /** Zero-padded "01" for the counter. */
 export const pad2 = (n: number): string => String(n).padStart(2, '0');

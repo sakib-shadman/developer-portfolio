@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
+  EPS,
   activeIndex,
+  destination,
+  holdReasons,
+  needsSettle,
   nextIndex,
   nextStop,
   pad2,
@@ -99,5 +103,35 @@ describe('nextStop (autoplay)', () => {
   it('works from a mid-card position and tolerates sub-pixel offsets', () => {
     expect(nextStop(200, 1212, 380, 24, 6)).toBe(1);
     expect(nextStop(403.6, 1212, 380, 24, 6)).toBe(2);
+  });
+});
+
+describe('holdReasons / destination / needsSettle / tolerance', () => {
+  const idle = { hovered: false, focusWithin: false, paused: false, reducedMotion: false, hidden: false };
+  it('lists every active hold in a stable order', () => {
+    expect(holdReasons(idle)).toEqual([]);
+    expect(
+      holdReasons({ hovered: true, focusWithin: true, paused: true, reducedMotion: true, hidden: true }),
+    ).toEqual(['hover', 'focus', 'paused', 'reduced', 'hidden']);
+    expect(holdReasons({ ...idle, paused: true })).toEqual(['paused']);
+  });
+  it('clamps the destination to the track end', () => {
+    expect(destination(0, 414, 24, 438)).toBe(0);
+    expect(destination(1, 414, 24, 438)).toBe(438);
+    expect(destination(2, 414, 24, 438)).toBe(438);
+  });
+  it('detects a smooth scroll cut short', () => {
+    expect(needsSettle(0, 438)).toBe(true);
+    expect(needsSettle(437.4, 438)).toBe(false);
+    expect(needsSettle(438 - EPS - 0.5, 438)).toBe(true);
+  });
+  it('tolerates fractional scroll metrics (Gecko/WebKit)', () => {
+    // maxScroll reported as 1.6 / 2 → nothing really scrolls
+    expect(activeIndex(0, 1.6, 414, 24, 3, 2)).toBe(0);
+    expect(activeIndex(0, EPS, 414, 24, 3)).toBe(0);
+    // sitting 1.5px short of the end still counts as the end, and nextStop wraps
+    expect(activeIndex(436.5, 438, 414, 24, 3)).toBe(2);
+    expect(nextStop(436.5, 438, 414, 24, 3)).toBe(0);
+    expect(nextStop(0, 438, 414, 24, 3)).toBe(1);
   });
 });
