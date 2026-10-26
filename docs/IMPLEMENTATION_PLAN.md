@@ -749,12 +749,12 @@ Legend: **[size]** · _SRS refs_ · ⟵ depends on
 
 #### M4 — Release → `v1.0.0`
 
-| ID    | Task                           | Subtasks                                                                                                                                                                                                        |
-| ----- | ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| PF-50 | Content completion **[owner]** | HANDOFF §11; `content:check --production` passes                                                                                                                                                                |
-| PF-51 | Release candidate **[S]**      | `release/1.0.0`; full regression on staging; manual checklist                                                                                                                                                   |
-| PF-52 | Launch **[S]**                 | merge to `main`, tag `v1.0.0`, `PUBLIC_INDEXABLE=true` on live; prod smoke e2e; Search Console (URL-prefix property, HTML-tag verification) + Bing; sitemap submit; OG preview checks (LinkedIn Post Inspector) |
-| PF-53 | Docs **[S]**                   | README; `MAINTENANCE.md` (add article/project/case study, swap resume, rollback, Spark limits); known limitations                                                                                               |
+| ID    | Task                           | Subtasks                                                                                                                                                                                                                |
+| ----- | ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| PF-50 | Content completion **[owner]** | HANDOFF §11; `content:check --production` passes                                                                                                                                                                        |
+| PF-51 | Release candidate **[S]**      | `release/1.0.0`; full regression on staging; manual checklist; open the resume PDF directly in Chrome, Firefox and Safari on staging (site-wide CSP + `frame-ancestors 'none'` must not break the built-in PDF viewers) |
+| PF-52 | Launch **[S]**                 | merge to `main`, tag `v1.0.0`, `PUBLIC_INDEXABLE=true` on live; prod smoke e2e; Search Console (URL-prefix property, HTML-tag verification) + Bing; sitemap submit; OG preview checks (LinkedIn Post Inspector)         |
+| PF-53 | Docs **[S]**                   | README; `MAINTENANCE.md` (add article/project/case study, swap resume, rollback, Spark limits); known limitations                                                                                                       |
 
 #### M5 — Contact form (post-launch, Blaze) → `v1.1.0`
 

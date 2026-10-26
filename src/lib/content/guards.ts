@@ -85,12 +85,17 @@ export function looseMdxContent(source: string): { line: number; text: string }[
 /**
  * FR-10.4: a configured resume must exist under public/ (`exists` is injected for tests).
  * Returns the error message, or undefined when there is no resume or the file is present.
+ * Relies on the schema (`resume` must match /^\/resume\/[\w.-]+\.pdf$/) for a well-formed leading
+ * "/"; this function also rejects a path without one instead of resolving it oddly.
  */
 export function resumeError(
   resume: string | undefined,
   exists: (publicPath: string) => boolean,
 ): string | undefined {
-  return resume && !exists(`public${resume}`)
-    ? `src/content/profile.json $.main.resume: file public${resume} does not exist`
-    : undefined;
+  if (!resume) return undefined;
+  if (!resume.startsWith('/'))
+    return `src/content/profile.json $.main.resume: "${resume}" must start with "/"`;
+  return exists(`public${resume}`)
+    ? undefined
+    : `src/content/profile.json $.main.resume: file public${resume} does not exist`;
 }

@@ -9,8 +9,7 @@ test.describe('home', () => {
     await expect(page.getByText('Flutter · iOS · Android')).toBeVisible();
     await expect(page.getByText('Dhaka, Bangladesh · GMT+6')).toBeVisible();
     await expect(page.getByRole('link', { name: /View projects/ })).toHaveAttribute('href', '/projects');
-    // Unconfigured data is hidden, not placeholdered.
-    await expect(page.getByRole('link', { name: /Download resume/ })).toHaveCount(0);
+    // Unconfigured data is hidden, not placeholdered (resume links are asserted in resume.spec.ts).
     await expect(page.locator('#hero figure')).toHaveCount(0);
     await expect(page.locator('body')).not.toContainText(/\[[^\]]+\]/);
   });

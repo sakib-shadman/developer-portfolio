@@ -31,3 +31,23 @@ for (const path of PAGES) {
     }
   });
 }
+
+// The hero ("Download resume") and About page actions exist exactly when a resume is configured.
+test('@smoke hero and About show Download resume if and only if a resume is configured', async ({ page }) => {
+  await page.goto('/');
+  const configured = (await page.locator('a[href^="/resume/"]').count()) > 0;
+  const hero = page.locator('#hero').getByRole('link', { name: /Download resume/ });
+  await expect(hero).toHaveCount(configured ? 1 : 0);
+  if (configured) await expect(hero).toHaveAttribute('download', '');
+  await page.goto('/about');
+  const main = page.getByRole('main');
+  const download = main.getByRole('link', { name: /Download resume/ });
+  const view = main.getByRole('link', { name: /View resume/ });
+  await expect(download).toHaveCount(configured ? 2 : 0);
+  await expect(view).toHaveCount(configured ? 1 : 0);
+  if (configured) {
+    await expect(download.first()).toHaveAttribute('download', '');
+    await expect(view).toHaveAttribute('target', '_blank');
+    await expect(view).not.toHaveAttribute('download', /.*/);
+  }
+});

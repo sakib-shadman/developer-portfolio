@@ -69,6 +69,9 @@ describe('resumeError', () => {
       'src/content/profile.json $.main.resume: file public/resume/cv.pdf does not exist',
     );
   });
+  it('rejects a path without a leading slash', () => {
+    expect(resumeError('resume/cv.pdf', () => true)).toContain('must start with "/"');
+  });
   it('is silent when there is no resume or the file exists', () => {
     expect(resumeError(undefined, () => false)).toBeUndefined();
     expect(resumeError('/resume/cv.pdf', (p) => p === 'public/resume/cv.pdf')).toBeUndefined();
