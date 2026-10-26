@@ -1,0 +1,25 @@
+{
+  "name": "Sample SDK",
+  "label": "iOS SDK · Example",
+  "category": "sdk",
+  "summary": "A fictional iOS SDK that exists only for tests.",
+  "description": "This sample project has a case study so the detail page, previous/next links and media can be tested.",
+  "technologies": ["swift", "ios"],
+  "role": "Lead engineer (sample)",
+  "contributions": ["Sample contribution one", "Sample contribution two"],
+  "links": {
+    "repo": "https://github.com/example/sample-sdk",
+    "demo": "https://example.com/sample-sdk"
+  },
+  "progress": "shipped",
+  "featured": true,
+  "status": "published",
+  "featuredOrder": 1,
+  "media": [
+    {
+      "src": "./images/project-a.png",
+      "alt": "Sample screenshot of Sample SDK"
+    }
+  ],
+  "caseStudy": "sample-sdk"
+}

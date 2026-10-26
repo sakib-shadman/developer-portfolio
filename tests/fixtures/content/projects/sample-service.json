@@ -1,0 +1,16 @@
+{
+  "name": "Sample Service",
+  "label": "Backend · Example",
+  "category": "backend",
+  "summary": "A fictional backend service with no case study.",
+  "description": "A sample project without a case study, so it gets a card but no detail page.",
+  "technologies": ["go", "docker"],
+  "role": "Engineer (sample)",
+  "contributions": ["Sample contribution one", "Sample contribution two"],
+  "links": {
+    "repo": "https://github.com/example/sample-service"
+  },
+  "progress": "shipped",
+  "featured": false,
+  "status": "published"
+}

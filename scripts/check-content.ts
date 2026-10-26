@@ -10,9 +10,21 @@ import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { parse as parseYaml } from 'yaml';
 import { findPlaceholders, looseMdxContent, resumeError } from '../src/lib/content/guards';
+import {
+  FIXTURE_CONTENT,
+  FIXTURE_MARKER,
+  REAL_CONTENT,
+  contentRoot,
+  fixtureLeak,
+  fixturesOn,
+  publicRoot,
+} from '../src/lib/content/root';
 
 const ROOT = new URL('..', import.meta.url).pathname;
-const CONTENT = join(ROOT, 'src/content');
+const FIXTURES = fixturesOn(process.env.PUBLIC_CONTENT_FIXTURES);
+const CONTENT_DIR = contentRoot(process.env.PUBLIC_CONTENT_FIXTURES);
+const PUBLIC_DIR = publicRoot(process.env.PUBLIC_CONTENT_FIXTURES);
+const CONTENT = join(ROOT, CONTENT_DIR);
 
 function* walk(dir: string): Generator<string> {
   for (const name of readdirSync(dir)) {
@@ -29,6 +41,15 @@ function frontmatter(source: string): unknown {
 
 const errors: string[] = [];
 
+// Fixtures must never leak into real content, whichever content is being checked.
+for (const file of walk(join(ROOT, REAL_CONTENT))) {
+  if (/\.(json|mdx?)$/.test(file) && fixtureLeak(readFileSync(file, 'utf8'))) {
+    errors.push(
+      `${relative(ROOT, file)}: contains the fixture marker "${FIXTURE_MARKER}" (fixtures belong in ${FIXTURE_CONTENT})`,
+    );
+  }
+}
+
 for (const file of walk(CONTENT)) {
   const rel = relative(ROOT, file);
   const src = readFileSync(file, 'utf8');
@@ -40,10 +61,15 @@ for (const file of walk(CONTENT)) {
 }
 
 const profile = JSON.parse(readFileSync(join(CONTENT, 'profile.json'), 'utf8')) as {
-  main?: { resume?: string };
+  main?: { resume?: string; intro?: string };
 };
+if (FIXTURES && !fixtureLeak(profile.main?.intro ?? '')) {
+  errors.push(
+    `${CONTENT_DIR}/profile.json: fixture profile must carry the marker "${FIXTURE_MARKER}" in intro`,
+  );
+}
 const resume = profile.main?.resume;
-const missing = resumeError(resume, (p) => existsSync(join(ROOT, p)));
+const missing = resumeError(resume, (p) => existsSync(join(ROOT, PUBLIC_DIR, p.replace(/^public\//, ''))));
 if (missing) errors.push(missing);
 
 // ---------- Reference integrity ----------
@@ -55,9 +81,9 @@ const idsIn = (dir: string, ext: string) =>
       .map((f) => f.slice(0, -ext.length)),
   );
 
-const skillIds = new Set(readJson<{ id: string }[]>('src/content/skills.json').map((s) => s.id));
-const projectIds = idsIn('src/content/projects', '.json');
-const caseStudyIds = idsIn('src/content/case-studies', '.mdx');
+const skillIds = new Set(readJson<{ id: string }[]>(`${CONTENT_DIR}/skills.json`).map((s) => s.id));
+const projectIds = idsIn(`${CONTENT_DIR}/projects`, '.json');
+const caseStudyIds = idsIn(`${CONTENT_DIR}/case-studies`, '.mdx');
 
 const checkRefs = (where: string, refs: unknown, ids: Set<string>, kind: string) => {
   for (const ref of Array.isArray(refs) ? refs : refs === undefined ? [] : [refs]) {
@@ -65,20 +91,20 @@ const checkRefs = (where: string, refs: unknown, ids: Set<string>, kind: string)
   }
 };
 
-for (const g of readJson<{ id: string; items?: unknown }[]>('src/content/skill-groups.json')) {
-  checkRefs(`src/content/skill-groups.json [${g.id}].items`, g.items, skillIds, 'skill');
+for (const g of readJson<{ id: string; items?: unknown }[]>(`${CONTENT_DIR}/skill-groups.json`)) {
+  checkRefs(`${CONTENT_DIR}/skill-groups.json [${g.id}].items`, g.items, skillIds, 'skill');
 }
-for (const e of readJson<{ id: string; technologies?: unknown }[]>('src/content/experience.json')) {
-  checkRefs(`src/content/experience.json [${e.id}].technologies`, e.technologies, skillIds, 'skill');
+for (const e of readJson<{ id: string; technologies?: unknown }[]>(`${CONTENT_DIR}/experience.json`)) {
+  checkRefs(`${CONTENT_DIR}/experience.json [${e.id}].technologies`, e.technologies, skillIds, 'skill');
 }
 for (const id of projectIds) {
-  const rel = `src/content/projects/${id}.json`;
+  const rel = `${CONTENT_DIR}/projects/${id}.json`;
   const p = readJson<{ technologies?: unknown; caseStudy?: unknown }>(rel);
   checkRefs(`${rel} technologies`, p.technologies, skillIds, 'skill');
   checkRefs(`${rel} caseStudy`, p.caseStudy, caseStudyIds, 'case study');
 }
 for (const id of caseStudyIds) {
-  const rel = `src/content/case-studies/${id}.mdx`;
+  const rel = `${CONTENT_DIR}/case-studies/${id}.mdx`;
   const fm = frontmatter(readFileSync(join(ROOT, rel), 'utf8')) as { project?: unknown };
   checkRefs(`${rel} project`, fm.project, projectIds, 'project');
   for (const hit of looseMdxContent(readFileSync(join(ROOT, rel), 'utf8'))) {
@@ -90,4 +116,4 @@ if (errors.length) {
   console.error(`✖ content check failed (${errors.length}):\n  ${errors.join('\n  ')}`);
   process.exit(1);
 }
-console.log('✓ content check passed');
+console.log(`✓ content check passed${FIXTURES ? ' (fixtures)' : ''}`);

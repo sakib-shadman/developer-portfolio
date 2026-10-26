@@ -10,29 +10,33 @@ import {
   makeSkillGroupSchema,
   skillSchema,
 } from './lib/content/schemas';
+import { contentRoot } from './lib/content/root';
+
+// PUBLIC_CONTENT_FIXTURES=true loads tests/fixtures/content instead (e2e only; astro.config refuses it with PUBLIC_INDEXABLE=true).
+const root = contentRoot(import.meta.env.PUBLIC_CONTENT_FIXTURES);
 
 const profile = defineCollection({
-  loader: file('src/content/profile.json'),
+  loader: file(`${root}/profile.json`),
   schema: ({ image }) => makeProfileSchema(image()),
 });
 
 const skills = defineCollection({
-  loader: file('src/content/skills.json'),
+  loader: file(`${root}/skills.json`),
   schema: skillSchema,
 });
 
 const skillGroups = defineCollection({
-  loader: file('src/content/skill-groups.json'),
+  loader: file(`${root}/skill-groups.json`),
   schema: makeSkillGroupSchema(reference('skills')),
 });
 
 const experience = defineCollection({
-  loader: file('src/content/experience.json'),
+  loader: file(`${root}/experience.json`),
   schema: makeExperienceSchema(reference('skills')),
 });
 
 const projects = defineCollection({
-  loader: glob({ pattern: '*.json', base: 'src/content/projects' }),
+  loader: glob({ pattern: '*.json', base: `${root}/projects` }),
   schema: ({ image }) =>
     makeProjectSchema({
       image: image(),
@@ -42,12 +46,12 @@ const projects = defineCollection({
 });
 
 const caseStudies = defineCollection({
-  loader: glob({ pattern: '*.mdx', base: 'src/content/case-studies' }),
+  loader: glob({ pattern: '*.mdx', base: `${root}/case-studies` }),
   schema: makeCaseStudySchema(reference('projects')),
 });
 
 const articles = defineCollection({
-  loader: glob({ pattern: '*.md', base: 'src/content/articles' }),
+  loader: glob({ pattern: '*.md', base: `${root}/articles` }),
   schema: ({ image }) => makeArticleSchema(image()),
 });
 

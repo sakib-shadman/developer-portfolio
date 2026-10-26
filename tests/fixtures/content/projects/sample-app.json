@@ -1,0 +1,25 @@
+{
+  "name": "Sample App",
+  "label": "Mobile app · Example",
+  "category": "mobile-app",
+  "summary": "A fictional cross-platform app that exists only for tests.",
+  "description": "This second sample project also has a case study.",
+  "technologies": ["flutter", "dart", "android"],
+  "role": "Engineer (sample)",
+  "contributions": ["Sample contribution one", "Sample contribution two"],
+  "links": {
+    "repo": "https://github.com/example/sample-app",
+    "demo": "https://example.com/sample-app"
+  },
+  "progress": "shipped",
+  "featured": true,
+  "status": "published",
+  "featuredOrder": 2,
+  "media": [
+    {
+      "src": "./images/project-b.png",
+      "alt": "Sample screenshot of Sample App"
+    }
+  ],
+  "caseStudy": "sample-app"
+}

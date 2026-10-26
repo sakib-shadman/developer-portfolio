@@ -1,0 +1,34 @@
+[
+  {
+    "id": "dart",
+    "name": "Dart"
+  },
+  {
+    "id": "swift",
+    "name": "Swift"
+  },
+  {
+    "id": "go",
+    "name": "Go"
+  },
+  {
+    "id": "flutter",
+    "name": "Flutter"
+  },
+  {
+    "id": "swiftui",
+    "name": "SwiftUI"
+  },
+  {
+    "id": "ios",
+    "name": "iOS"
+  },
+  {
+    "id": "android",
+    "name": "Android"
+  },
+  {
+    "id": "docker",
+    "name": "Docker"
+  }
+]

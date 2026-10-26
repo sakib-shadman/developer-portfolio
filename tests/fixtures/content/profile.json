@@ -1,0 +1,83 @@
+{
+  "main": {
+    "name": "Alex Example",
+    "title": "Software Engineer",
+    "headline": "Sample apps and SDKs, built for tests.",
+    "headlineAccent": "built",
+    "intro": "Sample profile (fixture) used only by automated tests. Every name, link and address here is fictional.",
+    "location": "Sampletown",
+    "timezone": "GMT+0",
+    "focus": ["Mobile", "SDKs", "Backend"],
+    "now": "Maintaining an example SDK",
+    "email": "hello@example.com",
+    "links": {
+      "github": "https://github.com/example",
+      "linkedin": "https://www.linkedin.com/in/example",
+      "medium": "https://medium.com/@example"
+    },
+    "resume": "/resume/example-resume.pdf",
+    "photo": {
+      "src": "./images/photo.jpg",
+      "alt": "Sample portrait of Alex Example"
+    },
+    "stats": [
+      {
+        "label": "Sample projects",
+        "value": "4"
+      },
+      {
+        "label": "Sample articles",
+        "value": "9"
+      },
+      {
+        "label": "Years in tests",
+        "value": "8",
+        "suffix": "+"
+      }
+    ],
+    "availability": "Open to sample roles, sample freelance work and sample collaboration.",
+    "bio": [
+      "Alex is a fictional engineer who exists so the portfolio can be tested with realistic, populated content.",
+      "This second paragraph checks that several bio paragraphs render in order."
+    ],
+    "yearsExperience": 8,
+    "principles": [
+      {
+        "title": "Keep it small",
+        "text": "Sample principle one: prefer the smallest change that works."
+      },
+      {
+        "title": "Test the seams",
+        "text": "Sample principle two: cover the boundaries between modules."
+      },
+      {
+        "title": "Write it down",
+        "text": "Sample principle three: decisions are recorded where people look."
+      }
+    ],
+    "expertise": [
+      {
+        "title": "Sample mobile",
+        "text": "Fictional cross-platform apps from architecture to release.",
+        "items": ["Flutter", "Dart"]
+      },
+      {
+        "title": "Sample SDKs",
+        "text": "Fictional SDK work designed for other developers.",
+        "items": ["Swift", "iOS"]
+      }
+    ],
+    "community": [
+      {
+        "text": "Writes sample articles on Medium.",
+        "href": "https://medium.com/@example"
+      },
+      {
+        "text": "Mentors sample engineers."
+      }
+    ],
+    "objective": "A sample role building sample products with a sample team.",
+    "interests": ["Sample chess", "Sample hiking"],
+    "replyTime": "within 2 days"
+  }
+}

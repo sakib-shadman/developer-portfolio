@@ -846,12 +846,34 @@ gh pr create --base main --head develop --title "release: v1.0.1"   # ships to l
     "typecheck": "astro check && tsc --noEmit",
     "test": "vitest run --coverage",
     "e2e": "playwright test",
+    "e2e:fixtures": "playwright test -c playwright.fixtures.config.ts",
+    "build:fixtures": "node scripts/build-fixtures.mjs",
     "lhci": "lhci autorun",
     "links": "lychee --config lychee.toml dist",
     "deploy:live": "firebase deploy --only hosting"
   }
 }
 ```
+
+### 3.9 Test content fixtures (`@fixtures`)
+
+Real content has no articles, case studies, photo, resume or email yet, so those paths would have no
+browser coverage. `PUBLIC_CONTENT_FIXTURES=true` makes `src/content.config.ts` load
+`tests/fixtures/content` (same layout as `src/content`; fictional "Alex Example" data, 4 projects of which
+2 have case studies, 9 articles with tags, thumbnails and varied dates, a fully populated profile) instead.
+
+- **Build:** `pnpm build:fixtures` writes `dist-fixtures/` (real `dist/` is untouched, so both suites can
+  coexist). The fixture resume PDF (`tests/fixtures/public/resume/`) is copied into that build by a small
+  integration; `publicDir` is not switched, so real `public/` assets (favicon, ...) stay in the build and no
+  fixture file ever sits in `public/`.
+- **Run:** `pnpm e2e:fixtures` (own config, own port 5400). Only tests whose title contains `@fixtures`
+  run there; `playwright.config.ts` excludes them. CI runs both (chromium, webkit, firefox).
+- **Safety:** `astro.config.mjs` refuses `PUBLIC_CONTENT_FIXTURES=true` with `PUBLIC_INDEXABLE=true`;
+  CI/deploy builds set it to `'false'` explicitly; `content:check` validates the fixtures when the flag is
+  set and fails if the fixture marker `(fixture)` appears anywhere in `src/content`.
+- **Writing tests:** tag the title `@fixtures`, assert fixture values (names, counts) freely; keep other
+  specs content-agnostic. Fixture articles (for `/blog`): `tests/fixtures/content/articles/sample-article-1..9.md`
+  (9 articles, 3 featured, tags flutter/dart/swift/ios/architecture/testing/career, dates 2025-06 to 2026-09).
 
 ---
 

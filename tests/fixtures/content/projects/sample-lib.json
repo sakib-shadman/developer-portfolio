@@ -1,0 +1,16 @@
+{
+  "name": "Sample Library",
+  "label": "Library · Example",
+  "category": "library",
+  "summary": "A fictional open-source library with no case study.",
+  "description": "A sample library without a case study or media, so cards without images are covered.",
+  "technologies": ["dart"],
+  "role": "Maintainer (sample)",
+  "contributions": ["Sample contribution one", "Sample contribution two"],
+  "links": {
+    "repo": "https://github.com/example/sample-lib"
+  },
+  "progress": "shipped",
+  "featured": false,
+  "status": "published"
+}
