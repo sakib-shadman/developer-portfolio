@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   activeIndex,
   nextIndex,
+  nextStop,
   pad2,
   scrollTarget,
   shouldAutoAdvance,
@@ -55,5 +56,48 @@ describe('shouldAutoAdvance', () => {
     for (const k of Object.keys(idle) as (keyof typeof idle)[]) {
       expect(shouldAutoAdvance({ ...idle, [k]: true }), k).toBe(false);
     }
+  });
+});
+
+describe('3 cards, 2 per view (card 2 offset == end of track)', () => {
+  // card 414, gap 24, track 852 → step 438, maxScroll = 3*414 + 48 - 852 = 438
+  const W = 414;
+  const G = 24;
+  const max = 438;
+  it('an explicit target wins over the at-end rule', () => {
+    expect(activeIndex(max, max, W, G, 3, 1)).toBe(1);
+    expect(activeIndex(max, max, W, G, 3, 2)).toBe(2);
+    expect(activeIndex(100, max, W, G, 3, 0)).toBe(0);
+    expect(activeIndex(max, max, W, G, 3, 99)).toBe(2); // clamped
+    expect(activeIndex(max, max, W, G, 3, -4)).toBe(0);
+  });
+  it('free scrolling to the end still marks the last card', () => {
+    expect(activeIndex(max, max, W, G, 3)).toBe(2);
+    expect(activeIndex(0, max, W, G, 3)).toBe(0);
+  });
+  it('a target is ignored when nothing scrolls', () => {
+    expect(activeIndex(0, 0, W, G, 3, 2)).toBe(0);
+  });
+});
+
+describe('nextStop (autoplay)', () => {
+  it('steps one card and wraps, skipping cards that cannot scroll further', () => {
+    // 3 cards, 2 per view: 0 → 1 (at the end) → wrap to 0
+    expect(nextStop(0, 438, 414, 24, 3)).toBe(1);
+    expect(nextStop(438, 438, 414, 24, 3)).toBe(0);
+  });
+  it('6 cards, 3 per view: 0 → 1 → 2 → 3 → wrap', () => {
+    const W = 380;
+    const G = 24;
+    const step = W + G;
+    const max = 3 * step;
+    expect(nextStop(0, max, W, G, 6)).toBe(1);
+    expect(nextStop(step, max, W, G, 6)).toBe(2);
+    expect(nextStop(2 * step, max, W, G, 6)).toBe(3);
+    expect(nextStop(max, max, W, G, 6)).toBe(0);
+  });
+  it('works from a mid-card position and tolerates sub-pixel offsets', () => {
+    expect(nextStop(200, 1212, 380, 24, 6)).toBe(1);
+    expect(nextStop(403.6, 1212, 380, 24, 6)).toBe(2);
   });
 });

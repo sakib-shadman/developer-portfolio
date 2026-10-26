@@ -3,7 +3,7 @@
  * track with the controls `hidden`; this script reveals and wires them. Each `[data-slider]` root
  * is independent so several sliders can share a page.
  */
-import { activeIndex, nextIndex, pad2, scrollTarget, shouldAutoAdvance } from './slider-math';
+import { activeIndex, nextStop, pad2, scrollTarget, shouldAutoAdvance } from './slider-math';
 
 const INTERVAL_MS = 5000;
 
@@ -24,6 +24,8 @@ function init(root: HTMLElement): void {
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
   const state = { hovered: false, focusWithin: false, paused: false };
   let active = 0;
+  /** Card the user/autoplay explicitly navigated to; cleared as soon as the user scrolls freely. */
+  let target: number | undefined;
   let timer: number | undefined;
 
   const metrics = () => {
@@ -58,7 +60,7 @@ function init(root: HTMLElement): void {
     controls!.hidden = maxScroll <= 1;
     // Nothing to scroll → not a tab stop (the no-JS markup keeps tabindex=0).
     track!.tabIndex = maxScroll > 1 ? 0 : -1;
-    active = activeIndex(track!.scrollLeft, maxScroll, cardW, gap, count);
+    active = activeIndex(track!.scrollLeft, maxScroll, cardW, gap, count, target);
     render();
   }
 
@@ -68,15 +70,16 @@ function init(root: HTMLElement): void {
       left: scrollTarget(i, cardW, gap),
       behavior: reduced.matches ? 'auto' : 'smooth',
     });
+    target = i;
     active = i;
     render();
   }
 
   function tick(): void {
-    const { maxScroll } = metrics();
+    const { cardW, gap, maxScroll } = metrics();
     if (maxScroll <= 1) return;
     if (!shouldAutoAdvance({ ...state, reducedMotion: reduced.matches, hidden: document.hidden })) return;
-    goTo(nextIndex(active, count));
+    goTo(nextStop(track!.scrollLeft, maxScroll, cardW, gap, count));
   }
 
   /** (Re)starts the 5s clock so a full interval passes after any user action. */
@@ -118,9 +121,17 @@ function init(root: HTMLElement): void {
   track.addEventListener('focusout', (e) => {
     if (!track.contains(e.relatedTarget as Node | null)) state.focusWithin = false;
   });
-  // User navigation (swipe, wheel, drag, keys) restarts the clock so a tick can't yank the cards away.
+  // User navigation (swipe, wheel, drag, keys) hands control back to the scroll position and
+  // restarts the clock so a tick can't yank the cards away.
   for (const type of ['pointerdown', 'wheel', 'touchstart', 'keydown'] as const)
-    track.addEventListener(type, restartTimer, { passive: true });
+    track.addEventListener(
+      type,
+      () => {
+        target = undefined;
+        restartTimer();
+      },
+      { passive: true },
+    );
   reduced.addEventListener('change', applyMotionPreference);
   new ResizeObserver(sync).observe(track);
 

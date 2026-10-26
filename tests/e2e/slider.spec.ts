@@ -48,8 +48,13 @@ test.describe('featured projects slider', () => {
     await open(page);
     await dots(page).nth(1).click();
     await expect.poll(() => scrollLeft(page)).toBeGreaterThan(100);
+    // At 900px card 2's offset equals the end of the track: the clicked dot must stay active.
     await expect(counter(page)).toHaveText(/^02 \/ /);
     await expect(dots(page).nth(1)).toHaveAttribute('aria-current', 'true');
+    await page.waitForTimeout(500); // after the smooth scroll settles
+    await expect(dots(page).nth(1)).toHaveAttribute('aria-current', 'true');
+    await dots(page).first().click();
+    await expect(dots(page).first()).toHaveAttribute('aria-current', 'true');
   });
 
   test('keyboard: the focused track scrolls with arrow keys', async ({ page }) => {
@@ -57,7 +62,8 @@ test.describe('featured projects slider', () => {
     await track(page).focus();
     await page.keyboard.press('ArrowRight');
     await expect.poll(() => scrollLeft(page)).toBeGreaterThan(100);
-    await expect(counter(page)).toHaveText(/^02 \//);
+    // Free scrolling to the end of the track marks the last card active (HANDOFF §6.1).
+    await expect(counter(page)).not.toHaveText(/^01 \//);
   });
 
   test('pause toggle changes its label and stops auto-advance', async ({ page, isMobile }) => {
@@ -118,10 +124,22 @@ test.describe('featured projects slider', () => {
     expect(await scrollLeft(page)).toBe(0);
   });
 
+  test('autoplay wraps back to the first card after the end', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'timing test runs on desktop only');
+    test.setTimeout(30_000);
+    await open(page);
+    await page.mouse.move(1, 1);
+    await expect.poll(() => scrollLeft(page), { timeout: 8000 }).toBeGreaterThan(100);
+    await expect(counter(page)).toHaveText(/^02 \//);
+    await expect.poll(() => scrollLeft(page), { timeout: 9000 }).toBe(0);
+    await expect(counter(page)).toHaveText(/^01 \//);
+  });
+
   test('auto-advances one card after 5s, then holds while hovered', async ({ page, isMobile }) => {
     test.skip(isMobile, 'timing test runs on desktop only');
     await open(page);
-    // 3 cards at 2 per view: one step already reaches the end, so the counter shows the last card.
+    await page.mouse.move(1, 1); // pointer parked away from the slider
+    // 3 cards at 2 per view: one step already reaches the end of the track.
     await expect.poll(() => scrollLeft(page), { timeout: 8000 }).toBeGreaterThan(100);
     await expect(counter(page)).not.toHaveText(/^01 \//);
     // Hover pauses: park the pointer on the track and make sure the next tick does nothing.
