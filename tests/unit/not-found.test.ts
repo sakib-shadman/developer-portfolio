@@ -50,6 +50,11 @@ describe('requestedPath decoding', () => {
     expect(out.endsWith('…')).toBe(true);
     expect(out).not.toMatch(/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/);
   });
+  it('strips C1 controls, LRM/RLM and bidi isolates', () => {
+    expect(requestedPath('/a%C2%80b%C2%9Fc')).toBe('/abc');
+    expect(requestedPath('/a%E2%80%8Eb%E2%80%8Fc')).toBe('/abc');
+    expect(requestedPath('/a%E2%81%A6b%E2%81%A9c')).toBe('/abc');
+  });
   it('strips control and bidi-override characters', () => {
     expect(requestedPath('/a%00b%E2%80%AEc')).toBe('/abc');
     expect(requestedPath('/%00')).toBe('/');

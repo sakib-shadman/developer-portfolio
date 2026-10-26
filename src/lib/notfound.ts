@@ -1,9 +1,9 @@
 /** Text for the 404 "requested path" line. Static hosting serves one 404.html, so it is filled in by script. */
 export const MAX_PATH_CHARS = 80;
 
-// Control characters and bidi overrides would make the line misleading; textContent already keeps it inert.
+// Written as escapes (no literal invisible characters in source). Control characters (C0/C1), LRM/RLM and bidi overrides would make the line misleading; textContent already keeps it inert.
 // eslint-disable-next-line no-control-regex
-const UNWANTED = /[\u0000-\u001f\u007f‪-‮⁦-⁩]/g;
+const UNWANTED = /[\u0000-\u001f\u007f-\u009f‎‏‪-‮⁦-⁩]/g;
 
 function decode(pathname: string): string {
   try {
