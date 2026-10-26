@@ -12,7 +12,7 @@ const profile = await getProfile();
   description="The page you were looking for doesn't exist."
   noindex
 >
-  <div class="wrap page">
+  <div class="wrap page not-found">
     <span class="code">Error 404</span>
     <h1>This page doesn't exist.</h1>
     <p class="lead">
@@ -30,8 +30,8 @@ const profile = await getProfile();
         </Button>
       </li>
       <li>
-        <Button variant="outline" size="lg" href="/about">
-          About
+        <Button variant="outline" size="lg" href="/contact">
+          Contact
         </Button>
       </li>
     </ul>
@@ -56,12 +56,26 @@ const profile = await getProfile();
   }
 </script>
 
+<!-- Design links: Home, Projects, Writing. Writing (/blog) returns with PF-34; Contact stands in until then. -->
+
 <style>
+  /* Vertically centre the content between header and footer (design), scoped to this page only. */
+  :global(body:has(.not-found)) {
+    display: flex;
+    flex-direction: column;
+  }
+  :global(body:has(.not-found) > main) {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    justify-content: center;
+  }
   .page {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
     gap: 24px;
+    width: 100%;
     padding-block: 96px;
   }
   .code {

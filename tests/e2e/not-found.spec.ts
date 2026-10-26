@@ -14,6 +14,7 @@ for (const url of urls) {
       const main = page.getByRole('main');
       await expect(main.getByRole('link', { name: 'Back to home' })).toHaveAttribute('href', '/');
       await expect(main.getByRole('link', { name: 'Projects' })).toHaveAttribute('href', '/projects');
+      await expect(main.getByRole('link', { name: 'Contact' })).toHaveAttribute('href', '/contact');
       await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', /noindex/);
       await expect(page.locator('link[rel="canonical"]')).toHaveCount(0);
     });
@@ -47,4 +48,24 @@ test('404 page is not in the sitemap', async ({ request }) => {
   const res = await request.get('/sitemap-0.xml');
   expect(res.status()).toBe(200);
   expect(await res.text()).not.toContain('/404');
+});
+
+test('shows the decoded path for non-ASCII URLs', async ({ page }) => {
+  await page.goto('/caf%C3%A9/%C3%B1');
+  await expect(page.locator('[data-path]')).toHaveText('/café/ñ');
+});
+
+test('content is vertically centred between header and footer on a tall viewport', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/nope');
+  const gaps = await page.evaluate(() => {
+    const main = document.querySelector('main')!.getBoundingClientRect();
+    const page = document.querySelector('.not-found')!;
+    const first = page.firstElementChild!.getBoundingClientRect();
+    const last = page.lastElementChild!.getBoundingClientRect();
+    const footer = document.querySelector('footer')!.getBoundingClientRect();
+    return { above: first.top - main.top, below: main.bottom - last.bottom, footerBottom: footer.bottom };
+  });
+  expect(Math.abs(gaps.above - gaps.below)).toBeLessThanOrEqual(2);
+  expect(gaps.footerBottom).toBeGreaterThanOrEqual(899);
 });

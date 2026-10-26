@@ -36,6 +36,26 @@ beforeAll(async () => {
 });
 afterEach(() => vi.unstubAllEnvs());
 
+describe('requestedPath decoding', () => {
+  it('decodes percent-escapes for display', () => {
+    expect(requestedPath('/caf%C3%A9/%C3%B1')).toBe('/café/ñ');
+  });
+  it('falls back to the raw value on a malformed escape', () => {
+    expect(requestedPath('/%E0%A4%A')).toBe('/%E0%A4%A');
+  });
+  it('truncates after decoding without splitting a surrogate pair', () => {
+    const p = '/' + '%F0%9F%98%80'.repeat(100); // 100 emoji = 200 UTF-16 units
+    const out = requestedPath(p);
+    expect(Array.from(out)).toHaveLength(MAX_PATH_CHARS);
+    expect(out.endsWith('…')).toBe(true);
+    expect(out).not.toMatch(/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/);
+  });
+  it('strips control and bidi-override characters', () => {
+    expect(requestedPath('/a%00b%E2%80%AEc')).toBe('/abc');
+    expect(requestedPath('/%00')).toBe('/');
+  });
+});
+
 describe('requestedPath', () => {
   it('passes short paths, truncates long ones, never returns empty', () => {
     expect(requestedPath('/nope')).toBe('/nope');
@@ -55,7 +75,7 @@ describe('404 page', () => {
     expect(html).toContain('Page not found — Ada Lovelace');
     const main = html.slice(html.indexOf('<main'), html.indexOf('</main>'));
     const hrefs = [...main.matchAll(/<a[^>]*href="([^"]+)"/g)].map((m) => m[1]);
-    expect(hrefs).toEqual(['/', '/projects', '/about']);
+    expect(hrefs).toEqual(['/', '/projects', '/contact']);
     expect(html).toMatch(/<meta name="robots" content="noindex, nofollow"/);
     expect(html).not.toContain('rel="canonical"');
   });
