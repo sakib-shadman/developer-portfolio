@@ -92,6 +92,13 @@ describe('Hero', () => {
     expect(html).toContain('Medium');
   });
 
+  it('View projects points at the given target (default /projects)', async () => {
+    const slider = await c.renderToString(Hero, { props: { profile: full, projectsHref: '#work' } });
+    expect(slider).toMatch(/href="#work"[^>]*>\s*View projects/);
+    const dflt = await c.renderToString(Hero, { props: { profile: full } });
+    expect(dflt).toMatch(/href="\/projects"[^>]*>\s*View projects/);
+  });
+
   it('is a clean single column when nothing optional is configured', async () => {
     const html = await c.renderToString(Hero, { props: { profile: bare } });
     expect(html).not.toContain('has-photo');

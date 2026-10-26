@@ -8,7 +8,8 @@ test.describe('home', () => {
     await expect(page.getByRole('heading', { level: 1 })).toContainText('engineered');
     await expect(page.getByText('Flutter · iOS · Android')).toBeVisible();
     await expect(page.getByText('Dhaka, Bangladesh · GMT+6')).toBeVisible();
-    await expect(page.getByRole('link', { name: /View projects/ })).toHaveAttribute('href', '/projects');
+    const cta = page.getByRole('link', { name: /View projects/ });
+    await expect(cta).toHaveAttribute('href', (await page.locator('#work').count()) ? '#work' : '/projects');
     // Unconfigured data is hidden, not placeholdered (resume links are asserted in resume.spec.ts).
     await expect(page.locator('#hero figure')).toHaveCount(0);
     await expect(page.locator('body')).not.toContainText(/\[[^\]]+\]/);
@@ -40,12 +41,13 @@ test.describe('home', () => {
     const ids = await page
       .locator('main > section')
       .evaluateAll((els) => els.map((e) => e.id || e.getAttribute('aria-label')));
-    expect(ids).toEqual(['hero', 'At a glance', 'skills', 'experience', 'contact']);
+    expect(ids).toEqual(['hero', 'At a glance', 'skills', 'experience', 'work', 'contact']);
 
     await expect(page.locator('#skills .eyebrow')).toHaveText('01 — Skills');
     await expect(page.locator('#experience .eyebrow')).toHaveText('02 — Experience');
-    // Projects/Writing sliders are not built yet: no "03"/"04" eyebrows anywhere.
-    await expect(page.locator('main')).not.toContainText(/0[34] — /);
+    await expect(page.locator('#work .eyebrow')).toHaveText('03 — Projects');
+    // The writing slider is not built yet: no "04" eyebrow.
+    await expect(page.locator('main')).not.toContainText(/04 — /);
   });
 
   test('heading order never skips a level', async ({ page }) => {
@@ -134,7 +136,8 @@ test.describe('home', () => {
     const wide = await page.evaluate(
       () =>
         [...document.querySelectorAll('main *')].filter(
-          (e) => e.getBoundingClientRect().right > window.innerWidth + 1,
+          // Slider cards intentionally extend past the viewport inside their own scroll track.
+          (e) => !e.closest('[data-slider-track]') && e.getBoundingClientRect().right > window.innerWidth + 1,
         ).length,
     );
     expect(wide).toBe(0);
