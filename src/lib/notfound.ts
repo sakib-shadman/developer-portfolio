@@ -3,7 +3,7 @@ export const MAX_PATH_CHARS = 80;
 
 // Written as escapes (no literal invisible characters in source). Control characters (C0/C1), LRM/RLM and bidi overrides would make the line misleading; textContent already keeps it inert.
 // eslint-disable-next-line no-control-regex
-const UNWANTED = /[\u0000-\u001f\u007f-\u009f‎‏‪-‮⁦-⁩]/g;
+const UNWANTED = /[\u0000-\u001f\u007f-\u009f\u200e\u200f\u202a-\u202e\u2066-\u2069]/g;
 
 function decode(pathname: string): string {
   try {
