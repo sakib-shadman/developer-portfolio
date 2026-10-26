@@ -1,0 +1,111 @@
+---
+/** 404 (FR-12.5, design: NotFound.dc.html). Firebase serves dist/404.html with HTTP 404. */
+import PageLayout from '../layouts/PageLayout.astro';
+import Button from '../components/ui/Button.astro';
+import { getProfile } from '../lib/content/queries';
+
+const profile = await getProfile();
+---
+
+<PageLayout
+  title={`Page not found — ${profile.name}`}
+  description="The page you were looking for doesn't exist."
+  noindex
+>
+  <div class="wrap page">
+    <span class="code">Error 404</span>
+    <h1>This page doesn't exist.</h1>
+    <p class="lead">
+      The link may be broken, or the page may have moved. Here are some places to go instead.
+    </p>
+    <ul class="actions" role="list" aria-label="Where to go">
+      <li>
+        <Button variant="solid" href="/" icon="arrow-left">
+          Back to home
+        </Button>
+      </li>
+      <li>
+        <Button variant="outline" size="lg" href="/projects">
+          Projects
+        </Button>
+      </li>
+      <li>
+        <Button variant="outline" size="lg" href="/about">
+          About
+        </Button>
+      </li>
+    </ul>
+    <pre
+      class="trace"
+      aria-hidden="true"
+      hidden
+      data-requested
+    ><span class="kw">throw</span> RouteNotFound('<span
+        class="path"
+        data-path></span>');</pre>
+  </div>
+</PageLayout>
+
+<script>
+  import { requestedPath } from '../lib/notfound';
+  const box = document.querySelector<HTMLElement>('[data-requested]');
+  const slot = box?.querySelector<HTMLElement>('[data-path]');
+  if (box && slot) {
+    slot.textContent = requestedPath(location.pathname);
+    box.hidden = false;
+  }
+</script>
+
+<style>
+  .page {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 24px;
+    padding-block: 96px;
+  }
+  .code {
+    font-family: var(--font-mono);
+    font-size: 14px;
+    color: var(--acc-text);
+  }
+  h1 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(44px, 6vw, 80px);
+    line-height: 1.02;
+    letter-spacing: var(--tracking-display);
+  }
+  .lead {
+    max-width: 560px;
+    font-size: 20px;
+    color: var(--muted);
+  }
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin: 0;
+    padding: 8px 0 0;
+    list-style: none;
+  }
+  .trace {
+    max-width: 100%;
+    margin: 24px 0 0;
+    padding: 16px 20px;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--surface);
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    color: var(--muted);
+  }
+  .kw {
+    color: var(--acc-text);
+  }
+  .path {
+    color: var(--text);
+  }
+</style>

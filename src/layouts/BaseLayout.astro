@@ -13,6 +13,8 @@ interface Props {
   path?: string;
   image?: string;
   type?: 'website' | 'article' | 'profile';
+  /** Always emit noindex and no canonical, regardless of PUBLIC_INDEXABLE (404 page). */
+  noindex?: boolean;
 }
 
 const props = Astro.props;
