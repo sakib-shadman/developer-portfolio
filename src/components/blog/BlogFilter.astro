@@ -1,0 +1,112 @@
+---
+// Client-side tag filter, search and "Load more" for /blog. Rendered only when there are articles,
+// so the empty state ships no script.
+---
+
+<script>
+  import {
+    ALL_TAGS,
+    PAGE_SIZE,
+    blogQuery,
+    counterParts,
+    filterArticles,
+    paginate,
+    parseBlogState,
+    type BlogState,
+  } from '../../lib/blog';
+
+  const root = document.querySelector<HTMLElement>('[data-blog]');
+  const shownEl = root?.querySelector('[data-counter-shown]');
+  const restEl = root?.querySelector('[data-counter-rest]');
+  const controls = root?.querySelector<HTMLElement>('[data-controls]');
+  const tagGroup = root?.querySelector<HTMLElement>('[data-filters]');
+  const searchWrap = root?.querySelector<HTMLElement>('[data-search]');
+  const input = root?.querySelector<HTMLInputElement>('#blog-search');
+  const empty = root?.querySelector<HTMLElement>('[data-empty]');
+  const more = root?.querySelector<HTMLButtonElement>('[data-more]');
+  const footer = root?.querySelector<HTMLElement>('[data-footer]');
+
+  if (root && shownEl && restEl && controls && searchWrap && input && empty && more && footer) {
+    const pills = [...(tagGroup?.querySelectorAll<HTMLButtonElement>('[data-filter]') ?? [])];
+    const items = [...root.querySelectorAll<HTMLElement>('[data-grid] > li')].map((el) => ({
+      el,
+      title: el.dataset.title ?? '',
+      excerpt: el.dataset.excerpt ?? '',
+      tags: JSON.parse(el.dataset.tags ?? '[]') as string[],
+    }));
+
+    let state: BlogState = { tag: ALL_TAGS, q: '' };
+    let page = 1;
+
+    const render = () => {
+      const matches = filterArticles(items, state);
+      const { visible, total, hasMore } = paginate(matches, page, PAGE_SIZE);
+      const show = new Set(visible);
+      for (const item of items) item.el.hidden = !show.has(item);
+      for (const pill of pills) pill.setAttribute('aria-pressed', String(pill.dataset.filter === state.tag));
+      const parts = counterParts(visible.length, total);
+      // Write only on change so the live region doesn't re-announce identical text.
+      if (shownEl.textContent !== parts.shown) shownEl.textContent = parts.shown;
+      if (restEl.textContent !== parts.rest) restEl.textContent = parts.rest;
+      more.hidden = !hasMore;
+      empty.hidden = total > 0;
+      footer.hidden = total === 0;
+    };
+
+    const available = pills.map((p) => p.dataset.filter as string);
+    const sync = () => {
+      const url = `${location.pathname}${blogQuery(state)}${location.hash}`;
+      if (url !== `${location.pathname}${location.search}${location.hash}`)
+        history.replaceState(history.state, '', url);
+    };
+    const fromUrl = () => {
+      state = parseBlogState(location.search, available);
+      input.value = state.q;
+      page = 1;
+    };
+    // Any filter/search change goes back to the first page.
+    const change = (next: BlogState) => {
+      state = next;
+      page = 1;
+      render();
+      sync();
+    };
+
+    controls.hidden = false;
+    if (tagGroup) tagGroup.hidden = false;
+    searchWrap.hidden = false;
+
+    tagGroup?.addEventListener('click', (e) => {
+      const pill = (e.target as Element).closest<HTMLButtonElement>('[data-filter]');
+      if (pill) change({ ...state, tag: pill.dataset.filter as string });
+    });
+    input.addEventListener('input', () => change({ ...state, q: input.value.trim() }));
+    more.addEventListener('click', () => {
+      const before = new Set(items.filter((i) => !i.el.hidden));
+      page += 1;
+      render();
+      // Keep keyboard users in place: focus the first newly revealed card's link.
+      const first = items.find((i) => !i.el.hidden && !before.has(i));
+      first?.el.querySelector<HTMLElement>('a')?.focus();
+    });
+    empty.querySelector('[data-clear]')?.addEventListener('click', () => {
+      input.value = '';
+      change({ tag: ALL_TAGS, q: '' });
+      input.focus();
+    });
+    window.addEventListener('popstate', () => {
+      fromUrl();
+      render();
+    });
+    window.addEventListener('pageshow', (e) => {
+      if (e.persisted) {
+        fromUrl();
+        render();
+      }
+    });
+
+    fromUrl();
+    render();
+    sync(); // normalises an unknown ?tag= to the clean URL
+  }
+</script>
