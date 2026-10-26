@@ -55,6 +55,11 @@ a:hover {
   opacity: 0.8;
 }
 
+/* `hidden` must win over component display rules (e.g. .btn is inline-flex). */
+[hidden] {
+  display: none !important;
+}
+
 /* ---------- Focus (NFR-02) ---------- */
 :focus-visible {
   outline: var(--focus-ring);
