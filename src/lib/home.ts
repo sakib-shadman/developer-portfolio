@@ -1,4 +1,4 @@
-import type { ExperienceItem, ProjectCard, SkillGroup } from './content/types';
+import type { ArticleCard, ExperienceItem, ProjectCard, SkillGroup } from './content/types';
 
 /** Pure helpers for the home page composition. */
 
@@ -40,8 +40,10 @@ export interface HomeSections {
   experience: ExperienceItem[];
   /** Featured, published projects for the home slider (already ordered and capped). */
   featuredProjects: ProjectCard[];
+  /** Featured-or-latest articles for the home writing slider (already ordered and capped). */
+  homeArticles: ArticleCard[];
   /** Which home anchors exist — drives the header nav. */
-  rendered: { skills: boolean; experience: boolean; projects: boolean };
+  rendered: { skills: boolean; experience: boolean; projects: boolean; writing: boolean };
   /** Hero "View projects" target: the home slider when it renders, otherwise the projects page. */
   projectsHref: '#work' | '/projects';
   /** "01 — Skills" etc., keyed by section id; absent for sections not rendered. */
@@ -51,27 +53,29 @@ export interface HomeSections {
 /**
  * Single source of truth for which home sections render, shared by the header nav, the home page
  * and the section components so anchors and eyebrow numbers cannot drift.
- * Writing (PF-33) becomes `visible` here when it lands.
  */
 export function composeHomeSections(input: {
   skillGroups: SkillGroup[];
   experience: ExperienceItem[];
   featuredProjects?: ProjectCard[];
+  homeArticles?: ArticleCard[];
 }): HomeSections {
   const skillGroups = input.skillGroups.filter((g) => g.items.length > 0);
   const experience = input.experience;
   const featuredProjects = input.featuredProjects ?? [];
+  const homeArticles = input.homeArticles ?? [];
   const rendered = {
     skills: skillGroups.length > 0,
     experience: experience.length > 0,
     projects: featuredProjects.length > 0,
+    writing: homeArticles.length > 0,
   };
   const eyebrows = numberSections([
     { id: 'skills', label: 'Skills', visible: rendered.skills },
     { id: 'experience', label: 'Experience', visible: rendered.experience },
     { id: 'projects', label: 'Projects', visible: rendered.projects },
-    { id: 'writing', label: 'Writing', visible: false },
+    { id: 'writing', label: 'Writing', visible: rendered.writing },
   ]);
   const projectsHref = rendered.projects ? '#work' : '/projects';
-  return { skillGroups, experience, featuredProjects, rendered, eyebrows, projectsHref };
+  return { skillGroups, experience, featuredProjects, homeArticles, rendered, eyebrows, projectsHref };
 }

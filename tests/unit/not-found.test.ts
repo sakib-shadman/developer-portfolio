@@ -80,7 +80,7 @@ describe('404 page', () => {
     expect(html).toContain('Page not found — Ada Lovelace');
     const main = html.slice(html.indexOf('<main'), html.indexOf('</main>'));
     const hrefs = [...main.matchAll(/<a[^>]*href="([^"]+)"/g)].map((m) => m[1]);
-    expect(hrefs).toEqual(['/', '/projects', '/contact']);
+    expect(hrefs).toEqual(['/', '/projects', '/blog', '/contact']);
     expect(html).toMatch(/<meta name="robots" content="noindex, nofollow"/);
     expect(html).not.toContain('rel="canonical"');
   });

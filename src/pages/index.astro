@@ -5,6 +5,7 @@ import Stats from '../components/home/Stats.astro';
 import Skills from '../components/home/Skills.astro';
 import Experience from '../components/home/Experience.astro';
 import FeaturedProjects from '../components/home/FeaturedProjects.astro';
+import HomeWriting from '../components/home/HomeWriting.astro';
 import ContactCta from '../components/home/ContactCta.astro';
 import { getHomeSections, getProfile } from '../lib/content/queries';
 
@@ -17,6 +18,6 @@ const [profile, home] = await Promise.all([getProfile(), getHomeSections()]);
   <Skills groups={home.skillGroups} eyebrow={home.eyebrows.skills ?? ''} />
   <Experience items={home.experience} eyebrow={home.eyebrows.experience ?? ''} />
   <FeaturedProjects projects={home.featuredProjects} eyebrow={home.eyebrows.projects ?? ''} />
-  {/* PF-33 insertion point: <HomeWriting eyebrow={home.eyebrows.writing} /> (section#writing, "04 — Writing") */}
+  <HomeWriting articles={home.homeArticles} eyebrow={home.eyebrows.writing ?? ''} />
   <ContactCta profile={profile} />
 </PageLayout>

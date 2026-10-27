@@ -58,6 +58,9 @@ const { id, noun, label, class: className, ...rest } = Astro.props;
 
 <style>
   .track {
+    /* Containing block for absolutely positioned descendants (sr-only hints, stretched links) so
+       they are clipped with the track instead of widening the page. */
+    position: relative;
     display: flex;
     gap: var(--grid-gap);
     overflow-x: auto;
