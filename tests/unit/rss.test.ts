@@ -71,7 +71,7 @@ describe('GET /rss.xml', () => {
     expect(XMLValidator.validate(xml)).toBe(true);
     const { channel } = parse(xml).rss;
     expect(channel.title).toBe('Ada Lovelace — Articles');
-    expect(channel.link).toBe('https://portfolio.example/');
+    expect(channel.link).toBe('https://portfolio.example/blog');
     expect(channel.description).toContain('original on Medium');
     expect(channel.language).toBe('en');
     expect(channel['atom:link']['@_href']).toBe('https://portfolio.example/rss.xml');

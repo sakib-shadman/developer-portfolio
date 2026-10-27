@@ -16,7 +16,8 @@ export const GET: APIRoute = async ({ site }) => {
     site,
     items: buildFeedItems(articles),
     xmlns: { atom: 'http://www.w3.org/2005/Atom' },
-    customData: `<language>en</language><atom:link href="${new URL('rss.xml', site).href}" rel="self" type="application/rss+xml"/>`,
+    // The channel <link> is the human-readable home of these articles (overrides the site root).
+    customData: `<link>${new URL('blog', site).href}</link><language>en</language><atom:link href="${new URL('rss.xml', site).href}" rel="self" type="application/rss+xml"/>`,
   });
   return new Response(body, { headers: { 'Content-Type': 'application/rss+xml; charset=utf-8' } });
 };
