@@ -21,8 +21,9 @@ CSP review against what the site loads: images come from astro:assets (same orig
 ### Deliberately not set
 
 - **`object-src 'none'`**: `default-src 'self'` already limits objects to same-origin, and `'none'` would break the browser's built-in PDF viewer for `/resume/*.pdf` in some browsers.
-- **`Strict-Transport-Security`**: Firebase Hosting already sends it on `*.web.app` and `*.firebaseapp.com` (HTTPS only). Setting it in `firebase.json` would be overridden anyway and would be wrong on the plain-http emulator. Revisit with `includeSubDomains; preload` if a custom domain is added (ADR-0007).
+- **`Strict-Transport-Security`**: `.app` is an HSTS-preloaded TLD (browsers force HTTPS for every `*.web.app` host before the first request) and Firebase Hosting also sends HSTS on `web.app`, so a header here adds nothing. Revisit with `includeSubDomains; preload` if a custom domain is added (ADR-0007).
 - **`upgrade-insecure-requests`**: would break the http emulator used by e2e; every subresource is same-origin relative.
+- **CORP and OG images (PF-40)**: `Cross-Origin-Resource-Policy: same-origin` blocks browser-side cross-origin embeds. Social crawlers fetch server-side and are unaffected, but if any client renders the OG images or feed thumbnails directly from our origin (e.g. a web feed reader), set `Cross-Origin-Resource-Policy: cross-origin` on those paths.
 - **COEP**: nothing needs cross-origin isolation, and the beacon would need CORP headers.
 
 ### Cache policy
@@ -34,6 +35,8 @@ CSP review against what the site loads: images come from astro:assets (same orig
 | `/rss.xml`     | `public, max-age=3600`                | Feed readers poll; an hour is fine. Content-Type set explicitly. |
 | `/resume/**`   | `public, max-age=3600`                | PDF name is stable, so it must not be immutable.                 |
 | `/favicon.svg` | `public, max-age=86400`               | Stable name, rarely changes.                                     |
+
+- **Precedence is verified only in the emulator.** Firebase documents no rule for duplicate header keys in production, so PF-51 must re-run `tests/e2e/headers.spec.ts` against the preview channel.
 
 ## Consequences
 

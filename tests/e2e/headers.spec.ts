@@ -97,7 +97,7 @@ async function collectViolations(page: Page, url: string): Promise<string[]> {
   return [...events, ...consoleErrors];
 }
 
-test('@smoke no CSP violations on any page (images, fonts, scripts, styles all allowed)', async ({
+test('@smoke @any-content no CSP violations on any page (images, fonts, scripts, styles all allowed)', async ({
   page,
 }) => {
   await page.goto('/');
