@@ -130,10 +130,16 @@ const crumbs = [
     padding-bottom: 28px;
     border-bottom: 1px solid var(--border);
   }
-  .filters[hidden],
   .grid li[hidden],
   .page :global([data-empty][hidden]) {
     display: none;
+  }
+  /* Same as /blog: reserve the space the script-revealed filters will take (CLS). */
+  @media (scripting: enabled) {
+    .filters[hidden] {
+      display: flex !important;
+      visibility: hidden;
+    }
   }
   .grid {
     display: grid;

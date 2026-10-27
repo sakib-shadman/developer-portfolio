@@ -16,9 +16,10 @@
   --danger-soft: rgba(252, 165, 165, 0.08);
 
   /* Typography — self-hosted variable fonts (Fontsource) first */
-  --font-display: 'Space Grotesk Variable', 'Space Grotesk', system-ui, sans-serif;
-  --font-body: 'Inter Variable', 'Inter', system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace;
+  --font-display: 'Space Grotesk Variable', 'Space Grotesk', 'Space Grotesk Fallback', system-ui, sans-serif;
+  --font-body: 'Inter Variable', 'Inter', 'Inter Fallback', system-ui, sans-serif;
+  --font-mono:
+    'JetBrains Mono Variable', 'JetBrains Mono', 'JetBrains Mono Fallback', ui-monospace, monospace;
 
   --text-xs: 12px;
   --text-sm: 13px;

@@ -22,7 +22,9 @@
     "test": "vitest run --coverage",
     "test:watch": "vitest",
     "e2e": "playwright test",
-    "lhci": "lhci autorun",
+    "lhci": "lhci autorun --config=./lighthouserc.cjs",
+    "lhci:indexable": "lhci autorun --config=./lighthouserc.indexable.cjs",
+    "lhci:local": "pnpm build:fixtures && pnpm lhci && node scripts/lhci-report.mjs",
     "schemas:export": "tsx scripts/export-schemas.ts",
     "prepare": "lefthook install || true"
   },

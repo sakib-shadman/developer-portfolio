@@ -10,3 +10,11 @@
 - LCP < 2.0 s, CLS < 0.05, INP < 200 ms; ≤ 25 KB JS per page; ≤ 500 KB first-visit page weight.
 
 Enforced by `lighthouserc.json` on PRs into `main`.
+
+## Enforcement (PF-43)
+
+- `lighthouserc.cjs`: Lighthouse CI over **every route** of the fixtures build (`pnpm build:fixtures`, routes read from `dist-fixtures/`), mobile profile, 3 runs, pessimistic aggregation, all budgets above (JS = `resource-summary:script:size` ≤ 25 KB transferred, page weight = `total-byte-weight` ≤ 500 KB). The fixtures build is noindex by design, so `is-crawlable` is skipped there.
+- `lighthouserc.indexable.cjs`: SEO = 1 **including** `is-crawlable` on the real indexable production build (home).
+- CI: the `lighthouse` job (PRs into `main`) runs both. Locally: `pnpm lhci:local` (builds fixtures, runs LHCI, prints a per-route table); set `CHROME_PATH` if Chrome is not on the default path (the config already passes `--no-sandbox`).
+- Findings that shaped the code: all stylesheets are inlined (`build.inlineStylesheets: 'always'`; CSP allows inline styles) to remove a chain of small render-blocking requests (LCP -150 to -250 ms); web fonts have metric-matched local fallback faces (`size-adjust`) so the swap does not move text; the script-revealed filter controls on `/blog` and `/projects` keep their space while scripting is on (`@media (scripting: enabled)`), which removed a 0.06-0.07 CLS.
+- Fonts were already latin-only variable `woff2` with `font-display: swap`; Inter and Space Grotesk are preloaded, JetBrains Mono is not (below the fold on most pages).

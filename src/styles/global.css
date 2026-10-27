@@ -1,5 +1,33 @@
 @import './tokens.css';
 
+/* ---------- Fallback faces (PF-43) ----------
+   Metric-matched local fonts so the swap to the web font does not move layout (CLS). Values come from the
+   latin woff2 files: size-adjust = average letter width vs Arial / Courier New; ascent/descent follow. */
+@font-face {
+  font-family: 'Inter Fallback';
+  src: local('Arial'), local('Liberation Sans'), local('Helvetica');
+  size-adjust: 110%;
+  ascent-override: 88%;
+  descent-override: 22%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: 'Space Grotesk Fallback';
+  src: local('Arial'), local('Liberation Sans'), local('Helvetica');
+  size-adjust: 114%;
+  ascent-override: 86%;
+  descent-override: 25.6%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: 'JetBrains Mono Fallback';
+  src: local('Courier New'), local('Liberation Mono'), local('Courier');
+  size-adjust: 100%;
+  ascent-override: 102%;
+  descent-override: 30%;
+  line-gap-override: 0%;
+}
+
 /* ---------- Reset ---------- */
 *,
 *::before,
