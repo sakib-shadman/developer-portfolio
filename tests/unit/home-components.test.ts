@@ -2,10 +2,11 @@ import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import { beforeAll, describe, expect, it } from 'vitest';
 import ContactCta from '../../src/components/home/ContactCta.astro';
 import Experience from '../../src/components/home/Experience.astro';
+import HomeWriting from '../../src/components/home/HomeWriting.astro';
 import Hero from '../../src/components/home/Hero.astro';
 import Stats from '../../src/components/home/Stats.astro';
 import ProfileLinks from '../../src/components/ui/ProfileLinks.astro';
-import type { ExperienceItem, Profile } from '../../src/lib/content/types';
+import type { ArticleCard, ExperienceItem, Profile } from '../../src/lib/content/types';
 
 let c: AstroContainer;
 beforeAll(async () => {
@@ -194,5 +195,40 @@ describe('ProfileLinks', () => {
       props: { links: { github: 'javascript:alert(1)' }, kinds: ['github', 'medium'] },
     });
     expect(bad.trim()).toBe('');
+  });
+});
+
+describe('HomeWriting', () => {
+  const art = (n: number): ArticleCard => ({
+    id: `a${n}`,
+    title: `Article ${n}`,
+    url: `https://medium.com/@ada/article-${n}`,
+    publishedAt: new Date(`2026-0${n}-10`),
+    excerpt: `Excerpt ${n}`,
+    tags: ['flutter', 'dart'],
+    readingMinutes: 4,
+    featured: false,
+  });
+
+  it('renders a labelled section with a slider of tag-less cards and links', async () => {
+    const html = await c.renderToString(HomeWriting, {
+      props: { articles: [art(1), art(2), art(3)], eyebrow: '04 — Writing' },
+    });
+    expect(html).toContain('id="writing"');
+    expect(html).toContain('04 — Writing');
+    expect(html).toContain('Latest on Medium');
+    expect(html).toMatch(/href="\/blog"[^>]*>\s*All articles/);
+    expect(html).toContain('id="writing-slider"');
+    expect(html).toContain('data-noun="article"');
+    expect(html).toContain('Latest articles — scroll sideways');
+    expect(html.match(/<article/g)).toHaveLength(3);
+    expect(html).toContain('Article 2');
+    expect(html).toContain('https://medium.com/@ada/article-3');
+    // tags="none": the first tag never shows in the meta row on the home cards
+    expect(html).not.toContain('flutter');
+  });
+
+  it('renders nothing without articles', async () => {
+    expect((await c.renderToString(HomeWriting, { props: { articles: [], eyebrow: '' } })).trim()).toBe('');
   });
 });

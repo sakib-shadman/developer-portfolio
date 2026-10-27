@@ -14,6 +14,7 @@ for (const url of urls) {
       const main = page.getByRole('main');
       await expect(main.getByRole('link', { name: 'Back to home' })).toHaveAttribute('href', '/');
       await expect(main.getByRole('link', { name: 'Projects' })).toHaveAttribute('href', '/projects');
+      await expect(main.getByRole('link', { name: 'Writing' })).toHaveAttribute('href', '/blog');
       await expect(main.getByRole('link', { name: 'Contact' })).toHaveAttribute('href', '/contact');
       await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', /noindex/);
       await expect(page.locator('link[rel="canonical"]')).toHaveCount(0);

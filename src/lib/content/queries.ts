@@ -99,10 +99,11 @@ export async function getHomeArticles(n = 6): Promise<ArticleCard[]> {
 
 /** Home sections that actually render (shared by PageLayout nav, home page and numbering). */
 export async function getHomeSections(): Promise<HomeSections> {
-  const [skillGroups, experience, featuredProjects] = await Promise.all([
+  const [skillGroups, experience, featuredProjects, homeArticles] = await Promise.all([
     getSkillGroups(),
     getExperience(),
     getFeaturedProjects(),
+    getHomeArticles(),
   ]);
-  return composeHomeSections({ skillGroups, experience, featuredProjects });
+  return composeHomeSections({ skillGroups, experience, featuredProjects, homeArticles });
 }

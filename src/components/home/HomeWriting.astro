@@ -1,0 +1,47 @@
+---
+/** "Latest on Medium" slider on the home page (FR-01, FR-09): featured-or-latest articles. Hidden when none. */
+import type { ArticleCard as Article } from '../../lib/content/types';
+import ArticleCard from '../blog/ArticleCard.astro';
+import Slider from '../slider/Slider.astro';
+import Button from '../ui/Button.astro';
+import SectionHeading from '../ui/SectionHeading.astro';
+
+interface Props {
+  articles: Article[];
+  eyebrow: string;
+}
+const { articles, eyebrow } = Astro.props;
+---
+
+{articles.length > 0 && (
+  <section id="writing" class="wrap" aria-labelledby="writing-title">
+    <div class="head">
+      <SectionHeading eyebrow={eyebrow} title="Latest on Medium" id="writing-title" />
+      <Button variant="soft" href="/blog" iconEnd="arrow-right">
+        All articles
+      </Button>
+    </div>
+    <Slider id="writing-slider" noun="article" label="Latest articles — scroll sideways">
+      {articles.map((a) => (
+        <ArticleCard article={a} tags="none" idPrefix="home-article" />
+      ))}
+    </Slider>
+  </section>
+)}
+
+<style>
+  section {
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+    padding-top: var(--section-gap);
+    padding-bottom: var(--section-gap);
+  }
+  .head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+  }
+</style>
