@@ -1,0 +1,253 @@
+---
+import PageLayout from '../../layouts/PageLayout.astro';
+import Breadcrumbs from '../../components/layout/Breadcrumbs.astro';
+import ArticleCard from '../../components/blog/ArticleCard.astro';
+import BlogFilter from '../../components/blog/BlogFilter.astro';
+import Button from '../../components/ui/Button.astro';
+import Card from '../../components/ui/Card.astro';
+import Icon from '../../components/ui/Icon.astro';
+import FilterChip from '../../components/ui/FilterChip.astro';
+import SectionHeading from '../../components/ui/SectionHeading.astro';
+import { getArticles, getProfile } from '../../lib/content/queries';
+import { ALL_TAGS, PAGE_SIZE, buildTagFilters, counterParts, hasTagRow } from '../../lib/blog';
+import { linkAttrs } from '../../lib/link';
+
+const articles = await getArticles();
+const profile = await getProfile();
+// FR-08.8: only when configured and safe; an unsafe href renders nothing.
+const medium = profile.links.medium && linkAttrs(profile.links.medium) ? profile.links.medium : undefined;
+const total = articles.length;
+const tagFilters = buildTagFilters(articles);
+const showTags = hasTagRow(tagFilters);
+// Without JS every article is listed; the script trims to the first page.
+const counter = counterParts(total, total);
+---
+
+<PageLayout
+  title="Writing — Shadman Sakib"
+  description="Technical articles Shadman Sakib has published on Medium."
+  path="/blog"
+>
+  <section class="wrap page" aria-labelledby="blog-title" data-blog data-page-size={PAGE_SIZE}>
+    <Breadcrumbs
+      items={[
+        { label: 'Home', href: '/' },
+        { label: 'Writing', href: '/blog' },
+      ]}
+    />
+
+    <div class="intro">
+      <SectionHeading
+        level="h1"
+        id="blog-title"
+        title="Writing"
+        lead="Technical articles I've published on Medium. Each card opens the original post."
+        class="intro-text"
+      />
+      {medium && (
+        <Button variant="soft" href={medium} iconEnd="external">
+          Medium profile
+        </Button>
+      )}
+    </div>
+
+    {total > 0 ? (
+      <>
+        {/* Hidden until the script runs: without JS every article shows and there is nothing to operate. */}
+        <div class="controls" data-controls hidden>
+          {showTags && (
+            <div role="group" aria-label="Filter by topic" class="filters" data-filters>
+              {tagFilters.map((f) => (
+                <FilterChip group="blog-tag" value={f.value} pressed={f.value === ALL_TAGS}>
+                  {f.label}
+                </FilterChip>
+              ))}
+            </div>
+          )}
+          <div class="search-wrap" data-search>
+            <label for="blog-search" class="sr-only">
+              Search articles
+            </label>
+            <span class="search-icon" aria-hidden="true">
+              <Icon name="search" size={18} />
+            </span>
+            <input
+              id="blog-search"
+              type="search"
+              class="search"
+              placeholder="Search articles"
+              autocomplete="off"
+              spellcheck="false"
+            />
+          </div>
+        </div>
+
+        <ul class="grid" role="list" data-grid>
+          {articles.map((a) => (
+            <li data-title={a.title} data-excerpt={a.excerpt ?? ''} data-tags={JSON.stringify(a.tags)}>
+              <ArticleCard article={a} headingLevel="h2" idPrefix="blog" />
+            </li>
+          ))}
+        </ul>
+
+        {/* Always present (the footer is hidden at 0 results); the script writes it after each change. */}
+        <p class="sr-only" role="status" data-status></p>
+
+        <div class="footer" data-footer>
+          <p class="counter" data-counter>
+            Showing{' '}
+            <span class="shown" data-counter-shown>
+              {counter.shown}
+            </span>
+            <span data-counter-rest>{counter.rest}</span>
+          </p>
+          <Button variant="outline" data-more hidden>
+            Load more articles
+          </Button>
+        </div>
+
+        {/* Shown by the script when search/filters match nothing. */}
+        <Card as="div" class="empty" data-empty hidden>
+          <Icon name="search" size={40} color="var(--acc)" />
+          <h2>No articles match your search</h2>
+          <p>Try a different word or topic.</p>
+          <Button variant="soft" data-clear>
+            Clear search and filters
+          </Button>
+        </Card>
+        <BlogFilter />
+      </>
+    ) : (
+      <Card as="div" class="empty">
+        <Icon name="pen" size={44} color="var(--acc)" />
+        <h2>No articles yet</h2>
+        <p>New writing will appear here once it's published on Medium.</p>
+        {medium && (
+          <Button variant="soft" href={medium} iconEnd="external">
+            Medium profile
+          </Button>
+        )}
+      </Card>
+    )}
+  </section>
+</PageLayout>
+
+<style>
+  .page {
+    display: flex;
+    flex-direction: column;
+    gap: 36px;
+    padding-top: var(--page-top);
+    padding-bottom: 112px;
+  }
+  .intro {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+  }
+  .intro-text {
+    gap: 16px;
+    max-width: 680px;
+  }
+  .intro-text :global(.lead) {
+    font-size: 19px;
+  }
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding-bottom: 28px;
+    border-bottom: 1px solid var(--border);
+  }
+  .filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .search-wrap {
+    position: relative;
+    flex: 0 1 320px;
+    min-width: 220px;
+    margin-left: auto;
+  }
+  .search-icon {
+    position: absolute;
+    left: 16px;
+    top: 15px;
+    display: flex;
+    color: var(--muted);
+    pointer-events: none;
+  }
+  .search {
+    width: 100%;
+    min-height: 48px;
+    padding: 0 16px 0 44px;
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font: inherit;
+    font-size: 15px;
+  }
+  .search::placeholder {
+    color: var(--muted);
+  }
+  .search:focus-visible {
+    outline: var(--focus-ring);
+    outline-offset: 2px;
+  }
+  .controls[hidden],
+  .grid li[hidden],
+  .footer[hidden],
+  .page :global([data-empty][hidden]),
+  .page :global([data-more][hidden]) {
+    display: none;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
+    gap: var(--grid-gap);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .grid li {
+    display: flex;
+  }
+  .grid li > :global(.article-card) {
+    flex: 1;
+    min-width: 0;
+  }
+  .footer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding-top: 8px;
+  }
+  .counter {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .shown {
+    color: var(--text);
+  }
+  .page :global(.empty .body) {
+    align-items: center;
+    padding: 64px 24px;
+    text-align: center;
+  }
+  .page :global(.empty h2) {
+    font-family: var(--font-display);
+    font-size: 24px;
+  }
+  .page :global(.empty p) {
+    color: var(--muted);
+  }
+</style>
