@@ -75,6 +75,7 @@ describe('/blog page', () => {
       'data-grid',
       'data-controls',
       'data-counter',
+      'data-status',
       'Filter by topic',
       'blog-search',
       'Load more',
@@ -97,8 +98,11 @@ describe('/blog page', () => {
     expect(count(html, /<h3\b/g)).toBe(0);
     expect(html).toMatch(/data-counter-shown[^>]*>\s*9\s*</);
     expect(html).toContain('of 9');
-    expect(html).toContain('aria-live="polite"');
-    expect(html).toContain('aria-atomic="true"');
+    // One always-present status region, outside the (hideable) footer; the visual counter is plain text.
+    expect(count(html, /role="status"/g)).toBe(1);
+    expect(html).toMatch(/<p[^>]*class="sr-only"[^>]*role="status"[^>]*data-status/);
+    expect(html).not.toContain('aria-live');
+    expect(html.indexOf('data-status')).toBeLessThan(html.indexOf('data-footer'));
     expect(html).toMatch(/data-controls[^>]*\shidden/);
     expect(html).toMatch(/data-more[^>]*\shidden/);
     expect(html).toMatch(/data-empty[^>]*\shidden/);
@@ -124,6 +128,7 @@ describe('/blog page', () => {
     ]);
     expect(tagged).toContain('aria-label="Filter by topic"');
     expect(count(tagged, /data-filter-group="blog-tag"/g)).toBe(3); // All, Dart, Flutter
+    expect(tagged).not.toContain('class="count"'); // labels only, per the design
     expect(tagged).toMatch(
       /data-filter="\*"[^>]*aria-pressed="true"|aria-pressed="true"[^>]*data-filter="\*"/,
     );

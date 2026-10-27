@@ -12,6 +12,7 @@ import {
   isFiltered,
   matchesQuery,
   paginate,
+  statusText,
   parseBlogState,
 } from '../../src/lib/blog';
 
@@ -122,6 +123,14 @@ describe('URL state', () => {
     expect(blogQuery({ tag: ALL_TAGS, q: ' a b ' })).toBe('?q=a+b');
     expect(blogQuery({ tag: 'Flutter', q: 'x' })).toBe('?tag=Flutter&q=x');
   });
+  it('preserves unrelated params and replaces only tag/q', () => {
+    expect(blogQuery({ tag: 'Flutter', q: '' }, '?utm_source=x&tag=Old&q=old')).toBe(
+      '?utm_source=x&tag=Flutter',
+    );
+    expect(blogQuery({ tag: ALL_TAGS, q: '' }, '?utm_source=x&tag=Old&q=old')).toBe('?utm_source=x');
+    expect(blogQuery({ tag: ALL_TAGS, q: '' }, '?utm_source=x')).toBe('?utm_source=x');
+    expect(blogQuery({ tag: ALL_TAGS, q: 'a' }, 'utm=1')).toBe('?utm=1&q=a');
+  });
   it('round-trips', () => {
     const s = { tag: 'Android', q: 'coroutines & more' };
     expect(parseBlogState(blogQuery(s), avail)).toEqual(s);
@@ -138,5 +147,12 @@ describe('counterParts', () => {
   it('splits the number from the rest', () => {
     expect(counterParts(6, 9)).toEqual({ shown: '6', rest: ' of 9' });
     expect(counterParts(0, 0)).toEqual({ shown: '0', rest: ' of 0' });
+  });
+});
+
+describe('statusText', () => {
+  it('announces the range, or the no-match message at 0', () => {
+    expect(statusText(6, 9)).toBe('Showing 6 of 9');
+    expect(statusText(0, 0)).toBe('No articles match your search');
   });
 });

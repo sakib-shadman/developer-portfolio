@@ -9,6 +9,7 @@ const PAGE_SIZE = 6;
 const counter = (page: Page) => page.locator('[data-counter]');
 const allItems = (page: Page) => page.locator('[data-grid] > li');
 const shown = (page: Page) => page.locator('[data-grid] > li:not([hidden])');
+const status = (page: Page) => page.getByRole('status');
 const search = (page: Page) => page.getByRole('searchbox', { name: 'Search articles' });
 const more = (page: Page) => page.getByRole('button', { name: 'Load more articles' });
 const tagPills = (page: Page) => page.getByRole('group', { name: 'Filter by topic' }).getByRole('button');
@@ -27,8 +28,9 @@ test('@smoke /blog renders one h1, breadcrumbs and a consistent list or empty st
   } else {
     await expect(shown(page)).toHaveCount(Math.min(n, PAGE_SIZE));
     await expect(counter(page)).toHaveText(`Showing ${Math.min(n, PAGE_SIZE)} of ${n}`);
-    await expect(counter(page)).toHaveAttribute('aria-live', 'polite');
-    await expect(counter(page)).toHaveAttribute('aria-atomic', 'true');
+    // One always-present status live region; the visible counter is plain text.
+    await expect(status(page)).toHaveCount(1);
+    await expect(counter(page)).not.toHaveAttribute('aria-live', /.*/);
     await expect(page.getByRole('heading', { level: 2 })).toHaveCount(Math.min(n, PAGE_SIZE));
   }
 });
@@ -161,6 +163,25 @@ test.describe('with articles', () => {
     await expect(search(page)).toHaveValue(title);
   });
 
+  test('the status region announces results after a change, and "No articles match" at 0', async ({
+    page,
+  }) => {
+    await expect(status(page)).toHaveText(''); // nothing is spoken on load
+    await search(page).fill('zzzz-no-such-article-zzzz');
+    await expect(status(page)).toHaveText('No articles match your search');
+    await expect(status(page)).toBeAttached();
+    await search(page).fill('');
+    await expect(status(page)).toHaveText(`Showing ${Math.min(n, PAGE_SIZE)} of ${n}`);
+  });
+
+  test('other URL params survive filtering (utm_*)', async ({ page }) => {
+    await page.goto('/blog?utm_source=x');
+    await search(page).fill('zzz');
+    await expect(page).toHaveURL(/\?utm_source=x&q=zzz$/);
+    await search(page).fill('');
+    await expect(page).toHaveURL(/\?utm_source=x$/);
+  });
+
   test('no match shows the empty state; Clear search and filters restores everything', async ({ page }) => {
     await search(page).fill('zzzz-no-such-article-zzzz');
     await expect(noMatch(page)).toBeVisible();
@@ -204,17 +225,24 @@ test.describe('with articles', () => {
     await expect(shown(page)).toHaveCount(PAGE_SIZE);
   });
 
-  test('tag pills (when articles have tags): filter, count, URL, reset page, unknown tag -> All', async ({
+  test('tag pills (when articles have tags): filter, counter, URL, reset page, unknown tag -> All', async ({
     page,
   }) => {
     const pills = tagPills(page);
     test.skip((await pills.count()) < 2, 'no article has tags: the pill row is hidden');
-    await expect(pills.first()).toHaveText(new RegExp(`^All\\s*${n}$`));
+    await expect(pills.first()).toHaveText('All'); // labels only, no counts
     await expect(pills.first()).toHaveAttribute('aria-pressed', 'true');
 
     const pill = pills.nth(1);
-    const label = (await pill.innerText()).replace(/\s*\d+$/, '').trim();
-    const count = Number((await pill.innerText()).match(/(\d+)$/)?.[1]);
+    const label = (await pill.innerText()).trim();
+    // Expected matches come from the cards' own tag data, not from pill counts.
+    const count = await page.evaluate(
+      (tag) =>
+        [...document.querySelectorAll<HTMLElement>('[data-grid] > li')].filter((li) =>
+          (JSON.parse(li.dataset.tags ?? '[]') as string[]).includes(tag),
+        ).length,
+      label,
+    );
     await pill.click();
     await expect(pill).toHaveAttribute('aria-pressed', 'true');
     await expect(pills.first()).toHaveAttribute('aria-pressed', 'false');

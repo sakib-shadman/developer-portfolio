@@ -11,6 +11,7 @@
     counterParts,
     filterArticles,
     paginate,
+    statusText,
     parseBlogState,
     type BlogState,
   } from '../../lib/blog';
@@ -25,8 +26,9 @@
   const empty = root?.querySelector<HTMLElement>('[data-empty]');
   const more = root?.querySelector<HTMLButtonElement>('[data-more]');
   const footer = root?.querySelector<HTMLElement>('[data-footer]');
+  const status = root?.querySelector<HTMLElement>('[data-status]');
 
-  if (root && shownEl && restEl && controls && searchWrap && input && empty && more && footer) {
+  if (root && shownEl && restEl && controls && searchWrap && input && empty && more && footer && status) {
     const pills = [...(tagGroup?.querySelectorAll<HTMLButtonElement>('[data-filter]') ?? [])];
     const items = [...root.querySelectorAll<HTMLElement>('[data-grid] > li')].map((el) => ({
       el,
@@ -38,14 +40,20 @@
     let state: BlogState = { tag: ALL_TAGS, q: '' };
     let page = 1;
 
-    const render = () => {
+    // `announce` is false for the initial render so nothing is spoken on page load.
+    const render = (announce = true) => {
       const matches = filterArticles(items, state);
       const { visible, total, hasMore } = paginate(matches, page, PAGE_SIZE);
       const show = new Set(visible);
       for (const item of items) item.el.hidden = !show.has(item);
       for (const pill of pills) pill.setAttribute('aria-pressed', String(pill.dataset.filter === state.tag));
       const parts = counterParts(visible.length, total);
-      // Write only on change so the live region doesn't re-announce identical text.
+      // The counter is plain text; the sr-only status region below is what assistive tech hears. It
+      // lives outside the footer, which is hidden at 0 results, and is written only on change.
+      if (announce) {
+        const text = statusText(visible.length, total);
+        if (status.textContent !== text) status.textContent = text;
+      }
       if (shownEl.textContent !== parts.shown) shownEl.textContent = parts.shown;
       if (restEl.textContent !== parts.rest) restEl.textContent = parts.rest;
       more.hidden = !hasMore;
@@ -55,7 +63,7 @@
 
     const available = pills.map((p) => p.dataset.filter as string);
     const sync = () => {
-      const url = `${location.pathname}${blogQuery(state)}${location.hash}`;
+      const url = `${location.pathname}${blogQuery(state, location.search)}${location.hash}`;
       if (url !== `${location.pathname}${location.search}${location.hash}`)
         history.replaceState(history.state, '', url);
     };
@@ -106,7 +114,7 @@
     });
 
     fromUrl();
-    render();
+    render(false);
     sync(); // normalises an unknown ?tag= to the clean URL
   }
 </script>

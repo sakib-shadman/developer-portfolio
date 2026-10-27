@@ -8,7 +8,6 @@
 import { Image } from 'astro:assets';
 import type { HTMLAttributes } from 'astro/types';
 import Card from '../ui/Card.astro';
-import ChipList from '../ui/ChipList.astro';
 import LinkPill from '../ui/LinkPill.astro';
 import type { ArticleCard } from '../../lib/content/types';
 import { formatMeta } from '../../lib/blog';
@@ -19,12 +18,18 @@ interface Props extends Omit<HTMLAttributes<'article'>, 'title'> {
   headingLevel?: 'h2' | 'h3';
   /** Prefix for the title id so the same article can appear twice on a page. */
   idPrefix?: string;
+  /**
+   * 'meta' (default): the first tag, or "Tag +N", in accent on the right of the meta row (Blog.dc.html).
+   * 'none': no tags at all (the home "04 - Writing" card).
+   */
+  tags?: 'meta' | 'none';
 }
 
 const {
   article,
   headingLevel: Heading = 'h3',
   idPrefix = 'article',
+  tags: tagMode = 'meta',
   class: className,
   ...rest
 } = Astro.props;
@@ -32,6 +37,9 @@ const titleId = `${idPrefix}-${article.id}`;
 const meta = formatMeta(article.publishedAt, article.readingMinutes);
 const validDate = !Number.isNaN(article.publishedAt.getTime());
 const thumb = article.thumbnail;
+const [firstTag, ...otherTags] = article.tags;
+const tagLabel =
+  tagMode === 'meta' && firstTag ? (otherTags.length ? `${firstTag} +${otherTags.length}` : firstTag) : '';
 ---
 
 <Card
@@ -59,16 +67,18 @@ const thumb = article.thumbnail;
     )}
   </Fragment>
 
-  {meta && (
+  {(meta || tagLabel) && (
     <p class="meta">
-      {validDate ? <time datetime={article.publishedAt.toISOString().slice(0, 10)}>{meta}</time> : meta}
+      <span>
+        {validDate ? <time datetime={article.publishedAt.toISOString().slice(0, 10)}>{meta}</time> : meta}
+      </span>
+      {tagLabel && <span class="tag">{tagLabel}</span>}
     </p>
   )}
   <Heading id={titleId} class="title">
     {article.title}
   </Heading>
   {article.excerpt && <p class="excerpt">{article.excerpt}</p>}
-  <ChipList items={article.tags} label="Topics" />
   <div class="links">
     <LinkPill href={article.url} class="read" aria-describedby={titleId}>
       Read on Medium
@@ -98,9 +108,16 @@ const thumb = article.thumbnail;
     opacity: 0.45;
   }
   .meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
     font-family: var(--font-mono);
     font-size: var(--text-xs);
     color: var(--muted);
+  }
+  .tag {
+    color: var(--acc-text);
+    text-align: right;
   }
   .title {
     font-family: var(--font-display);
@@ -115,7 +132,11 @@ const thumb = article.thumbnail;
     margin-top: auto;
     padding-top: 4px;
   }
-  /* Stretched link: the pill's ::after covers the card so the whole card is clickable. */
+  /*
+   * Stretched link: the pill's ::after covers the card so the whole card is clickable (one real link,
+   * no nested interactive elements). Trade-off: the overlay sits above the text, so dragging to select
+   * the title or excerpt selects nothing. Accepted: a clickable card matters more than copying a teaser.
+   */
   .read {
     align-self: flex-start;
   }
@@ -124,6 +145,10 @@ const thumb = article.thumbnail;
     position: absolute;
     inset: 0;
     border-radius: inherit;
+  }
+  /* One focus ring: the card's, not the pill's. */
+  .article-card .read:focus-visible {
+    outline: none;
   }
   .article-card:has(.read:focus-visible) {
     outline: var(--focus-ring);

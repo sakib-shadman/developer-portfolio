@@ -88,9 +88,14 @@ export function parseBlogState(search: string, available: readonly string[]): Bl
   return { tag, q: (params.get(QUERY_PARAM) ?? '').trim() };
 }
 
-/** Query string for the state ("" when nothing is filtered, keeping the clean URL). */
-export function blogQuery(state: BlogState): string {
-  const params = new URLSearchParams();
+/**
+ * Query string for the state ("" when nothing is filtered, keeping the clean URL). Pass the current
+ * `search` so unrelated params (utm_*, ...) survive: only `tag` and `q` are set or removed.
+ */
+export function blogQuery(state: BlogState, search = ''): string {
+  const params = new URLSearchParams(search);
+  params.delete(TAG_PARAM);
+  params.delete(QUERY_PARAM);
   if (state.tag !== ALL_TAGS) params.set(TAG_PARAM, state.tag);
   if (state.q.trim()) params.set(QUERY_PARAM, state.q.trim());
   const s = params.toString();
@@ -101,5 +106,9 @@ export function blogQuery(state: BlogState): string {
 export function counterParts(shown: number, total: number): { shown: string; rest: string } {
   return { shown: String(shown), rest: ` of ${total}` };
 }
+
+/** Text for the always-present status live region (announced after a filter, search or Load more). */
+export const statusText = (shown: number, total: number): string =>
+  total === 0 ? 'No articles match your search' : `Showing ${shown} of ${total}`;
 
 export const isFiltered = (state: BlogState): boolean => state.tag !== ALL_TAGS || state.q.trim() !== '';
