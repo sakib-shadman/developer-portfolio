@@ -23,7 +23,7 @@ const { articles, eyebrow } = Astro.props;
     </div>
     <Slider id="writing-slider" noun="article" label="Latest articles — scroll sideways">
       {articles.map((a) => (
-        <ArticleCard article={a} tags="none" idPrefix="writing" />
+        <ArticleCard article={a} tags="none" idPrefix="home-article" />
       ))}
     </Slider>
   </section>

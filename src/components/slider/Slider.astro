@@ -79,6 +79,11 @@ const { id, noun, label, class: className, ...rest } = Astro.props;
     scroll-snap-align: start;
     min-width: 0;
   }
+  /* A card's focus ring is drawn inset inside a track: the track clips overflow, so an outside ring
+     would lose its top/left edge on the first card. !important beats the card's own scoped offset. */
+  .track > :global(article:has(:focus-visible)) {
+    outline-offset: -3px !important;
+  }
   @media (max-width: 1024px) {
     .track > :global(article) {
       flex-basis: calc((100% - var(--grid-gap)) / 2);

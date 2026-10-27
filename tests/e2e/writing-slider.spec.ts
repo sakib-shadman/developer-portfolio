@@ -40,7 +40,9 @@ const FIXTURE_DIR = 'tests/fixtures/content/articles';
 const featured = readdirSync(FIXTURE_DIR)
   .filter((f) => f.endsWith('.md'))
   .map((f) => {
-    const fm = parseYaml(readFileSync(join(FIXTURE_DIR, f), 'utf8').split('---')[1] ?? '') as {
+    const fm = parseYaml(
+      /^---\r?\n([\s\S]*?)\r?\n---/.exec(readFileSync(join(FIXTURE_DIR, f), 'utf8'))?.[1] ?? '',
+    ) as {
       title: string;
       url: string;
       publishedAt: Date | string;
@@ -76,8 +78,7 @@ test.describe('@fixtures home writing slider', () => {
       await expect(links).toHaveCount(1);
       await expect(links.first()).toHaveAttribute('href', a.url);
       await expect(links.first()).toHaveAttribute('target', '_blank');
-      for (const tag of a.tags ?? [])
-        await expect(cards.nth(i)).not.toContainText(new RegExp(`^${tag}$`, 'i'));
+      await expect(cards.nth(i).locator('.tag')).toHaveCount(0);
     }
   });
 
@@ -92,6 +93,12 @@ test.describe('@fixtures home writing slider', () => {
 
   test('@fixtures two sliders on one page work independently', async ({ page }) => {
     const left = (s: ReturnType<typeof wSlider>) => track(s).evaluate((e) => e.scrollLeft);
+    const toggle = (s: ReturnType<typeof wSlider>) => s.locator('[data-slider-toggle]');
+    // Pause the projects slider first so its autoplay cannot move it during the assertions.
+    await toggle(pSlider(page)).click();
+    await expect(pSlider(page)).toHaveAttribute('data-holds', /paused/);
+    await expect(wSlider(page)).not.toHaveAttribute('data-holds', /paused/);
+
     await dots(wSlider(page)).nth(1).click();
     await expect.poll(() => left(wSlider(page))).toBeGreaterThan(100);
     await expect(counter(wSlider(page))).toHaveText(/^02 \//);
@@ -99,12 +106,43 @@ test.describe('@fixtures home writing slider', () => {
     expect(await left(pSlider(page))).toBe(0);
     await expect(counter(pSlider(page))).toHaveText(/^01 \//);
 
-    // and the other way round, then pausing one leaves the other's state alone
-    await pSlider(page).locator('[data-slider-toggle]').click();
-    await expect(pSlider(page)).toHaveAttribute('data-holds', /paused/);
-    await expect(wSlider(page)).not.toHaveAttribute('data-holds', /paused/);
-    await wSlider(page).locator('[data-slider-toggle]').click();
+    // and the other way round: a projects dot leaves the writing slider where it is
+    await dots(pSlider(page)).nth(1).click();
+    await expect.poll(() => left(pSlider(page))).toBeGreaterThan(100);
+    await expect(counter(wSlider(page))).toHaveText(/^02 \//);
+
+    // pausing the writing slider is its own state
+    await toggle(wSlider(page)).click();
     await expect(wSlider(page)).toHaveAttribute('data-holds', /paused/);
+  });
+
+  test('@fixtures the focus ring of a card inside a slider is fully visible (not clipped)', async ({
+    page,
+  }) => {
+    await page.keyboard.press('Shift'); // keyboard modality, so focus() matches :focus-visible
+    for (const slider of [wSlider(page), pSlider(page)]) {
+      const card = track(slider).locator(':scope > article').first();
+      await card.getByRole('link').first().focus();
+      const ring = await card.evaluate((el) => {
+        const cs = getComputedStyle(el);
+        const c = el.getBoundingClientRect();
+        const t = el.parentElement!.getBoundingClientRect();
+        const grow = parseFloat(cs.outlineOffset) + parseFloat(cs.outlineWidth); // outer edge vs border box
+        return {
+          style: cs.outlineStyle,
+          top: c.top - grow - t.top,
+          left: c.left - grow - t.left,
+        };
+      });
+      // pill-focused project cards draw their ring on the pill; only assert cards that own the ring
+      if (ring.style === 'none') continue;
+      expect(ring.top, 'ring top edge inside the track').toBeGreaterThanOrEqual(-0.5);
+      expect(ring.left, 'ring left edge inside the track').toBeGreaterThanOrEqual(-0.5);
+    }
+    // the writing card owns the ring, so it must have been asserted
+    const w = track(wSlider(page)).locator(':scope > article').first();
+    await w.getByRole('link').first().focus();
+    expect(await w.evaluate((el) => getComputedStyle(el).outlineStyle)).not.toBe('none');
   });
 
   test('@fixtures no axe violations and no horizontal overflow at 320px', async ({ page }) => {
