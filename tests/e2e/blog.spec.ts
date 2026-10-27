@@ -1,11 +1,40 @@
+import { readdirSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import AxeBuilder from '@axe-core/playwright';
 import { test, expect, type Page } from '@playwright/test';
 
-// The repo currently ships zero articles and the e2e build may include test-only fixtures, so
-// nothing here assumes specific content. Populated checks read what the page renders (titles, tags,
-// counts) and skip themselves when the data they need (cards, tags, >1 page) is absent.
-// Tests tagged @smoke / named "axe" also run against the shipped build.
+// Two kinds of tests. Untagged / @smoke / "axe" / @any-content tests assume no content (the shipped
+// build has zero articles) and also run against the fixture build. Tests tagged @fixtures run only in
+// `pnpm e2e:fixtures`, against tests/fixtures/content (9 articles); their expectations are read from
+// those fixture files, never hard-coded.
 const PAGE_SIZE = 6;
+
+interface Fixture {
+  title: string;
+  publishedAt: string;
+  tags: string[];
+}
+const FIXTURE_DIR = 'tests/fixtures/content/articles';
+/** Fixture articles, newest first (the order the page renders). */
+const FIXTURES: Fixture[] = readdirSync(FIXTURE_DIR)
+  .filter((f) => f.endsWith('.md'))
+  .map((f) => {
+    const fm = readFileSync(join(FIXTURE_DIR, f), 'utf8').split('---')[1] ?? '';
+    const field = (k: string) => fm.match(new RegExp(`^${k}: (.*)$`, 'm'))?.[1]?.trim() ?? '';
+    return {
+      title: field('title').replace(/^'|'$/g, ''),
+      publishedAt: field('publishedAt'),
+      tags: field('tags')
+        .replace(/^\[|\]$/g, '')
+        .split(',')
+        .map((t) => t.trim())
+        .filter(Boolean),
+    };
+  })
+  .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
+const N = FIXTURES.length;
+const TAGS = [...new Set(FIXTURES.flatMap((a) => a.tags))].sort((a, b) => a.localeCompare(b));
+const withTag = (tag: string) => FIXTURES.filter((a) => a.tags.includes(tag));
 const counter = (page: Page) => page.locator('[data-counter]');
 const allItems = (page: Page) => page.locator('[data-grid] > li');
 const shown = (page: Page) => page.locator('[data-grid] > li:not([hidden])');
@@ -15,7 +44,9 @@ const more = (page: Page) => page.getByRole('button', { name: 'Load more article
 const tagPills = (page: Page) => page.getByRole('group', { name: 'Filter by topic' }).getByRole('button');
 const noMatch = (page: Page) => page.getByRole('heading', { name: 'No articles match your search' });
 
-test('@smoke /blog renders one h1, breadcrumbs and a consistent list or empty state', async ({ page }) => {
+test('@smoke @any-content /blog renders one h1, breadcrumbs and a consistent list or empty state', async ({
+  page,
+}) => {
   await page.goto('/blog');
   await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1);
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Writing');
@@ -48,7 +79,7 @@ test('@smoke with zero articles: only the empty state, no list, controls, counte
   await expect(page.locator('main script')).toHaveCount(0);
 });
 
-test('no axe violations (empty or populated, plus filtered, no-match and expanded states)', async ({
+test('@any-content no axe violations (empty or populated, plus filtered, no-match and expanded states)', async ({
   page,
 }) => {
   await page.goto('/blog');
@@ -73,14 +104,14 @@ test('no axe violations (empty or populated, plus filtered, no-match and expande
   }
 });
 
-test('no horizontal overflow at 320px', async ({ page }) => {
+test('@any-content no horizontal overflow at 320px', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 640 });
   await page.goto('/blog');
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
   expect(overflow).toBeLessThanOrEqual(0);
 });
 
-test('the Medium profile link (when configured) opens safely in a new tab', async ({ page }) => {
+test('@any-content the Medium profile link (when configured) opens safely in a new tab', async ({ page }) => {
   await page.goto('/blog');
   const link = page.locator('main').getByRole('link', { name: /Medium profile/ });
   test.skip((await link.count()) === 0, 'no Medium profile configured');
@@ -89,175 +120,232 @@ test('the Medium profile link (when configured) opens safely in a new tab', asyn
   await expect(link.first()).toHaveAttribute('rel', /noopener/);
 });
 
-test.describe('without JavaScript', () => {
-  test.use({ javaScriptEnabled: false });
-  test('every article is listed; controls and Load more stay hidden', async ({ page }) => {
-    await page.goto('/blog');
-    const n = await allItems(page).count();
-    test.skip(n === 0, 'needs articles');
-    await expect(shown(page)).toHaveCount(n);
-    await expect(search(page)).toBeHidden();
-    await expect(more(page)).toBeHidden();
-    await expect(page.getByRole('link', { name: /Read on Medium/ })).toHaveCount(n);
-  });
-});
-
-test.describe('with articles', () => {
-  let n = 0;
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/blog');
-    n = await allItems(page).count();
-    test.skip(n === 0, 'needs articles (test fixtures or real content)');
-  });
-
-  test('cards: one external link each, no placeholders, no nested interactive elements', async ({ page }) => {
-    const li = allItems(page).first();
-    const links = li.getByRole('link');
-    await expect(links).toHaveCount(1);
-    await expect(links).toHaveAttribute('href', /^https:\/\//);
-    await expect(links).toHaveAttribute('target', '_blank');
-    await expect(links).toHaveAttribute('rel', /noopener/);
-    await expect(links).toContainText('Read on Medium');
-    await expect(li.locator('button, input, a a')).toHaveCount(0);
-    await expect(page.locator('main')).not.toContainText(/\[[^\]]+\]/);
-  });
-
-  test('the whole card is clickable (stretched link covers the card)', async ({ page }) => {
-    const card = allItems(page).first().locator('article');
-    await card.scrollIntoViewIfNeeded();
-    // The pill itself is small; its ::after must cover the card: the card's centre hits the link.
-    const hit = await card.evaluate((el) => {
-      const r = el.getBoundingClientRect();
-      const top = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
-      return !!top?.closest('a');
+test.describe('@fixtures populated /blog', () => {
+  test.describe('without JavaScript', () => {
+    test.use({ javaScriptEnabled: false });
+    test('@fixtures every article is listed; controls and Load more stay hidden', async ({ page }) => {
+      await page.goto('/blog');
+      await expect(shown(page)).toHaveCount(N);
+      await expect(search(page)).toBeHidden();
+      await expect(more(page)).toBeHidden();
+      await expect(page.getByRole('link', { name: /Read on Medium/ })).toHaveCount(N);
     });
-    expect(hit).toBe(true);
   });
 
-  test('search filters by title or excerpt, case-insensitively, resets to page 1, and syncs ?q=', async ({
-    page,
-  }) => {
-    const title = (await allItems(page).first().locator('h2').innerText()).trim();
-    const word = title.split(/\s+/).find((w) => w.length > 3) ?? title;
-    await search(page).fill(word.toUpperCase());
-    await expect(page).toHaveURL(new RegExp(`\\?q=${encodeURIComponent(word.toUpperCase())}$`));
-    await expect(shown(page).first().locator('h2')).toContainText(new RegExp(word, 'i'));
-    const total = Number((await counter(page).innerText()).match(/of (\d+)$/)?.[1]);
-    expect(total).toBeGreaterThan(0);
-    await expect(shown(page)).toHaveCount(Math.min(total, PAGE_SIZE));
-    await expect(counter(page)).toHaveText(`Showing ${Math.min(total, PAGE_SIZE)} of ${total}`);
+  test.describe('with JavaScript', () => {
+    test.beforeEach(async ({ page }) => {
+      await page.goto('/blog');
+      await expect(allItems(page)).toHaveCount(N);
+    });
 
-    await search(page).fill('');
-    await expect(page).toHaveURL(/\/blog$/);
-    await expect(shown(page)).toHaveCount(Math.min(n, PAGE_SIZE));
-  });
+    test('@fixtures first page: newest first, 6 of N, h2 titles, thumbnails, tag in meta row', async ({
+      page,
+    }) => {
+      expect(N).toBeGreaterThan(PAGE_SIZE);
+      await expect(shown(page)).toHaveCount(PAGE_SIZE);
+      await expect(counter(page)).toHaveText(`Showing ${PAGE_SIZE} of ${N}`);
+      await expect(shown(page).locator('h2')).toHaveText(FIXTURES.slice(0, PAGE_SIZE).map((a) => a.title));
+      const first = shown(page).first();
+      await expect(first.locator('img')).toHaveCount(1);
+      await expect(first.locator('.meta')).toContainText(FIXTURES[0]!.tags[0]!);
+      await expect(first.locator('.meta time')).toHaveAttribute('datetime', FIXTURES[0]!.publishedAt);
+      // Cards load their thumbnails.
+      expect(await first.locator('img').evaluate((el: HTMLImageElement) => el.complete)).toBe(true);
+    });
 
-  test('?q= is restored on load, and Back/Forward re-read the URL', async ({ page }) => {
-    const title = (await allItems(page).first().locator('h2').innerText()).trim();
-    await page.goto(`/blog?q=${encodeURIComponent(title)}`);
-    await expect(search(page)).toHaveValue(title);
-    await expect(shown(page).first().locator('h2')).toHaveText(title);
-    await page.goto('/blog');
-    await expect(search(page)).toHaveValue('');
-    await page.goBack();
-    await expect(search(page)).toHaveValue(title);
-  });
+    test('@fixtures cards: one external link each, no placeholders, no nested interactive elements', async ({
+      page,
+    }) => {
+      const li = allItems(page).first();
+      const links = li.getByRole('link');
+      await expect(links).toHaveCount(1);
+      await expect(links).toHaveAttribute('href', /^https:\/\//);
+      await expect(links).toHaveAttribute('target', '_blank');
+      await expect(links).toHaveAttribute('rel', /noopener/);
+      await expect(links).toContainText('Read on Medium');
+      await expect(li.locator('button, input, a a')).toHaveCount(0);
+      await expect(page.locator('main')).not.toContainText(/\[[^\]]+\]/);
+    });
 
-  test('the status region announces results after a change, and "No articles match" at 0', async ({
-    page,
-  }) => {
-    await expect(status(page)).toHaveText(''); // nothing is spoken on load
-    await search(page).fill('zzzz-no-such-article-zzzz');
-    await expect(status(page)).toHaveText('No articles match your search');
-    await expect(status(page)).toBeAttached();
-    await search(page).fill('');
-    await expect(status(page)).toHaveText(`Showing ${Math.min(n, PAGE_SIZE)} of ${n}`);
-  });
+    test('@fixtures the whole card is clickable (stretched link covers the card)', async ({ page }) => {
+      const card = allItems(page).first().locator('article');
+      await card.scrollIntoViewIfNeeded();
+      // The pill itself is small; its ::after must cover the card: the card's centre hits the link.
+      const hit = await card.evaluate((el) => {
+        const r = el.getBoundingClientRect();
+        const top = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+        return !!top?.closest('a');
+      });
+      expect(hit).toBe(true);
+    });
 
-  test('other URL params survive filtering (utm_*)', async ({ page }) => {
-    await page.goto('/blog?utm_source=x');
-    await search(page).fill('zzz');
-    await expect(page).toHaveURL(/\?utm_source=x&q=zzz$/);
-    await search(page).fill('');
-    await expect(page).toHaveURL(/\?utm_source=x$/);
-  });
+    test('@fixtures search: title/excerpt, case-insensitive, ?q= synced, back to page 1 when cleared', async ({
+      page,
+    }) => {
+      // "architecture" appears in the title of exactly the fixtures that are about it.
+      const q = 'ARCHITECTURE';
+      const expected = FIXTURES.filter((a) => a.title.toLowerCase().includes('architecture'));
+      expect(expected.length).toBeGreaterThan(0);
+      await search(page).fill(q);
+      await expect(page).toHaveURL(new RegExp(`\\?q=${q}$`));
+      await expect(shown(page).locator('h2')).toHaveText(expected.slice(0, PAGE_SIZE).map((a) => a.title));
+      await expect(counter(page)).toHaveText(
+        `Showing ${Math.min(expected.length, PAGE_SIZE)} of ${expected.length}`,
+      );
+      // Excerpts are searched too: no title contains it, every fixture excerpt does.
+      await search(page).fill('exists only');
+      await expect(counter(page)).toHaveText(`Showing ${PAGE_SIZE} of ${N}`);
 
-  test('no match shows the empty state; Clear search and filters restores everything', async ({ page }) => {
-    await search(page).fill('zzzz-no-such-article-zzzz');
-    await expect(noMatch(page)).toBeVisible();
-    await expect(shown(page)).toHaveCount(0);
-    await expect(counter(page)).toBeHidden();
-    await expect(more(page)).toBeHidden();
-    await page.getByRole('button', { name: 'Clear search and filters' }).click();
-    await expect(noMatch(page)).toBeHidden();
-    await expect(search(page)).toHaveValue('');
-    await expect(search(page)).toBeFocused();
-    await expect(shown(page)).toHaveCount(Math.min(n, PAGE_SIZE));
-    await expect(page).toHaveURL(/\/blog$/);
-  });
+      await search(page).fill('');
+      await expect(page).toHaveURL(/\/blog$/);
+      await expect(shown(page)).toHaveCount(PAGE_SIZE);
+    });
 
-  test('Load more reveals the next page, updates the counter and moves focus to the first new card', async ({
-    page,
-  }) => {
-    test.skip(n <= PAGE_SIZE, 'needs more than one page of articles');
-    await expect(more(page)).toBeVisible();
-    await expect(counter(page)).toHaveText(`Showing ${PAGE_SIZE} of ${n}`);
-    await more(page).click();
-    const now = Math.min(n, PAGE_SIZE * 2);
-    await expect(shown(page)).toHaveCount(now);
-    await expect(counter(page)).toHaveText(`Showing ${now} of ${n}`);
-    await expect(allItems(page).nth(PAGE_SIZE).getByRole('link')).toBeFocused();
-    if (n <= PAGE_SIZE * 2) await expect(more(page)).toBeHidden();
-  });
+    test('@fixtures ?q= is restored on load, and Back/Forward re-read the URL', async ({ page }) => {
+      const title = FIXTURES[1]!.title;
+      await page.goto(`/blog?q=${encodeURIComponent(title)}`);
+      await expect(search(page)).toHaveValue(title);
+      await expect(shown(page)).toHaveCount(1);
+      await expect(shown(page).first().locator('h2')).toHaveText(title);
+      await page.goto('/blog');
+      await expect(search(page)).toHaveValue('');
+      await page.goBack();
+      await expect(search(page)).toHaveValue(title);
+    });
 
-  test('Load more works with the keyboard', async ({ page }) => {
-    test.skip(n <= PAGE_SIZE, 'needs more than one page of articles');
-    await more(page).focus();
-    await page.keyboard.press('Enter');
-    await expect(shown(page)).toHaveCount(Math.min(n, PAGE_SIZE * 2));
-  });
+    test('@fixtures the status region announces results after a change, and "No articles match" at 0', async ({
+      page,
+    }) => {
+      await expect(status(page)).toHaveText(''); // nothing is spoken on load
+      await search(page).fill('zzzz-no-such-article-zzzz');
+      await expect(status(page)).toHaveText('No articles match your search');
+      await expect(status(page)).toBeAttached();
+      await search(page).fill('');
+      await expect(status(page)).toHaveText(`Showing ${PAGE_SIZE} of ${N}`);
+    });
 
-  test('changing the search resets pagination to the first page', async ({ page }) => {
-    test.skip(n <= PAGE_SIZE, 'needs more than one page of articles');
-    await more(page).click();
-    await search(page).fill('a');
-    await search(page).fill('');
-    await expect(shown(page)).toHaveCount(PAGE_SIZE);
-  });
+    test('@fixtures other URL params survive filtering (utm_*)', async ({ page }) => {
+      await page.goto('/blog?utm_source=x');
+      await search(page).fill('zzz');
+      await expect(page).toHaveURL(/\?utm_source=x&q=zzz$/);
+      await search(page).fill('');
+      await expect(page).toHaveURL(/\?utm_source=x$/);
+    });
 
-  test('tag pills (when articles have tags): filter, counter, URL, reset page, unknown tag -> All', async ({
-    page,
-  }) => {
-    const pills = tagPills(page);
-    test.skip((await pills.count()) < 2, 'no article has tags: the pill row is hidden');
-    await expect(pills.first()).toHaveText('All'); // labels only, no counts
-    await expect(pills.first()).toHaveAttribute('aria-pressed', 'true');
+    test('@fixtures no match shows the empty state; Clear search and filters restores everything', async ({
+      page,
+    }) => {
+      await search(page).fill('zzzz-no-such-article-zzzz');
+      await expect(noMatch(page)).toBeVisible();
+      await expect(shown(page)).toHaveCount(0);
+      await expect(counter(page)).toBeHidden();
+      await expect(more(page)).toBeHidden();
+      await page.getByRole('button', { name: 'Clear search and filters' }).click();
+      await expect(noMatch(page)).toBeHidden();
+      await expect(search(page)).toHaveValue('');
+      await expect(search(page)).toBeFocused();
+      await expect(shown(page)).toHaveCount(PAGE_SIZE);
+      await expect(page).toHaveURL(/\/blog$/);
+    });
 
-    const pill = pills.nth(1);
-    const label = (await pill.innerText()).trim();
-    // Expected matches come from the cards' own tag data, not from pill counts.
-    const count = await page.evaluate(
-      (tag) =>
-        [...document.querySelectorAll<HTMLElement>('[data-grid] > li')].filter((li) =>
-          (JSON.parse(li.dataset.tags ?? '[]') as string[]).includes(tag),
-        ).length,
-      label,
-    );
-    await pill.click();
-    await expect(pill).toHaveAttribute('aria-pressed', 'true');
-    await expect(pills.first()).toHaveAttribute('aria-pressed', 'false');
-    await expect(shown(page)).toHaveCount(Math.min(count, PAGE_SIZE));
-    await expect(counter(page)).toHaveText(`Showing ${Math.min(count, PAGE_SIZE)} of ${count}`);
-    await expect(page).toHaveURL(
-      new RegExp(`\\?tag=${encodeURIComponent(label).replace(/%20/g, '(\\+|%20)')}$`),
-    );
+    test('@fixtures Load more: 6 then the rest, counter, focus on the first new card, button hides', async ({
+      page,
+    }) => {
+      await expect(more(page)).toBeVisible();
+      await expect(counter(page)).toHaveText(`Showing ${PAGE_SIZE} of ${N}`);
+      await more(page).click();
+      await expect(shown(page)).toHaveCount(N);
+      await expect(counter(page)).toHaveText(`Showing ${N} of ${N}`);
+      await expect(status(page)).toHaveText(`Showing ${N} of ${N}`);
+      await expect(allItems(page).nth(PAGE_SIZE).getByRole('link')).toBeFocused();
+      await expect(more(page)).toBeHidden();
+    });
 
-    await page.goto(`/blog?tag=${encodeURIComponent(label.toLowerCase())}`);
-    await expect(tagPills(page).nth(1)).toHaveAttribute('aria-pressed', 'true');
+    test('@fixtures Load more works with the keyboard', async ({ page }) => {
+      await more(page).focus();
+      await page.keyboard.press('Enter');
+      await expect(shown(page)).toHaveCount(N);
+    });
 
-    await page.goto('/blog?tag=definitely-not-a-tag');
-    await expect(tagPills(page).first()).toHaveAttribute('aria-pressed', 'true');
-    await expect(shown(page)).toHaveCount(Math.min(n, PAGE_SIZE));
-    await expect(page).toHaveURL(/\/blog$/);
+    test('@fixtures changing the search or a tag resets pagination to the first page', async ({ page }) => {
+      await more(page).click();
+      await expect(shown(page)).toHaveCount(N);
+      await search(page).fill('a');
+      await search(page).fill('');
+      await expect(shown(page)).toHaveCount(PAGE_SIZE);
+      await more(page).click();
+      await tagPills(page).first().click(); // All: same set, but still back to page 1
+      await expect(shown(page)).toHaveCount(PAGE_SIZE);
+    });
+
+    test('@fixtures tag pills: labels only, filter, counter, URL, unknown tag -> All', async ({ page }) => {
+      const pills = tagPills(page);
+      await expect(pills).toHaveText(['All', ...TAGS]); // labels only, no counts
+      await expect(pills.first()).toHaveAttribute('aria-pressed', 'true');
+
+      // Every tag: matches come from the fixture front matter.
+      for (const tag of TAGS) {
+        const expected = withTag(tag);
+        await tagPills(page)
+          .filter({ hasText: new RegExp(`^${tag}$`) })
+          .click();
+        await expect(tagPills(page).filter({ hasText: new RegExp(`^${tag}$`) })).toHaveAttribute(
+          'aria-pressed',
+          'true',
+        );
+        await expect(pills.first()).toHaveAttribute('aria-pressed', 'false');
+        await expect(shown(page).locator('h2')).toHaveText(expected.slice(0, PAGE_SIZE).map((a) => a.title));
+        await expect(counter(page)).toHaveText(
+          `Showing ${Math.min(expected.length, PAGE_SIZE)} of ${expected.length}`,
+        );
+        await expect(page).toHaveURL(new RegExp(`\\?tag=${tag}$`));
+      }
+
+      // Tag + search combine.
+      await search(page).fill('zzzz');
+      await expect(noMatch(page)).toBeVisible();
+      await expect(page).toHaveURL(/\?tag=[^&]+&q=zzzz$/);
+
+      await page.goto(`/blog?tag=${TAGS[0]!.toUpperCase()}`); // case-insensitive
+      await expect(tagPills(page).nth(1)).toHaveAttribute('aria-pressed', 'true');
+
+      await page.goto('/blog?tag=definitely-not-a-tag');
+      await expect(tagPills(page).first()).toHaveAttribute('aria-pressed', 'true');
+      await expect(shown(page)).toHaveCount(PAGE_SIZE);
+      await expect(page).toHaveURL(/\/blog$/);
+    });
+
+    test('@fixtures no axe violations: populated, filtered, expanded', async ({ page }) => {
+      const run = async (label: string) =>
+        expect(
+          (await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa']).analyze())
+            .violations,
+          label,
+        ).toEqual([]);
+      await run('populated');
+      await tagPills(page).nth(1).click();
+      await run('tag filtered');
+      await search(page).fill('zzzz');
+      await run('no match');
+      await page.goto('/blog');
+      await more(page).click();
+      await run('expanded');
+    });
+
+    test('@fixtures no horizontal overflow at 320px with cards', async ({ page }) => {
+      await page.setViewportSize({ width: 320, height: 640 });
+      await page.goto('/blog');
+      await expect(shown(page)).toHaveCount(PAGE_SIZE);
+      expect(
+        await page.evaluate(() => document.documentElement.scrollWidth - innerWidth),
+      ).toBeLessThanOrEqual(0);
+    });
+
+    test('@fixtures the Medium profile link is a safe external link', async ({ page }) => {
+      const link = page.locator('main').getByRole('link', { name: /Medium profile/ });
+      await expect(link).toHaveAttribute('href', 'https://example.com/medium/example');
+      await expect(link).toHaveAttribute('target', '_blank');
+      await expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+    });
   });
 });
