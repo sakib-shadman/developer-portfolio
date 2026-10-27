@@ -64,7 +64,7 @@ importers:
         specifier: ^0.2.0
         version: 0.2.0(eslint@10.13.0(jiti@2.7.0))
       fast-xml-parser:
-        specifier: 5.11.2
+        specifier: ^5.11.2
         version: 5.11.2
       firebase-tools:
         specifier: ^15.34.1

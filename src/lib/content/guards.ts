@@ -99,3 +99,15 @@ export function resumeError(
     ? undefined
     : `src/content/profile.json $.main.resume: file public${resume} does not exist`;
 }
+
+/**
+ * ADR-0003: an article file is frontmatter only; the body stays empty (the text lives on Medium).
+ * Returns the first non-blank body line, or undefined when the body is empty.
+ */
+export function articleBodyHit(source: string): { line: number; text: string } | undefined {
+  const front = /^---\r?\n[\s\S]*?\r?\n---[ \t]*(?:\r?\n|$)/.exec(source)?.[0] ?? '';
+  const offset = front ? front.split(/\r?\n/).length - 1 : 0;
+  const lines = source.slice(front.length).split(/\r?\n/);
+  const i = lines.findIndex((l) => l.trim() !== '');
+  return i < 0 ? undefined : { line: offset + i + 1, text: lines[i]!.trim() };
+}

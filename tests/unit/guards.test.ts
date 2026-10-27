@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { findPlaceholders, isPlaceholder, looseMdxContent, resumeError } from '../../src/lib/content/guards';
+import {
+  articleBodyHit,
+  findPlaceholders,
+  isPlaceholder,
+  looseMdxContent,
+  resumeError,
+} from '../../src/lib/content/guards';
 
 describe('placeholder guard', () => {
   it.each(['[Project name]', '[X]', 'Built with [Tech]', 'TODO: write bio', 'TBD', 'Lorem ipsum dolor'])(
@@ -75,5 +81,22 @@ describe('resumeError', () => {
   it('is silent when there is no resume or the file exists', () => {
     expect(resumeError(undefined, () => false)).toBeUndefined();
     expect(resumeError('/resume/cv.pdf', (p) => p === 'public/resume/cv.pdf')).toBeUndefined();
+  });
+});
+
+describe('articleBodyHit (ADR-0003)', () => {
+  const fm = '---\ntitle: A\nurl: https://medium.com/x\n---\n';
+  it('accepts frontmatter-only files, with or without trailing blank lines', () => {
+    expect(articleBodyHit(fm)).toBeUndefined();
+    expect(articleBodyHit(`${fm}\n\n  \n`)).toBeUndefined();
+    expect(articleBodyHit('---\ntitle: A\n---')).toBeUndefined();
+    expect(articleBodyHit(fm.replace(/\n/g, '\r\n'))).toBeUndefined();
+  });
+  it('reports the first non-blank body line with its file line number', () => {
+    expect(articleBodyHit(`${fm}\n  Some prose here.\nmore`)).toEqual({ line: 6, text: 'Some prose here.' });
+    expect(articleBodyHit(`${fm}# Heading`)).toEqual({ line: 5, text: '# Heading' });
+  });
+  it('treats a file without frontmatter as all body', () => {
+    expect(articleBodyHit('hello')).toEqual({ line: 1, text: 'hello' });
   });
 });
