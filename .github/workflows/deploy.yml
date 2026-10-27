@@ -54,6 +54,11 @@ jobs:
           PUBLIC_CONTACT_FORM: 'false'
           # Explicit false also overrides any stray .env file (process.env wins in Vite).
           PUBLIC_INCLUDE_DRAFTS: 'false'
+          PUBLIC_CONTENT_FIXTURES: 'false'
+      # Belt and braces: fixture content must never reach hosting (pnpm build also checks this).
+      - if: steps.gate.outputs.enabled == 'true'
+        run: |
+          if grep -rIl -e '(fixture)' dist; then echo '::error::fixture content found in dist/'; exit 1; fi
       - if: steps.gate.outputs.enabled == 'true'
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:

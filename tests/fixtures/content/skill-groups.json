@@ -1,0 +1,26 @@
+[
+  {
+    "id": "languages",
+    "title": "Languages",
+    "order": 1,
+    "items": ["dart", "swift", "go"]
+  },
+  {
+    "id": "frameworks",
+    "title": "Frameworks",
+    "order": 2,
+    "items": ["flutter", "swiftui"]
+  },
+  {
+    "id": "platforms",
+    "title": "Platforms",
+    "order": 3,
+    "items": ["ios", "android"]
+  },
+  {
+    "id": "devops-cloud",
+    "title": "DevOps & Cloud",
+    "order": 4,
+    "items": ["docker"]
+  }
+]

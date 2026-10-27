@@ -1,8 +1,10 @@
 import AxeBuilder from '@axe-core/playwright';
 import { test, expect, type Page } from '@playwright/test';
 
-// Detail pages exist only for projects that have a case study, so a build may have none (the shipped
-// build today). Everything here discovers pages from /projects and is content-agnostic; the
+// Detail pages exist only for projects that have a case study, so real content may have none (today).
+// The page-level tests are tagged @any-content: they run on real content and skip when empty, and the
+// @fixtures run (pnpm e2e:fixtures) includes them so they are exercised against case studies.
+// Everything here discovers pages from /projects and is content-agnostic; the
 // page-level checks skip themselves when there is nothing to visit.
 async function detailPaths(page: Page): Promise<string[]> {
   await page.goto('/projects');
@@ -24,7 +26,7 @@ test('/projects links only to detail pages that exist', async ({ page, request }
   }
 });
 
-test('@smoke each detail page has one h1, breadcrumbs, unique metadata and a sane structure', async ({
+test('@smoke each detail page has one h1, breadcrumbs, unique metadata and a sane structure @any-content', async ({
   page,
 }) => {
   const paths = await detailPaths(page);
@@ -56,7 +58,10 @@ test('@smoke each detail page has one h1, breadcrumbs, unique metadata and a san
   }
 });
 
-test('@smoke detail pages: previous/next links go to existing pages', async ({ page, request }) => {
+test('@smoke detail pages: previous/next links go to existing pages @any-content', async ({
+  page,
+  request,
+}) => {
   const paths = await detailPaths(page);
   test.skip(paths.length === 0, 'no project has a case study in this build');
   for (const path of paths) {
@@ -75,7 +80,9 @@ test('@smoke detail pages: previous/next links go to existing pages', async ({ p
   }
 });
 
-test('detail pages: external links are safe, keyboard reachable and ≥ 40px', async ({ page }) => {
+test('detail pages: external links are safe, keyboard reachable and ≥ 40px @any-content', async ({
+  page,
+}) => {
   const paths = await detailPaths(page);
   test.skip(paths.length === 0, 'no project has a case study in this build');
   await page.goto(paths[0] as string);
@@ -90,7 +97,7 @@ test('detail pages: external links are safe, keyboard reachable and ≥ 40px', a
   await expect(page.getByRole('link', { name: 'Skip to content' })).toBeFocused();
 });
 
-test('no axe violations on detail pages', async ({ page }) => {
+test('no axe violations on detail pages @any-content', async ({ page }) => {
   const paths = await detailPaths(page);
   for (const path of paths) {
     await page.goto(path);

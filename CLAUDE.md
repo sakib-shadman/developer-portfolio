@@ -13,7 +13,8 @@ pnpm dev                 # localhost:4321, drafts visible
 pnpm lint                # eslint + prettier --check
 pnpm typecheck           # astro check (covers .astro + .ts)
 pnpm test                # vitest + coverage (≥ 90% on src/lib)
-pnpm e2e                 # playwright + axe via the Firebase Hosting emulator (:5000)
+pnpm e2e                 # playwright + axe via the Firebase Hosting emulator (:5000), real content
+pnpm e2e:fixtures        # @fixtures suite against tests/fixtures/content (builds dist-fixtures, :5390)
 pnpm build               # content:check + astro build
 ```
 
@@ -29,6 +30,11 @@ Node ≥ 22.23 (CI: `.nvmrc`), pnpm 10.
   `src/lib/content/queries.ts`, which returns domain types from `types.ts`.
 - **Links (NFR-03):** every rendered href goes through `src/lib/link.ts` (`linkAttrs`) or a UI
   primitive that uses it. Unsafe hrefs render nothing.
+- **Test fixtures:** `PUBLIC_CONTENT_FIXTURES=true` loads the fictional content in `tests/fixtures/content`
+  instead of `src/content` (e2e only; read from the process environment only, never from `.env`; the build refuses it with
+  `PUBLIC_INDEXABLE=true` and `pnpm build` fails if the fixture marker reaches `dist/`). Tests that need
+  populated content (blog, case studies, photo, email, resume) are tagged `@fixtures` and run via
+  `pnpm e2e:fixtures`; the default `pnpm e2e` excludes them. Never put fixture content in `src/content`.
 - **Content (ADR-0002):** never invent facts. Incomplete records stay `"status": "draft"`.
   No `[placeholders]` — `pnpm content:check` fails the build.
 - **Primitives:** reuse `src/components/ui/*`; accept `class` and spread rest props on the root so
