@@ -7,29 +7,32 @@ import Card from '../../components/ui/Card.astro';
 import FilterChip from '../../components/ui/FilterChip.astro';
 import ProjectsFilter from '../../components/projects/ProjectsFilter.astro';
 import SectionHeading from '../../components/ui/SectionHeading.astro';
-import { getProjects } from '../../lib/content/queries';
+import { getProfile, getProjects } from '../../lib/content/queries';
 import { buildFilters, counterParts, sortProjects } from '../../lib/projects';
+import { breadcrumbLd } from '../../lib/seo/jsonld';
+import { siteOrigin } from '../../lib/seo/text';
 
-const projects = sortProjects(await getProjects());
+const [profile, allProjects] = await Promise.all([getProfile(), getProjects()]);
+const projects = sortProjects(allProjects);
 const filters = buildFilters(projects);
 const total = projects.length;
 const counter = counterParts(total, total);
 const EMPTY_ICON =
   '<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18"/></svg>';
+const crumbs = [
+  { label: 'Home', href: '/' },
+  { label: 'Projects', href: '/projects' },
+];
 ---
 
 <PageLayout
-  title="Projects — Shadman Sakib"
-  description="Mobile apps, SDKs and backend services Shadman Sakib has built or contributed to."
+  title={`Projects — ${profile.name}`}
+  description={`Mobile apps, SDKs and backend services ${profile.name} has built or contributed to.`}
   path="/projects"
+  jsonLd={[breadcrumbLd(crumbs, '/projects', siteOrigin(Astro.site))]}
 >
   <section class="wrap page" aria-labelledby="projects-title" data-projects>
-    <Breadcrumbs
-      items={[
-        { label: 'Home', href: '/' },
-        { label: 'Projects', href: '/projects' },
-      ]}
-    />
+    <Breadcrumbs items={crumbs} />
 
     <div class="intro">
       <SectionHeading

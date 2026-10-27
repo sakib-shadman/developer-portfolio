@@ -11,7 +11,7 @@ import Button from '../../components/ui/Button.astro';
 import Prose from '../../components/case-study/Prose.astro';
 import Section from '../../components/case-study/Section.astro';
 import { caseStudyComponents } from '../../components/case-study';
-import { getCaseStudy, getProjects, getSkillGroups } from '../../lib/content/queries';
+import { getCaseStudy, getProfile, getProjects, getSkillGroups } from '../../lib/content/queries';
 import { linkAttrs } from '../../lib/link';
 import type { CaseStudy, ProjectCard } from '../../lib/content/types';
 import {
@@ -24,6 +24,8 @@ import {
   splitTech,
 } from '../../lib/project-detail';
 import { sortProjects } from '../../lib/projects';
+import { breadcrumbLd } from '../../lib/seo/jsonld';
+import { projectOgPath, siteOrigin } from '../../lib/seo/text';
 
 export async function getStaticPaths() {
   const pages = detailPageProjects(sortProjects(await getProjects()));
@@ -46,6 +48,7 @@ interface Props {
 }
 const { project, caseStudy, prev, next } = Astro.props;
 const { Content } = caseStudy;
+const profile = await getProfile();
 
 const { platforms, stack } = splitTech(project.technologies, platformIds(await getSkillGroups()));
 const facts = detailFacts(project, platforms, stack);
@@ -54,21 +57,23 @@ const neighbourLink = (p?: ProjectCard) =>
   p ? { p, href: linkAttrs(`/projects/${p.slug}`)?.href } : undefined;
 const prevLink = neighbourLink(prev);
 const nextLink = neighbourLink(next);
+const crumbs = [
+  { label: 'Home', href: '/' },
+  { label: 'Projects', href: '/projects' },
+  { label: project.name },
+];
 ---
 
 <PageLayout
-  title={`${project.name} — Case study — Shadman Sakib`}
+  title={`${project.name} — Case study — ${profile.name}`}
   description={detailDescription(project.summary, caseStudy.problem)}
   path={`/projects/${project.slug}`}
+  image={projectOgPath(project.slug)}
+  imageAlt={`${project.name}: case study by ${profile.name}`}
+  jsonLd={[breadcrumbLd(crumbs, `/projects/${project.slug}`, siteOrigin(Astro.site))]}
 >
   <section class="wrap hero" aria-labelledby="project-title">
-    <Breadcrumbs
-      items={[
-        { label: 'Home', href: '/' },
-        { label: 'Projects', href: '/projects' },
-        { label: project.name },
-      ]}
-    />
+    <Breadcrumbs items={crumbs} />
     <span class="kind">
       <span class="dot" aria-hidden="true"></span>
       {project.label} · Case study

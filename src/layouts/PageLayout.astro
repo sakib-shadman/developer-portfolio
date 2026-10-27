@@ -3,6 +3,7 @@
 import BaseLayout from './BaseLayout.astro';
 import Header from '../components/layout/Header.astro';
 import Footer from '../components/layout/Footer.astro';
+import type { JsonLd } from '../lib/seo/jsonld';
 import { getHomeSections, getProfile } from '../lib/content/queries';
 
 interface Props {
@@ -10,6 +11,9 @@ interface Props {
   description: string;
   path?: string;
   image?: string;
+  imageAlt?: string;
+  siteName?: string;
+  jsonLd?: JsonLd[];
   type?: 'website' | 'article' | 'profile';
   /** Always emit noindex and no canonical, regardless of PUBLIC_INDEXABLE (404 page). */
   noindex?: boolean;
@@ -18,7 +22,7 @@ interface Props {
 const [profile, home] = await Promise.all([getProfile(), getHomeSections()]);
 ---
 
-<BaseLayout {...Astro.props}>
+<BaseLayout siteName={profile.name} {...Astro.props}>
   <Header slot="header" name={profile.name} resume={profile.resume} sections={home.rendered} />
   <slot />
   <Footer slot="footer" rss name={profile.name} location={profile.location} resume={profile.resume} />

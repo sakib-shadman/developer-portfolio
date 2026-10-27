@@ -186,7 +186,10 @@ describe('/projects/[slug] page', () => {
     expect(html).toContain('Scores must update live.');
     // description falls back to the problem statement
     expect(html).toContain('content="Scores must update live."');
-    expect(html).not.toMatch(/\[[^\]]+\]/);
+    // (JSON-LD in the head legitimately contains "[]" for empty lists.)
+    expect(html.replace(/<script type="application\/ld\+json">.*?<\/script>/gs, '')).not.toMatch(
+      /\[[^\]]+\]/,
+    );
   });
 
   it('outcomes render only when provided', async () => {

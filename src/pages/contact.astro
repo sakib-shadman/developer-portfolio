@@ -8,24 +8,26 @@ import ProfileLinks from '../components/ui/ProfileLinks.astro';
 import ContactDirect from '../components/contact/ContactDirect.astro';
 import { getProfile } from '../lib/content/queries';
 import { placeLine } from '../lib/contact';
+import { breadcrumbLd } from '../lib/seo/jsonld';
+import { siteOrigin } from '../lib/seo/text';
 
 const profile = await getProfile();
 const place = placeLine(profile.location, profile.timezone);
+const crumbs = [
+  { label: 'Home', href: '/' },
+  { label: 'Contact', href: '/contact' },
+];
 ---
 
 <PageLayout
   title={`Contact — ${profile.name}`}
   description={profile.availability ?? `Contact ${profile.name}.`}
   path="/contact"
+  jsonLd={[breadcrumbLd(crumbs, '/contact', siteOrigin(Astro.site))]}
 >
   <div class="wrap page">
     <div class="col">
-      <Breadcrumbs
-        items={[
-          { label: 'Home', href: '/' },
-          { label: 'Contact', href: '/contact' },
-        ]}
-      />
+      <Breadcrumbs items={crumbs} />
       <SectionHeading level="h1" title="Let's talk." />
       {profile.availability && <p class="lead">{profile.availability}</p>}
 

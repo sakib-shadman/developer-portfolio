@@ -7,12 +7,19 @@ import Experience from '../components/home/Experience.astro';
 import FeaturedProjects from '../components/home/FeaturedProjects.astro';
 import HomeWriting from '../components/home/HomeWriting.astro';
 import ContactCta from '../components/home/ContactCta.astro';
+import { profilePersonLd } from '../lib/seo/jsonld';
+import { siteOrigin } from '../lib/seo/text';
 import { getHomeSections, getProfile } from '../lib/content/queries';
 
 const [profile, home] = await Promise.all([getProfile(), getHomeSections()]);
 ---
 
-<PageLayout title={`${profile.name} — ${profile.title}`} description={profile.intro}>
+<PageLayout
+  title={`${profile.name} — ${profile.title}`}
+  description={profile.intro}
+  path="/"
+  jsonLd={[profilePersonLd(profile, siteOrigin(Astro.site))]}
+>
   <Hero profile={profile} projectsHref={home.projectsHref} />
   <Stats stats={profile.stats} />
   <Skills groups={home.skillGroups} eyebrow={home.eyebrows.skills ?? ''} />
