@@ -9,7 +9,7 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { basename, join, relative } from 'node:path';
 import { parse as parseYaml } from 'yaml';
-import { findPlaceholders, looseMdxContent, resumeError } from '../src/lib/content/guards';
+import { articleBodyHit, findPlaceholders, looseMdxContent, resumeError } from '../src/lib/content/guards';
 import {
   FIXTURE_CONTENT,
   fixtureFileName,
@@ -119,6 +119,16 @@ for (const id of caseStudyIds) {
   for (const hit of looseMdxContent(readFileSync(join(ROOT, rel), 'utf8'))) {
     errors.push(`${rel}:${hit.line}: content outside a <Section> ("${hit.text.slice(0, 40)}")`);
   }
+}
+
+// ADR-0003: article files are frontmatter only (the text lives on Medium).
+for (const f of (existsSync(join(CONTENT, 'articles')) ? readdirSync(join(CONTENT, 'articles')) : []).filter(
+  (f) => /\.mdx?$/.test(f),
+)) {
+  const rel = `${CONTENT_DIR}/articles/${f}`;
+  const hit = articleBodyHit(readFileSync(join(ROOT, rel), 'utf8'));
+  if (hit)
+    errors.push(`${rel}:${hit.line}: article body must be empty (ADR-0003) ("${hit.text.slice(0, 40)}")`);
 }
 
 if (errors.length) {

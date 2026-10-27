@@ -13,6 +13,7 @@ interface Props {
 
 const { name, location, resume, rss = false } = Astro.props;
 const resumeLink = linkAttrs(resume, { newTab: true });
+const rssLink = rss ? linkAttrs('/rss.xml') : null;
 const year = new Date().getFullYear();
 ---
 
@@ -32,9 +33,9 @@ const year = new Date().getFullYear();
           </a>
         </li>
       )}
-      {rss && (
+      {rssLink && (
         <li>
-          <a class="pill" href="/rss.xml">
+          <a class="pill" href={rssLink.href}>
             <Icon name="rss" color="var(--acc)" />
             RSS
           </a>

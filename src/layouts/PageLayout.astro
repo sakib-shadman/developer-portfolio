@@ -21,5 +21,5 @@ const [profile, home] = await Promise.all([getProfile(), getHomeSections()]);
 <BaseLayout {...Astro.props}>
   <Header slot="header" name={profile.name} resume={profile.resume} sections={home.rendered} />
   <slot />
-  <Footer slot="footer" name={profile.name} location={profile.location} resume={profile.resume} />
+  <Footer slot="footer" rss name={profile.name} location={profile.location} resume={profile.resume} />
 </BaseLayout>
