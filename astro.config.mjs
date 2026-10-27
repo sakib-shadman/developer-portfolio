@@ -14,6 +14,7 @@ if (flagError) throw new Error(flagError);
 
 // Fixture builds also ship the fixture resume PDF. Copying into dist (instead of switching `publicDir`)
 // keeps the real public/ assets (favicon, ...) in the build and never puts fixture files in public/.
+/** @type {import('astro').AstroIntegration} */
 const fixturePublic = {
   name: 'fixture-public',
   hooks: {

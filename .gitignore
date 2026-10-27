@@ -37,5 +37,5 @@ Claude outputs/
 
 # local e2e helpers
 pw.local.config.ts
-.firebase-e2e.json
+.firebase-e2e*.json
 pw.fixtures.local.config.ts

@@ -5,7 +5,7 @@
     "title": "Software Engineer",
     "startDate": "2022-03-01",
     "endDate": null,
-    "description": "Fictional current role used by tests.",
+    "description": "Fictional current role used by tests (fixture).",
     "responsibilities": ["Sample responsibility one", "Sample responsibility two"],
     "achievements": ["Sample achievement"],
     "technologies": ["flutter", "dart", "swift"],
@@ -18,7 +18,7 @@
     "title": "Junior Engineer",
     "startDate": "2018-06-01",
     "endDate": "2022-02-28",
-    "description": "Fictional earlier role used by tests.",
+    "description": "Fictional earlier role used by tests (fixture).",
     "responsibilities": ["Sample responsibility"],
     "technologies": ["android", "go"],
     "status": "published"

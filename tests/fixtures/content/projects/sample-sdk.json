@@ -3,12 +3,12 @@
   "label": "iOS SDK · Example",
   "category": "sdk",
   "summary": "A fictional iOS SDK that exists only for tests.",
-  "description": "This sample project has a case study so the detail page, previous/next links and media can be tested.",
+  "description": "This sample project has a case study so the detail page, previous/next links and media can be tested (fixture).",
   "technologies": ["swift", "ios"],
   "role": "Lead engineer (sample)",
   "contributions": ["Sample contribution one", "Sample contribution two"],
   "links": {
-    "repo": "https://github.com/example/sample-sdk",
+    "repo": "https://example.com/code/sample-sdk",
     "demo": "https://example.com/sample-sdk"
   },
   "progress": "shipped",

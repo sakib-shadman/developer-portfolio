@@ -32,3 +32,11 @@ export function buildFlagError(env: BuildEnv): string | undefined {
     return 'Refusing to build: PUBLIC_CONTENT_FIXTURES=true with PUBLIC_INDEXABLE=true';
   return undefined;
 }
+
+/** Paths (from `{path, text}` build outputs) that carry the fixture marker: a shipped build must have none. */
+export const distLeaks = (files: { path: string; text: string }[]): string[] =>
+  files.filter((f) => fixtureLeak(f.text)).map((f) => f.path);
+
+/** Real content must not hold fixture records: marker in the text, or a fixture-style file name. */
+export const fixtureFileName = (name: string): boolean =>
+  /^sample-/.test(name) || name === 'example-resume.pdf';

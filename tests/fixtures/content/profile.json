@@ -11,9 +11,9 @@
     "now": "Maintaining an example SDK",
     "email": "hello@example.com",
     "links": {
-      "github": "https://github.com/example",
-      "linkedin": "https://www.linkedin.com/in/example",
-      "medium": "https://medium.com/@example"
+      "github": "https://example.com/github/example",
+      "linkedin": "https://example.com/linkedin/example",
+      "medium": "https://example.com/medium/example"
     },
     "resume": "/resume/example-resume.pdf",
     "photo": {
@@ -70,7 +70,7 @@
     "community": [
       {
         "text": "Writes sample articles on Medium.",
-        "href": "https://medium.com/@example"
+        "href": "https://example.com/medium/example"
       },
       {
         "text": "Mentors sample engineers."

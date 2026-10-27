@@ -1,5 +1,5 @@
 // Serve dist/ (or $E2E_DIST) with the Firebase Hosting emulator on E2E_PORT (default 5000).
-// Writes .firebase-e2e.json (gitignored) next to firebase.json so `public: "dist"` resolves the
+// Writes .firebase-e2e.<port>.json (gitignored; per port so parallel suites never share a config) next to firebase.json so `public: "dist"` resolves the
 // same way, with hub/logging ports offset from E2E_PORT so parallel runs don't collide.
 import { readFileSync, writeFileSync } from 'node:fs';
 import { spawn } from 'node:child_process';
@@ -14,7 +14,7 @@ config.emulators = {
   logging: { port: port + 2 },
   ui: { enabled: false },
 };
-writeFileSync('.firebase-e2e.json', JSON.stringify(config, null, 2));
+writeFileSync(`.firebase-e2e.${port}.json`, JSON.stringify(config, null, 2));
 
 const child = spawn(
   'pnpm',
@@ -27,7 +27,7 @@ const child = spawn(
     '--project',
     'shadman-portfolio',
     '--config',
-    '.firebase-e2e.json',
+    `.firebase-e2e.${port}.json`,
   ],
   { stdio: 'inherit' },
 );

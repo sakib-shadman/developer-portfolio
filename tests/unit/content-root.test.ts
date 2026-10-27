@@ -6,6 +6,8 @@ import {
   REAL_CONTENT,
   REAL_PUBLIC,
   buildFlagError,
+  distLeaks,
+  fixtureFileName,
   contentRoot,
   fixtureLeak,
   fixturesOn,
@@ -51,5 +53,26 @@ describe('buildFlagError', () => {
   });
   it('still refuses drafts on an indexable build', () => {
     expect(buildFlagError({ PUBLIC_INCLUDE_DRAFTS: 'true', PUBLIC_INDEXABLE: 'true' })).toMatch(/DRAFTS/);
+  });
+});
+
+describe('distLeaks', () => {
+  it('lists build outputs that carry the marker', () => {
+    expect(
+      distLeaks([
+        { path: 'dist/index.html', text: 'hello' },
+        { path: 'dist/about.html', text: `Sample ${FIXTURE_MARKER}` },
+      ]),
+    ).toEqual(['dist/about.html']);
+    expect(distLeaks([])).toEqual([]);
+  });
+});
+
+describe('fixtureFileName', () => {
+  it('flags fixture-style names only', () => {
+    expect(fixtureFileName('sample-sdk.json')).toBe(true);
+    expect(fixtureFileName('example-resume.pdf')).toBe(true);
+    expect(fixtureFileName('adtech-ios-sdk.json')).toBe(false);
+    expect(fixtureFileName('resume-sample.pdf')).toBe(false);
   });
 });

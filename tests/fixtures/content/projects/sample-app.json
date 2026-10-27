@@ -3,12 +3,12 @@
   "label": "Mobile app · Example",
   "category": "mobile-app",
   "summary": "A fictional cross-platform app that exists only for tests.",
-  "description": "This second sample project also has a case study.",
+  "description": "This second sample project also has a case study (fixture).",
   "technologies": ["flutter", "dart", "android"],
   "role": "Engineer (sample)",
   "contributions": ["Sample contribution one", "Sample contribution two"],
   "links": {
-    "repo": "https://github.com/example/sample-app",
+    "repo": "https://example.com/code/sample-app",
     "demo": "https://example.com/sample-app"
   },
   "progress": "shipped",

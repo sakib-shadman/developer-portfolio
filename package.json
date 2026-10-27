@@ -13,7 +13,7 @@
     "build:fixtures": "node scripts/build-fixtures.mjs",
     "e2e:fixtures": "playwright test -c playwright.fixtures.config.ts",
     "content:check": "tsx scripts/check-content.ts",
-    "build": "pnpm content:check && astro build",
+    "build": "pnpm content:check && astro build && tsx scripts/check-dist.ts",
     "preview": "astro preview",
     "serve:firebase": "node scripts/serve-firebase.mjs",
     "lint": "eslint . && prettier --check .",

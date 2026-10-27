@@ -866,11 +866,13 @@ browser coverage. `PUBLIC_CONTENT_FIXTURES=true` makes `src/content.config.ts` l
   coexist). The fixture resume PDF (`tests/fixtures/public/resume/`) is copied into that build by a small
   integration; `publicDir` is not switched, so real `public/` assets (favicon, ...) stay in the build and no
   fixture file ever sits in `public/`.
-- **Run:** `pnpm e2e:fixtures` (own config, own port 5400). Only tests whose title contains `@fixtures`
-  run there; `playwright.config.ts` excludes them. CI runs both (chromium, webkit, firefox).
-- **Safety:** `astro.config.mjs` refuses `PUBLIC_CONTENT_FIXTURES=true` with `PUBLIC_INDEXABLE=true`;
+- **Run:** `pnpm e2e:fixtures` (own config, own port 5390). Tests whose title contains `@fixtures`, plus
+  content-agnostic `@any-content` tests (which also run on real content and skip when empty), run there; `playwright.config.ts` excludes them. CI runs both (chromium, webkit, firefox).
+- **Safety:** the flag is read from the process environment only (never `.env`, so a stray file cannot
+  switch content). `pnpm build` ends with `scripts/check-dist.ts`, which fails if any text file in `dist/`
+  carries the marker, and deploy.yml greps `dist/` again before deploying. `astro.config.mjs` refuses `PUBLIC_CONTENT_FIXTURES=true` with `PUBLIC_INDEXABLE=true`;
   CI/deploy builds set it to `'false'` explicitly; `content:check` validates the fixtures when the flag is
-  set and fails if the fixture marker `(fixture)` appears anywhere in `src/content`.
+  set and requires the marker `(fixture)` in every fixture record and fails if it, or a `sample-*` file name, appears anywhere in `src/content`.
 - **Writing tests:** tag the title `@fixtures`, assert fixture values (names, counts) freely; keep other
   specs content-agnostic. Fixture articles (for `/blog`): `tests/fixtures/content/articles/sample-article-1..9.md`
   (9 articles, 3 featured, tags flutter/dart/swift/ios/architecture/testing/career, dates 2025-06 to 2026-09).

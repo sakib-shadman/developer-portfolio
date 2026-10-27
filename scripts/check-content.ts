@@ -7,11 +7,12 @@
  * Schema validation itself happens in `astro build` (content collections).
  */
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
-import { join, relative } from 'node:path';
+import { basename, join, relative } from 'node:path';
 import { parse as parseYaml } from 'yaml';
 import { findPlaceholders, looseMdxContent, resumeError } from '../src/lib/content/guards';
 import {
   FIXTURE_CONTENT,
+  fixtureFileName,
   FIXTURE_MARKER,
   REAL_CONTENT,
   contentRoot,
@@ -43,6 +44,9 @@ const errors: string[] = [];
 
 // Fixtures must never leak into real content, whichever content is being checked.
 for (const file of walk(join(ROOT, REAL_CONTENT))) {
+  if (fixtureFileName(basename(file))) {
+    errors.push(`${relative(ROOT, file)}: fixture-style file name (fixtures belong in ${FIXTURE_CONTENT})`);
+  }
   if (/\.(json|mdx?)$/.test(file) && fixtureLeak(readFileSync(file, 'utf8'))) {
     errors.push(
       `${relative(ROOT, file)}: contains the fixture marker "${FIXTURE_MARKER}" (fixtures belong in ${FIXTURE_CONTENT})`,
@@ -50,9 +54,14 @@ for (const file of walk(join(ROOT, REAL_CONTENT))) {
   }
 }
 
+// Every fixture record carries the marker, so a copied record is caught by the leak scan above.
+const UNMARKED_OK = new Set(['skills.json', 'skill-groups.json']);
 for (const file of walk(CONTENT)) {
   const rel = relative(ROOT, file);
   const src = readFileSync(file, 'utf8');
+  if (FIXTURES && /\.(json|mdx?)$/.test(file) && !UNMARKED_OK.has(basename(file)) && !fixtureLeak(src)) {
+    errors.push(`${rel}: fixture record without the marker "${FIXTURE_MARKER}"`);
+  }
   let data: unknown;
   if (file.endsWith('.json')) data = JSON.parse(src);
   else if (/\.mdx?$/.test(file)) data = frontmatter(src);

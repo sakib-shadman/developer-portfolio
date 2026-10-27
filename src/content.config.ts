@@ -12,8 +12,10 @@ import {
 } from './lib/content/schemas';
 import { contentRoot } from './lib/content/root';
 
-// PUBLIC_CONTENT_FIXTURES=true loads tests/fixtures/content instead (e2e only; astro.config refuses it with PUBLIC_INDEXABLE=true).
-const root = contentRoot(import.meta.env.PUBLIC_CONTENT_FIXTURES);
+// PUBLIC_CONTENT_FIXTURES=true loads tests/fixtures/content instead (e2e only). Read from the process
+// environment ONLY: import.meta.env would also pick it up from a stray .env file, which the build guard,
+// content:check and the fixture PDF copy (all process.env) would not see.
+const root = contentRoot(process.env.PUBLIC_CONTENT_FIXTURES);
 
 const profile = defineCollection({
   loader: file(`${root}/profile.json`),
