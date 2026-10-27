@@ -72,7 +72,14 @@ const tagLabel =
       <span>
         {validDate ? <time datetime={article.publishedAt.toISOString().slice(0, 10)}>{meta}</time> : meta}
       </span>
-      {tagLabel && <span class="tag">{tagLabel}</span>}
+      {tagLabel && otherTags.length > 0 ? (
+        <span class="tag">
+          <span aria-hidden="true">{tagLabel}</span>
+          <span class="sr-only">{`Topics: ${firstTag} and ${otherTags.length} more`}</span>
+        </span>
+      ) : (
+        tagLabel && <span class="tag">{tagLabel}</span>
+      )}
     </p>
   )}
   <Heading id={titleId} class="title">

@@ -41,7 +41,9 @@ describe('ArticleCard', () => {
     expect(one).toMatch(/<span class="tag"[^>]*>\s*Flutter\s*<\/span>/);
     expect(one).not.toContain('+');
     const many = await render({ tags: ['Flutter', 'Dart', 'iOS'] });
-    expect(many).toMatch(/<span class="tag"[^>]*>\s*Flutter \+2\s*<\/span>/);
+    expect(many).toMatch(/<span aria-hidden="true"[^>]*>Flutter \+2<\/span>/);
+    // Screen readers get a sentence instead of "Flutter plus 2".
+    expect(many).toMatch(/<span class="sr-only"[^>]*>Topics: Flutter and 2 more<\/span>/);
     expect(many).not.toContain('Dart');
     expect(many).not.toContain('class="chips');
   });

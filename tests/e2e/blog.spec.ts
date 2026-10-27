@@ -1,5 +1,6 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { parse } from 'yaml';
 import AxeBuilder from '@axe-core/playwright';
 import { test, expect, type Page } from '@playwright/test';
 
@@ -19,16 +20,16 @@ const FIXTURE_DIR = 'tests/fixtures/content/articles';
 const FIXTURES: Fixture[] = readdirSync(FIXTURE_DIR)
   .filter((f) => f.endsWith('.md'))
   .map((f) => {
-    const fm = readFileSync(join(FIXTURE_DIR, f), 'utf8').split('---')[1] ?? '';
-    const field = (k: string) => fm.match(new RegExp(`^${k}: (.*)$`, 'm'))?.[1]?.trim() ?? '';
+    const fm = parse(readFileSync(join(FIXTURE_DIR, f), 'utf8').split('---')[1] ?? '') as {
+      title: string;
+      publishedAt: Date | string;
+      tags?: string[];
+    };
+    const at = fm.publishedAt;
     return {
-      title: field('title').replace(/^'|'$/g, ''),
-      publishedAt: field('publishedAt'),
-      tags: field('tags')
-        .replace(/^\[|\]$/g, '')
-        .split(',')
-        .map((t) => t.trim())
-        .filter(Boolean),
+      title: fm.title,
+      publishedAt: at instanceof Date ? at.toISOString().slice(0, 10) : String(at),
+      tags: fm.tags ?? [],
     };
   })
   .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
