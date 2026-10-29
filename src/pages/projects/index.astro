@@ -135,6 +135,7 @@ const crumbs = [
     display: none;
   }
   /* Same as /blog: reserve the space the script-revealed filters will take (CLS). */
+  /* If the module fails to load the band stays empty; harmless. */
   @media (scripting: enabled) {
     .filters[hidden] {
       display: flex !important;
