@@ -208,12 +208,20 @@ const crumbs = [
     outline: var(--focus-ring);
     outline-offset: 2px;
   }
-  .controls[hidden],
   .grid li[hidden],
   .footer[hidden],
   .page :global([data-empty][hidden]),
   .page :global([data-more][hidden]) {
     display: none;
+  }
+  /* The script reveals the controls. With scripting on, keep their space (invisible, not focusable) so
+     revealing them does not push the cards down (CLS); without scripting they stay display: none. */
+  /* If the module fails to load the band stays empty; harmless. */
+  @media (scripting: enabled) {
+    .controls[hidden] {
+      display: flex !important;
+      visibility: hidden;
+    }
   }
   .grid {
     display: grid;

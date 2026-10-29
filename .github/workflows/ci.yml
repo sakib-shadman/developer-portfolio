@@ -72,7 +72,12 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version-file: .nvmrc, cache: pnpm }
       - run: pnpm install --frozen-lockfile
-      # Indexable build so the SEO category is measured as production will be.
+      # 1. Every route of the fixtures build against the ADR-0006 budgets (noindex build: `is-crawlable` skipped).
+      - run: pnpm build:fixtures
+      - run: pnpm lhci
+      - if: always()
+        run: node scripts/lhci-report.mjs .lighthouseci/fixtures
+      # 2. Indexable production build so SEO = 1 (including `is-crawlable`) is measured as production will be.
       - run: pnpm build
         env:
           {
@@ -81,4 +86,7 @@ jobs:
             PUBLIC_INCLUDE_DRAFTS: 'false',
             PUBLIC_CONTENT_FIXTURES: 'false',
           }
-      - run: pnpm lhci
+      - run: pnpm lhci:indexable
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with: { name: lighthouse-reports, path: .lighthouseci, retention-days: 7 }

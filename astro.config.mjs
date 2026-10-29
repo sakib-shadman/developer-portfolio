@@ -29,7 +29,7 @@ export default defineConfig({
   // Pairs with firebase.json `cleanUrls: true` + `trailingSlash: false`:
   // /about is served from about.html, no redirect loops.
   trailingSlash: 'never',
-  build: { format: 'file' },
+  build: { format: 'file', inlineStylesheets: 'always' },
   // CSP is `script-src 'self'` (firebase.json): Astro must never inline page scripts into the HTML.
   vite: { build: { assetsInlineLimit: 0 } },
   integrations: [

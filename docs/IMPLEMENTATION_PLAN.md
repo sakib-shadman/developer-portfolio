@@ -141,7 +141,7 @@ developer-portfolio/
 ├── functions/                         # (M5 only) Cloud Function package
 ├── tests/{unit,e2e}/
 ├── firebase.json  .firebaserc
-├── astro.config.mjs  lighthouserc.json  lychee.toml
+├── astro.config.mjs  lighthouserc.cjs  lighthouserc.indexable.cjs  lychee.toml
 ├── eslint.config.js  .prettierrc  lefthook.yml  commitlint.config.js
 └── package.json
 ```
