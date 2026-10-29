@@ -1,0 +1,69 @@
+# Accessibility audit (WCAG 2.2 AA) — PF-42
+
+Target: WCAG 2.2 AA (SRS NFR-02). Status: **automated part complete and enforced in CI; the manual screen-reader pass is the owner's and has not been done** (checklist below).
+
+## Automated (tests/e2e/a11y.spec.ts)
+
+Where each test runs (all on the Chromium desktop project; the mobile project skips the viewport sweeps):
+
+- **Real-content e2e** (`pnpm e2e`): every `@any-content` test.
+- **Shipped build** (`@smoke|axe` grep, `PUBLIC_INCLUDE_DRAFTS=false`): only the tests whose title contains "axe" or `@smoke` (the axe route sweep and the reflow/axe test); keyboard, forced-colors, structure and reduced-motion tests do not run there.
+- **Fixtures** (`pnpm e2e:fixtures`): `@any-content` and `@fixtures` tests, including the interactive-state, slider, copy and Enter/Space tests that need populated content.
+
+Long sweeps run with a 180 s timeout (the 8 routes x 3 widths axe sweep takes about 26 s locally).
+
+| Area                       | What is asserted                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | Build                                  |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| axe `wcag2a/2aa/21aa/22aa` | Zero violations on `/`, `/projects`, `/blog`, `/about`, `/contact`, the 404 page and every project detail page, at 1440, 768 and 390 px (includes 2.5.8 target size)                                                                                                                                                                                                                                                                                                                  | any content                            |
+| axe, interactive states    | Blog tag filter applied, no-match empty state, Load more expanded, projects filter, home slider paused, contact "Email address copied" status; at 1440, 600 and 390 px (at 600 and below the slider Pause control is asserted and clicked)                                                                                                                                                                                                                                            | fixtures                               |
+| Keyboard                   | Tab order: skip link first, then header, main, footer; focus leaves the page (no trap); every stop is visible, not covered by other content (2.4.11) and has a focus indicator (outline or box-shadow on the element or its card, with a real colour and at least 3:1 contrast against the background it sits on, 1.4.11); at 1440 and 390 px. Skip link moves focus to `main`; Enter on a nav link navigates; Enter and Space operate filter chips, Load more, slider pause and copy | any content, fixtures for the buttons  |
+| Reflow                     | No horizontal scroll at 320 px and at 200 % / 400 % zoom (640 / 320 CSS px); axe clean at 320 px; WCAG 1.4.12 text-spacing overrides cause no overflow                                                                                                                                                                                                                                                                                                                                | any content                            |
+| Forced colors              | `forced-colors: active` at 1280 and 600 px (600 is where the home sliders overflow and their dots and Pause control exist): every focus stop keeps a visible outline (box-shadow is dropped by the browser), every button/input in `main` keeps a border, slider dots are not drawn in the Canvas colour and the current dot differs                                                                                                                                                  | any content; the dots test is fixtures |
+| Reduced motion             | `scroll-behavior: auto`, no animation or transition over 50 ms; at 600 px (all fixture sliders scroll) no slider moves over two autoplay intervals and no pause control is shown                                                                                                                                                                                                                                                                                                      | any content, fixtures for the slider   |
+| Structure                  | One `h1`, first heading is `h1`, no skipped levels; one `main`/`header`/`footer`; every `nav` labelled and labels unique; no vague link text; same link text never points at different targets unless named by its card; every `img` has a meaningful `alt`                                                                                                                                                                                                                           | any content                            |
+
+Verified the tests bite (mutations, each reverted): no focus outline, a transparent focus ring, no skip link, positive tabindex, skipped heading level, unnamed button, over-wide element, slider autoplay ignoring reduced motion, and removing the forced-colors dot rules each fail the matching test. (Dropping only the autoplay timer guard is not visible to users because `tick` also checks reduced motion; the test fails when both are removed.)
+
+## Results
+
+Two product defects were found by the suite and fixed in this PR:
+
+1. **Slider dots invisible in forced colors** (major, 1.4.11): the dots are painted with `background`, which forced colors replaces with Canvas, so the dots and the current-dot marker vanished (at widths where the slider overflows). Fix: `@media (forced-colors: active)` in `Slider.astro` draws the dots with `ButtonText` and the current dot with `Highlight`. The Pause button and card focus rings were checked and keep their borders/outlines.
+2. **Invisible focus ring on the About page call-to-action** (major, 2.4.7/2.4.11): the band is accent-coloured, so the default accent ring was accent-on-accent. Fix: `outline-color: var(--on-acc)` inside the band, as the home CTA already does.
+
+Everything else passed on the current build. Already covered by earlier work: skip link, labelled landmarks, inset focus rings in sliders, 24 px slider dots, `aria-live` status text for filters and copy, "(opens in a new tab)" in external link names, reduced-motion handling.
+
+## Not covered by automation (known limits)
+
+axe finds roughly a third of WCAG issues. Not machine-checkable here: meaningful reading order and screen-reader announcements, whether alt text is accurate, cognitive load and wording, real-device zoom and text-size settings, high-contrast themes beyond Chromium's `forced-colors` emulation, Safari and Firefox focus behaviour (CI runs Firefox and WebKit for the standing suites, not this one).
+
+## Manual checklist for the owner
+
+Do this on the preview channel before v1.0 (PF-51). Record pass or fail and any note.
+
+### VoiceOver, macOS + Safari (Cmd+F5)
+
+1. Landmarks: open the rotor (VO+U), Landmarks: banner, Primary navigation, main, contentinfo are present once each; navigation names are unique.
+2. Headings rotor: one level-1 heading per page; levels read as an outline (no jumps).
+3. Skip link: Tab once, hear "Skip to content", press Return: VoiceOver reads the start of main.
+4. Links rotor: link names make sense out of context (including "Read on Medium", project links, "Copy address").
+5. Home: each slider is announced as a region with a name; the dots and the Pause button announce their state ("pressed"/"current"); the position counter is read once, not on every autoplay tick.
+6. Projects and Blog: activate a filter chip: the pressed state is announced and the result count status is spoken once; a no-match search announces the empty state; Load more moves focus to the first new card.
+7. Contact: "Copy address" announces "Email address copied".
+8. Images: the profile photo and card thumbnails read useful alt text, decorative images are skipped.
+9. 404 page: the heading and the way home are announced.
+
+### VoiceOver, iOS + Safari (Settings, Accessibility, VoiceOver)
+
+1. Swipe through the home page top to bottom: reading order matches the visual order; no unlabeled "button" or "link".
+2. Rotor (twist): Headings and Links work as above.
+3. Double-tap the slider controls and a filter chip: states are announced; the slider track scrolls with a three-finger swipe.
+4. Rotate to landscape and set Larger Text to the maximum: nothing is clipped, no horizontal scrolling.
+5. Touch targets: every control is comfortably tappable (24 px minimum is enforced; aim for 44 px on primary actions).
+
+### Other quick checks
+
+- Keyboard only (no mouse) on a real browser: Tab and Shift+Tab through every page, focus always visible, nothing is skipped or trapped.
+- Windows High Contrast / macOS Increase Contrast: text, buttons and focus rings remain visible.
+- Browser zoom 200 % and 400 %; text-only zoom to 200 %.
+- OS "Reduce motion" on: no automatic movement.
