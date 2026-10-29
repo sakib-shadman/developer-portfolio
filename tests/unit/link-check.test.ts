@@ -32,6 +32,11 @@ describe('idsOf', () => {
   it('collects id and name attributes', () => {
     expect([...idsOf('<h2 id="a"></h2><a name=\'b\'></a>')]).toEqual(['a', 'b']);
   });
+  it('counts name= on anchors only, not on meta or form controls', () => {
+    expect([...idsOf('<meta name="description" content="x"><input name="q"><a name="legacy"></a>')]).toEqual([
+      'legacy',
+    ]);
+  });
 });
 
 describe('checkSite', () => {
@@ -114,5 +119,103 @@ describe('checkSite', () => {
         ),
       }),
     ).toEqual([]);
+  });
+
+  it('a #fragment satisfied only by <meta name> or <input name> is broken', () => {
+    const issues = site({
+      'index.html': page(
+        '<a href="#description">x</a><a href="#q">y</a><meta name="description" content="d"><input name="q">',
+      ),
+    });
+    expect(kinds(issues)).toEqual(['broken-anchor', 'broken-anchor']);
+  });
+
+  describe('url() in inline CSS', () => {
+    it('checks @font-face and background urls in <style> and style attributes', () => {
+      const issues = site({
+        'index.html': page(
+          '<div style="background:url(/_astro/gone.png)"></div>',
+          '<style>@font-face{font-family:x;src:url(/_astro/gone.woff2) format("woff2")}</style>',
+        ),
+      });
+      expect(kinds(issues)).toEqual(['broken-asset', 'broken-asset']);
+    });
+    it('accepts existing urls, data/http urls and fragments; flags relative urls', () => {
+      const ok = site(
+        {
+          'index.html': page(
+            '<div style="background:url(\'/_astro/a.png\')"></div>',
+            '<style>a{background:url(data:image/png;base64,AAAA)}b{fill:url(#g)}c{background:url("https://cdn.example/x.png")}d{background:url(/_astro/f.woff2)}</style>',
+          ),
+        },
+        ['_astro/a.png', '_astro/f.woff2'],
+      );
+      expect(ok).toEqual([]);
+      const rel = site({ 'index.html': page('', '<style>a{background:url(img/a.png)}</style>') });
+      expect(kinds(rel)).toEqual(['policy']);
+    });
+  });
+
+  describe('JSON-LD own-origin URLs', () => {
+    const ld = (json: string) => page('', `<script type="application/ld+json">${json}</script>`);
+    it('flags an own-origin URL that does not exist in the build', () => {
+      const issues = site({
+        'index.html': ld(
+          `{"@type":"Person","image":"${ORIGIN}/_astro/gone.jpg","sameAs":["https://github.com/x"]}`,
+        ),
+      });
+      expect(kinds(issues)).toEqual(['broken-url']);
+    });
+    it('accepts existing urls, nested values, other origins and @id fragments', () => {
+      const issues = site(
+        {
+          'index.html': ld(
+            `{"@id":"${ORIGIN}/#person","url":"${ORIGIN}/","image":{"url":"${ORIGIN}/_astro/p.jpg"},"sameAs":["https://github.com/x"]}`,
+          ),
+        },
+        ['_astro/p.jpg'],
+      );
+      expect(issues).toEqual([]);
+    });
+    it('flags invalid JSON', () => {
+      expect(kinds(site({ 'index.html': ld('{nope') }))).toEqual(['policy']);
+    });
+  });
+
+  describe('mailto and other schemes go through linkAttrs', () => {
+    it('accepts a valid mailto and rejects malformed mailto, tel and data links', () => {
+      expect(site({ 'index.html': page('<a href="mailto:a@b.co?subject=Hi">ok</a>') })).toEqual([]);
+      const bad = site({
+        'index.html': page(
+          '<a href="mailto:nobody">m</a><a href="tel:+1555">t</a><a href="data:text/html,x">d</a>',
+        ),
+      });
+      expect(kinds(bad)).toEqual(['policy', 'policy', 'policy']);
+    });
+  });
+
+  describe('more asset attributes', () => {
+    it('checks video poster, iframe src, link imagesrcset and track src', () => {
+      const issues = site({
+        'index.html': page(
+          '<video poster="/_astro/p.png"><track src="/_astro/t.vtt"></video><iframe src="/embed/x"></iframe>',
+          '<link rel="preload" as="image" imagesrcset="/_astro/a.webp 1x, /_astro/b.webp 2x">',
+        ),
+      });
+      expect(kinds(issues)).toEqual(Array(5).fill('broken-asset'));
+    });
+    it('accepts them when present', () => {
+      const issues = site(
+        {
+          'index.html': page(
+            '<video poster="/_astro/p.png"></video><iframe src="/embed/x"></iframe>',
+            '<link rel="preload" as="image" imagesrcset="/_astro/a.webp 1x">',
+          ),
+          'embed/x.html': page(''),
+        },
+        ['_astro/p.png', '_astro/a.webp'],
+      );
+      expect(issues).toEqual([]);
+    });
   });
 });

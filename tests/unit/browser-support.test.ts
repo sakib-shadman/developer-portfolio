@@ -27,7 +27,7 @@ describe('browser support matrix (NFR-06)', () => {
     );
   });
 
-  it('every modern feature used in src/ is listed in docs/browser-support.md with its floor', () => {
+  it('every feature on the guard list that src/ uses is in docs/browser-support.md with its floor', () => {
     const FEATURES: [string, RegExp, string][] = [
       ['`:has()`', /:has\(/, ':has()'],
       ['`@media (scripting)`', /@media \(scripting/, '@media (scripting)'],
@@ -43,6 +43,16 @@ describe('browser support matrix (NFR-06)', () => {
       ['`replaceAll`', /\.replaceAll\(/, 'replaceAll'],
       ['`prefers-reduced-motion`', /prefers-reduced-motion/, 'prefers-reduced-motion'],
       ['`forced-colors`', /forced-colors/, 'forced-colors'],
+      ['font metric overrides', /(ascent|descent|line-gap)-override/, 'ascent-override'],
+      ['flex/grid `gap`', /[\s;{]gap:/, 'flex/grid `gap`'],
+      ['`min()`', /[\s(:,]min\(/, '`min()`'],
+      ['`loading="lazy"`', /loading="lazy"/, 'loading="lazy"'],
+      ['`fetchpriority`', /fetchpriority/, 'fetchpriority'],
+      [
+        '`MediaQueryList` listeners',
+        /matchMedia\([^)]*\)[\s\S]{0,80}addEventListener|reduced\.addEventListener/,
+        'MediaQueryList.addEventListener',
+      ],
       ['`container queries`', /@container/, '@container'],
       ['`color-mix()`', /color-mix\(/, 'color-mix()'],
       ['`dvh/svh units`', /\d(dvh|svh|lvh)\b/, 'dvh'],

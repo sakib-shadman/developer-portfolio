@@ -50,9 +50,11 @@ function tags(html: string, names: string[]): { name: string; attrs: Attrs }[] {
   return out;
 }
 
+/** Fragment targets: any `id`, plus `name` on `<a>` only (legacy anchors; `<meta name>`/`<input name>` are not targets). */
 export const idsOf = (html: string): Set<string> => {
   const ids = new Set<string>();
-  for (const m of html.matchAll(/\s(?:id|name)\s*=\s*(?:"([^"]*)"|'([^']*)')/gi)) ids.add(m[1] ?? m[2]!);
+  for (const m of html.matchAll(/\sid\s*=\s*(?:"([^"]*)"|'([^']*)')/gi)) ids.add(m[1] ?? m[2]!);
+  for (const { attrs } of tags(html, ['a'])) if (attrs.name) ids.add(attrs.name);
   return ids;
 };
 
@@ -69,6 +71,7 @@ export function resolvePath(pathname: string, files: ReadonlySet<string>): strin
 }
 
 const isSkippable = (href: string) => /^(mailto:|tel:|data:)/i.test(href);
+const isMailto = (href: string) => /^mailto:/i.test(href);
 
 /** Split "/a/b?x=1#frag" (also "#frag") into path and fragment. */
 function split(href: string): { path: string; hash: string } {
@@ -105,7 +108,7 @@ export function checkSite(site: Site): Issue[] {
   for (const [page, html] of site.html) {
     for (const { attrs } of tags(html, ['a'])) {
       const href = attrs.href;
-      if (href === undefined || isSkippable(href)) continue;
+      if (href === undefined) continue;
       const link = linkAttrs(href);
       if (!link || link.href !== href) {
         issues.push({
@@ -130,21 +133,33 @@ export function checkSite(site: Site): Issue[] {
           issues.push({ page, kind: 'policy', detail: `${href} is internal: use a site-relative path` });
         continue;
       }
+      if (isMailto(href)) continue; // valid per linkAttrs; nothing to resolve
       if (attrs.target === '_blank' && !(attrs.rel ?? '').toLowerCase().split(/\s+/).includes('noopener'))
         issues.push({ page, kind: 'policy', detail: `${href} opens a new tab without rel="noopener"` });
       checkInternal(page, href, 'broken-link');
     }
 
     // Same-site resources: images, scripts, styles, icons, feeds, preloads.
-    for (const { name, attrs } of tags(html, ['img', 'script', 'source', 'link'])) {
+    for (const { name, attrs } of tags(html, [
+      'img',
+      'script',
+      'source',
+      'link',
+      'video',
+      'audio',
+      'track',
+      'iframe',
+      'embed',
+    ])) {
       const refs: string[] = [];
       if (name === 'link') {
         if (attrs.href && !/canonical/i.test(attrs.rel ?? '')) refs.push(attrs.href);
       } else {
         if (attrs.src) refs.push(attrs.src);
-        for (const part of (attrs.srcset ?? '').split(','))
-          if (part.trim()) refs.push(part.trim().split(/\s+/)[0]!);
+        if (attrs.poster) refs.push(attrs.poster);
       }
+      for (const set of [attrs.srcset, attrs.imagesrcset])
+        for (const part of (set ?? '').split(',')) if (part.trim()) refs.push(part.trim().split(/\s+/)[0]!);
       for (const ref of refs) {
         if (isSkippable(ref) || /^https?:\/\//i.test(ref) || ref.startsWith('//')) continue;
         if (ref.startsWith('/')) checkInternal(page, ref, 'broken-asset');
@@ -157,7 +172,46 @@ export function checkSite(site: Site): Issue[] {
       }
     }
 
-    // Absolute URLs on our own origin (canonical, og:image, twitter:image, JSON-LD urls) must exist.
+    // url(...) in inline <style> blocks and style="" attributes (all CSS is inlined: @font-face lives here).
+    const css = [...html.matchAll(/<style\b[^>]*>([\s\S]*?)<\/style>/gi)].map((m) => m[1]!);
+    for (const m of html.matchAll(/\sstyle\s*=\s*(?:"([^"]*)"|'([^']*)')/gi))
+      css.push(decodeEntities(m[1] ?? m[2]!));
+    for (const block of css)
+      for (const m of block.matchAll(/url\(\s*(['"]?)([^)'"]*)\1\s*\)/gi)) {
+        const ref = m[2]!.trim();
+        if (!ref || ref.startsWith('#') || isSkippable(ref) || /^(https?:)?\/\//i.test(ref)) continue;
+        if (ref.startsWith('/')) checkInternal(page, ref, 'broken-asset');
+        else
+          issues.push({
+            page,
+            kind: 'policy',
+            detail: `url(${ref}) in inline CSS is relative; use /absolute paths`,
+          });
+      }
+
+    // JSON-LD: every string value that is an absolute URL on our own origin must exist (e.g. Person.image).
+    for (const m of html.matchAll(
+      /<script\b[^>]*type\s*=\s*["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi,
+    )) {
+      let data: unknown;
+      try {
+        data = JSON.parse(m[1]!);
+      } catch {
+        issues.push({ page, kind: 'policy', detail: 'application/ld+json is not valid JSON' });
+        continue;
+      }
+      const walk = (v: unknown): void => {
+        if (typeof v === 'string') {
+          if (/^https?:\/\//i.test(v) && new URL(v, origin).origin === origin)
+            // `@id` values like https://site/#person are node identifiers, not links: ignore the fragment.
+            checkOwnUrl(page, v.split('#')[0]!);
+        } else if (Array.isArray(v)) v.forEach(walk);
+        else if (v && typeof v === 'object') Object.values(v).forEach(walk);
+      };
+      walk(data);
+    }
+
+    // Absolute URLs on our own origin (canonical, og:image, twitter:image) must exist.
     const own: string[] = [];
     for (const { attrs } of tags(html, ['link']))
       if (/canonical/i.test(attrs.rel ?? '') && attrs.href) own.push(attrs.href);
