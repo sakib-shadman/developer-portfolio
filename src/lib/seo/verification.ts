@@ -24,3 +24,12 @@ export function verificationTags(env: VerificationEnv): VerificationTag[] {
   if (bing && TOKEN.test(bing)) tags.push({ name: 'msvalidate.01', content: bing });
   return tags;
 }
+
+/** Names of verification vars that are set (non-blank) but not a valid token, so the build can warn. */
+export function invalidVerificationVars(env: VerificationEnv): string[] {
+  const names = ['PUBLIC_GOOGLE_SITE_VERIFICATION', 'PUBLIC_BING_SITE_VERIFICATION'] as const;
+  return names.filter((name) => {
+    const value = env[name]?.trim();
+    return !!value && !TOKEN.test(value);
+  });
+}

@@ -26,6 +26,10 @@ body = """
 """
 footer = ""
 trim = true
+# Link the squash-merge PR number: "(#34)" becomes "([#34](.../pull/34))".
+postprocessors = [
+  { pattern = '\(#([0-9]+)\)', replace = "([#${1}](https://github.com/sakib-shadman/developer-portfolio/pull/${1}))" },
+]
 
 [git]
 conventional_commits = true

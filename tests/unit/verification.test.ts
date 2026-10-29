@@ -1,7 +1,7 @@
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import Seo from '../../src/components/layout/Seo.astro';
-import { verificationTags } from '../../src/lib/seo/verification';
+import { invalidVerificationVars, verificationTags } from '../../src/lib/seo/verification';
 
 describe('verificationTags', () => {
   it('returns nothing when unset or empty', () => {
@@ -24,6 +24,20 @@ describe('verificationTags', () => {
   it('ignores tokens that could break out of an attribute', () => {
     expect(verificationTags({ PUBLIC_GOOGLE_SITE_VERIFICATION: 'abc" onload="x(1)' })).toEqual([]);
     expect(verificationTags({ PUBLIC_GOOGLE_SITE_VERIFICATION: 'short' })).toEqual([]);
+  });
+});
+
+describe('invalidVerificationVars', () => {
+  it('names only vars that are set but invalid', () => {
+    expect(invalidVerificationVars({})).toEqual([]);
+    expect(invalidVerificationVars({ PUBLIC_GOOGLE_SITE_VERIFICATION: ' ' })).toEqual([]);
+    expect(invalidVerificationVars({ PUBLIC_GOOGLE_SITE_VERIFICATION: 'abc123_DEF-456' })).toEqual([]);
+    expect(
+      invalidVerificationVars({
+        PUBLIC_GOOGLE_SITE_VERIFICATION: 'bad" x',
+        PUBLIC_BING_SITE_VERIFICATION: 'short',
+      }),
+    ).toEqual(['PUBLIC_GOOGLE_SITE_VERIFICATION', 'PUBLIC_BING_SITE_VERIFICATION']);
   });
 });
 

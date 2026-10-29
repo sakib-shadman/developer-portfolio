@@ -29,6 +29,7 @@ Tooling that exists for this runbook:
 
    ```bash
    pnpm changelog --tag v1.0.0 --output CHANGELOG.md
+   pnpm exec prettier --write CHANGELOG.md
    ```
 
    Read it. Commit titles cannot be changed after merge, so edit `CHANGELOG.md` by hand only for typos. Commit both changes:
@@ -51,9 +52,13 @@ Tooling that exists for this runbook:
 7. **Regression against staging.** Smoke tests, then the header rules (headers only count on a `web.app` URL):
 
    ```bash
+   pnpm exec playwright install --with-deps chromium webkit
    SMOKE_BASE_URL=<STAGING_URL> pnpm smoke:live
+   SMOKE_BASE_URL=<STAGING_URL> SMOKE_PROJECT=webkit pnpm smoke:live
    BASE_URL=<STAGING_URL> pnpm exec playwright test tests/e2e/headers.spec.ts
    ```
+
+   Run the WebKit pass here, not for the first time on live: the header tests only ever ran against the emulator in CI.
 
    The second command verifies production header precedence on the real channel (the emulator is not the same thing).
 
@@ -66,7 +71,7 @@ Tooling that exists for this runbook:
 
 ## Part 2: launch (PF-52, #40)
 
-Before merging, confirm the repository variable `PUBLIC_INDEXABLE` is `true` (GitHub, Settings, Secrets and variables, Actions, Variables). It only affects the live build (ADR-0007). Optionally set the variables `PUBLIC_GOOGLE_SITE_VERIFICATION` and `PUBLIC_BING_SITE_VERIFICATION` now (see step 5); live builds pass them as the verification meta tags.
+Immediately before merging (not earlier: any re-run of `deploy` on `main`, such as a hotfix, would publish an indexable 0.x), set the repository variable `PUBLIC_INDEXABLE` to `true` (GitHub, Settings, Secrets and variables, Actions, Variables). It only affects the live build (ADR-0007). Optionally set the variables `PUBLIC_GOOGLE_SITE_VERIFICATION` and `PUBLIC_BING_SITE_VERIFICATION` now (see step 5); live builds pass them as the verification meta tags.
 
 1. **Merge `release/1.0.0` into `main`** with a merge commit (not a squash, so the release commit and history stay intact). The push to `main` runs `deploy.yml`: build with `PUBLIC_INDEXABLE=true`, deploy to the `live` channel, then smoke-test `https://shadman-portfolio.web.app`.
 2. **Tag the release** on the merge commit and push the tag:
@@ -81,6 +86,7 @@ Before merging, confirm the repository variable `PUBLIC_INDEXABLE` is `true` (Gi
 4. **Live smoke e2e.** The workflow already ran one; repeat it by hand, and in a second engine:
 
    ```bash
+   pnpm exec playwright install --with-deps chromium webkit
    SMOKE_BASE_URL=https://shadman-portfolio.web.app pnpm smoke:live
    SMOKE_BASE_URL=https://shadman-portfolio.web.app SMOKE_PROJECT=webkit pnpm smoke:live
    ```
@@ -100,7 +106,7 @@ Before merging, confirm the repository variable `PUBLIC_INDEXABLE` is `true` (Gi
 
 ## Roll back
 
-- **Live is broken:** Firebase console, Hosting, Release history, Rollback to the last good version; or `pnpm exec firebase hosting:clone shadman-portfolio:<version-id> shadman-portfolio:live`. Do this first, investigate second.
+- **Live is broken:** Firebase console, Hosting, Release history, Rollback to the last good version; or `pnpm exec firebase hosting:clone shadman-portfolio:@<version-id> shadman-portfolio:live` (the `@` marks a version id; the id is in Release history). Do this first, investigate second.
 - **Then fix the source:** revert on `develop` with `git revert <sha>` through a PR and release again as `v1.0.1` (same steps, branch `release/1.0.1`) so `main` stops containing the bad change. Never delete or move a published tag; add a new one.
 - **Indexing must be switched off again** (for example the wrong content shipped): set the repository variable `PUBLIC_INDEXABLE` to `false` and re-run `deploy` on `main`. The site goes back to `noindex` and `robots.txt` disallows crawling.
 - Hosting keeps only the last 10 versions, so decide quickly (`docs/MAINTENANCE.md`, "Roll back").
