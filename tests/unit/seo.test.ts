@@ -16,6 +16,22 @@ import {
 const SITE = 'https://example.web.app';
 
 describe('seoDescription', () => {
+  it('cuts at the last sentence end that fits instead of mid-clause', () => {
+    const text = `${'First sentence is here and complete. '.repeat(3)}Second part goes on and on and on, building an iOS SDK for an adtech company with many words.`;
+    const out = seoDescription(text);
+    expect(out.length).toBeLessThanOrEqual(160);
+    expect(out.endsWith('complete.')).toBe(true);
+    expect(out).not.toContain('…');
+  });
+  it('falls back to a word boundary when the only sentence end is too early', () => {
+    const out = seoDescription(`Hi. ${'word '.repeat(60)}`);
+    expect(out.endsWith('…')).toBe(true);
+    expect(out.length).toBeLessThanOrEqual(160);
+  });
+  it('keeps text that fits untouched, including a trailing sentence end', () => {
+    expect(seoDescription('Short one. Two.')).toBe('Short one. Two.');
+  });
+
   it('keeps short text and collapses whitespace', () => {
     expect(seoDescription('  Hello \n  world  ')).toBe('Hello world');
   });

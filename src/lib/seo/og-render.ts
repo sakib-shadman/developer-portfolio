@@ -4,14 +4,15 @@
  * read the variable woff2 the site itself serves). Build-only: never bundled into client code.
  */
 import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { createRequire } from 'node:module';
 import satori from 'satori';
 import sharp from 'sharp';
 import { ogTree, type OgCard } from './og';
 import { OG_SIZE } from './text';
 
-const font = (pkg: string, file: string) =>
-  readFileSync(join(process.cwd(), 'node_modules', pkg, 'files', file));
+// Resolved from this module, not from process.cwd(): works from any cwd, in a workspace, or hoisted.
+const require = createRequire(import.meta.url);
+const font = (pkg: string, file: string) => readFileSync(require.resolve(`${pkg}/files/${file}`));
 
 let fonts: { name: string; data: Buffer; weight: 400 | 600 | 700; style: 'normal' }[] | undefined;
 const loadFonts = () =>

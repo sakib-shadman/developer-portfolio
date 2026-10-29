@@ -2,10 +2,16 @@
 
 export const DESCRIPTION_MAX = 160;
 
-/** One line, whitespace collapsed, cut at a word boundary with an ellipsis when over `max`. */
+/**
+ * One line, whitespace collapsed. When over `max`: cut after the last sentence end that fits (kept whole,
+ * no ellipsis) if that keeps at least half of `max`; else at a word boundary with an ellipsis.
+ */
 export function seoDescription(text: string, max = DESCRIPTION_MAX): string {
   const flat = text.replace(/\s+/g, ' ').trim();
   if (flat.length <= max) return flat;
+  const sentenceEnd = [...flat.slice(0, max + 1).matchAll(/[.!?](?=\s|$)/g)].at(-1)?.index;
+  if (sentenceEnd !== undefined && sentenceEnd + 1 <= max && sentenceEnd + 1 >= max / 2)
+    return flat.slice(0, sentenceEnd + 1);
   const cut = flat.slice(0, max - 1);
   const space = cut.lastIndexOf(' ');
   // Prefer a word boundary unless that would throw away more than a third of the text.

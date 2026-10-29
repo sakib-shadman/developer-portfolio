@@ -145,6 +145,9 @@ export const defaultCard = (p: { name: string; title: string }, host: string): O
   host,
 });
 
+/** Alt text of the default card, as the card reads: "<name>, <title>". */
+export const defaultCardAlt = (p: { name: string; title: string }): string => `${p.name}, ${p.title}`;
+
 /** Project card: name + its own label, tagged as a case study. */
 export const projectCard = (
   project: { name: string; label: string },

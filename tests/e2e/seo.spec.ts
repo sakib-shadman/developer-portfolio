@@ -109,6 +109,9 @@ test.describe('@any-content head metadata on every route', () => {
       expect(h.og['og:image:width'], h.route).toBe('1200');
       expect(h.og['og:image:height'], h.route).toBe('630');
       expect(h.og['og:image:alt']?.length, h.route).toBeGreaterThan(0);
+      // The default card shows "<name>, <title>"; its alt must say that, not repeat the page title.
+      if (h.og['og:image']?.endsWith('/og/default.png') && h.route !== '/404')
+        expect(h.og['og:image:alt'], h.route).not.toBe(h.title[0]);
       expect(h.twitter['twitter:card'], h.route).toBe('summary_large_image');
       expect(h.twitter['twitter:title'], h.route).toBe(h.title[0]);
       expect(h.twitter['twitter:description'], h.route).toBe(h.description[0]);
