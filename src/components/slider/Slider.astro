@@ -137,6 +137,17 @@ const { id, noun, label, class: className, ...rest } = Astro.props;
     width: var(--dot-active-w);
     background: var(--acc);
   }
+  /* Forced colors drop backgrounds: draw the dots with system colors so they stay visible and the
+     current one stays distinct (1.4.11). */
+  @media (forced-colors: active) {
+    .dots :global(.pip) {
+      forced-color-adjust: none;
+      background: ButtonText;
+    }
+    .dots :global(.dot[aria-current='true'] .pip) {
+      background: Highlight;
+    }
+  }
   .right {
     display: flex;
     align-items: center;

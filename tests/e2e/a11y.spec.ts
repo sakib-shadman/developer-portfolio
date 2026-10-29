@@ -5,6 +5,9 @@ import { test, expect, type Page } from '@playwright/test';
 // fixtures builds; tests that need populated lists, an email or a slider are @fixtures. Viewport sweeps and
 // keyboard walks run on the desktop project only (the mobile project is the same browser engine).
 // Manual part (VoiceOver etc.): docs/a11y-audit.md.
+// The sweeps visit every route several times; the default 30 s is too tight on slow CI runners.
+test.describe.configure({ timeout: 180_000 });
+
 const STATIC_ROUTES = ['/', '/projects', '/blog', '/about', '/contact', '/this-route-does-not-exist'];
 const WIDTHS = [1440, 768, 390] as const;
 const TAGS = ['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa'];
@@ -41,7 +44,7 @@ test.describe('axe, every route x width', () => {
 });
 
 test.describe('axe, interactive states', () => {
-  for (const width of [1440, 390]) {
+  for (const width of [1440, 600, 390]) {
     test(`@fixtures filters, no-match, load more, slider paused, copy status at ${width}`, async ({
       page,
       context,
@@ -66,10 +69,14 @@ test.describe('axe, interactive states', () => {
 
       await page.goto('/');
       const pause = page.getByRole('button', { name: /Pause automatic/ }).first();
-      if (await pause.isVisible()) {
+      if (width <= 600) {
+        // 2 cards per view or fewer: every fixture slider scrolls, so its controls exist.
+        await expect(pause).toBeVisible();
         await pause.click();
         await expect(page.getByRole('button', { name: /Resume automatic/ }).first()).toBeVisible();
         await axe(page, 'home slider paused');
+      } else {
+        await expect(pause).toBeHidden(); // 3 per view: nothing to scroll, no controls
       }
 
       await page.goto('/contact');
@@ -93,6 +100,8 @@ interface Stop {
 /** Tab through the page; returns every stop until focus leaves the document (or a trap is suspected). */
 async function tabWalk(page: Page, max = 150): Promise<{ stops: Stop[]; left: boolean }> {
   await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
+  // Measure the settled ring, not a mid-transition colour.
+  await page.addStyleTag({ content: '*, *::before, *::after { transition: none !important; }' });
   const stops: Stop[] = [];
   for (let i = 0; i < max; i += 1) {
     await page.keyboard.press('Tab');
@@ -100,13 +109,50 @@ async function tabWalk(page: Page, max = 150): Promise<{ stops: Stop[]; left: bo
       const el = document.activeElement as HTMLElement | null;
       if (!el || el === document.body || el === document.documentElement) return null;
       // The ring may sit on the focused element or on a card that contains it (:has(:focus-visible)).
+      // It must have a real colour (not transparent) with >= 3:1 contrast against the background (1.4.11).
+      const parse = (c: string) => {
+        const m = c.match(/rgba?\(([^)]+)\)/);
+        if (!m) return null;
+        const p = m[1]!
+          .split(/[ ,/]+/)
+          .filter(Boolean)
+          .map(Number);
+        return { r: p[0]!, g: p[1]!, b: p[2]!, a: p[3] ?? 1 };
+      };
+      const lum = (c: { r: number; g: number; b: number }) => {
+        const f = (v: number) => {
+          const x = v / 255;
+          return x <= 0.03928 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4;
+        };
+        return 0.2126 * f(c.r) + 0.7152 * f(c.g) + 0.0722 * f(c.b);
+      };
+      const bgOf = (start: HTMLElement | null) => {
+        for (let n = start; n; n = n.parentElement) {
+          const c = parse(getComputedStyle(n).backgroundColor);
+          if (c && c.a > 0.9) return c;
+        }
+        return { r: 255, g: 255, b: 255, a: 1 };
+      };
+      const ratio = (a: { r: number; g: number; b: number }, b: { r: number; g: number; b: number }) => {
+        const [hi, lo] = [lum(a), lum(b)].sort((x, y) => y - x) as [number, number];
+        return (hi + 0.05) / (lo + 0.05);
+      };
       let outline = false;
       let shadow = false;
       for (let n: HTMLElement | null = el; n; n = n.parentElement) {
         if (n !== el && !n.matches(':has(:focus-visible)')) continue;
         const c = getComputedStyle(n);
-        outline ||= c.outlineStyle !== 'none' && parseFloat(c.outlineWidth) > 0;
-        shadow ||= c.boxShadow !== 'none' && c.boxShadow !== '';
+        // An outline drawn outside the box sits on the parent's background; an inset one on its own.
+        const bg = bgOf(parseFloat(c.outlineOffset) >= 0 ? n.parentElement : n);
+        const oc = parse(c.outlineColor);
+        outline ||=
+          c.outlineStyle !== 'none' &&
+          parseFloat(c.outlineWidth) > 0 &&
+          !!oc &&
+          oc.a > 0 &&
+          ratio(oc, bg) >= 3;
+        const sc = c.boxShadow === 'none' ? null : parse(c.boxShadow);
+        shadow ||= !!sc && sc.a > 0 && ratio(sc, bg) >= 3;
       }
       const cs = getComputedStyle(el);
       const parent = (s: string) => el.closest(s);
@@ -146,28 +192,21 @@ test.describe('keyboard', () => {
       for (const route of await routes(page)) {
         await page.goto(route);
         const { stops, left } = await tabWalk(page);
-        expect(left, `${route} @${width} @${width}: focus must leave the page (no trap)`).toBe(true);
+        expect(left, `${route} @${width}: focus must leave the page (no trap)`).toBe(true);
         expect(stops.length, route).toBeGreaterThan(2);
-        expect(stops[0]!.name, `${route} @${width} @${width}: first stop`).toBe('Skip to content');
+        expect(stops[0]!.name, `${route} @${width}: first stop`).toBe('Skip to content');
         // stops[0] is the skip link (before the header landmark); order is checked after it.
         for (let i = 2; i < stops.length; i += 1)
           expect(
             stops[i]!.region,
-            `${route} @${width} @${width}: ${stops[i]!.name} out of order`,
+            `${route} @${width}: ${stops[i]!.name} out of order`,
           ).toBeGreaterThanOrEqual(stops[i - 1]!.region);
         for (const s of stops) {
-          expect(
-            s.visible,
-            `${route} @${width} @${width}: ${s.tag} "${s.name}" is focusable but not visible`,
-          ).toBe(true);
-          expect(
-            s.obscured,
-            `${route} @${width} @${width}: ${s.tag} "${s.name}" is covered when focused`,
-          ).toBe(false);
-          expect(
-            s.indicator,
-            `${route} @${width} @${width}: ${s.tag} "${s.name}" has no focus indicator`,
-          ).toBe(true);
+          expect(s.visible, `${route} @${width}: ${s.tag} "${s.name}" is focusable but not visible`).toBe(
+            true,
+          );
+          expect(s.obscured, `${route} @${width}: ${s.tag} "${s.name}" is covered when focused`).toBe(false);
+          expect(s.indicator, `${route} @${width}: ${s.tag} "${s.name}" has no focus indicator`).toBe(true);
         }
       }
     }
@@ -209,13 +248,13 @@ test.describe('keyboard', () => {
     await page.keyboard.press('Enter');
     expect(await page.locator('[data-grid] > li:not([hidden])').count()).toBeGreaterThan(before);
 
+    await page.setViewportSize({ width: 600, height: 900 });
     await page.goto('/');
     const pause = page.getByRole('button', { name: /Pause automatic/ }).first();
-    if (await pause.isVisible()) {
-      await pause.focus();
-      await page.keyboard.press('Space');
-      await expect(page.getByRole('button', { name: /Resume automatic/ }).first()).toBeFocused();
-    }
+    await expect(pause).toBeVisible();
+    await pause.focus();
+    await page.keyboard.press('Space');
+    await expect(page.getByRole('button', { name: /Resume automatic/ }).first()).toBeFocused();
 
     await page.goto('/contact');
     await page.getByRole('button', { name: 'Copy address' }).focus();
@@ -246,7 +285,7 @@ test.describe('reflow and zoom', () => {
     }
   });
 
-  test('@any-content text-spacing overrides do not clip or overflow (WCAG 1.4.12)', async ({
+  test('@any-content text-spacing overrides cause no horizontal overflow (WCAG 1.4.12)', async ({
     page,
   }, info) => {
     test.skip(info.project.name !== 'chromium', 'viewport sweep runs once');
@@ -263,30 +302,75 @@ test.describe('reflow and zoom', () => {
 });
 
 test.describe('forced colors', () => {
-  test('@any-content focus indicators and form controls stay visible', async ({ page }, info) => {
-    test.skip(info.project.name !== 'chromium', 'keyboard walk runs once');
-    await page.emulateMedia({ forcedColors: 'active' });
-    for (const route of await routes(page)) {
-      await page.goto(route);
-      const { stops } = await tabWalk(page);
-      for (const s of stops)
-        expect(s.forcedIndicator, `${route}: ${s.tag} "${s.name}" needs an outline in forced colors`).toBe(
-          true,
+  // 1280px: everything fits; 600px: the home sliders overflow, so their dots and Pause control exist.
+  for (const width of [1280, 600]) {
+    test(`@any-content focus indicators and controls stay visible at ${width}px`, async ({ page }, info) => {
+      test.skip(info.project.name !== 'chromium', 'keyboard walk runs once');
+      await page.setViewportSize({ width, height: 900 });
+      await page.emulateMedia({ forcedColors: 'active' });
+      for (const route of await routes(page)) {
+        await page.goto(route);
+        const { stops } = await tabWalk(page);
+        for (const s of stops)
+          expect(
+            s.forcedIndicator,
+            `${route}: ${s.tag} "${s.name}" needs a visible outline in forced colors`,
+          ).toBe(true);
+        const bare = await page.evaluate(() =>
+          [...document.querySelectorAll<HTMLElement>('main button, main input, main textarea, main select')]
+            .filter((el) => el.getBoundingClientRect().width > 0)
+            // Slider dots are drawn by their .pip (checked below), not by a button border.
+            .filter((el) => !el.matches('.dot'))
+            .filter((el) => {
+              const cs = getComputedStyle(el);
+              return parseFloat(cs.borderTopWidth) === 0 && cs.outlineStyle === 'none';
+            })
+            .map(
+              (el) =>
+                `${el.tagName.toLowerCase()} "${(el.textContent ?? el.getAttribute('aria-label') ?? '').trim().slice(0, 30)}"`,
+            ),
         );
-      const bare = await page.evaluate(() =>
-        [...document.querySelectorAll<HTMLElement>('main button, main input, main textarea, main select')]
-          .filter((el) => el.getBoundingClientRect().width > 0)
-          .filter((el) => {
-            const cs = getComputedStyle(el);
-            return parseFloat(cs.borderTopWidth) === 0 && cs.outlineStyle === 'none';
-          })
-          .map(
-            (el) =>
-              `${el.tagName.toLowerCase()} "${(el.textContent ?? el.getAttribute('aria-label') ?? '').trim().slice(0, 30)}"`,
-          ),
+        expect(bare, `${route}: controls without a border in forced colors`).toEqual([]);
+      }
+    });
+  }
+
+  test('@fixtures slider dots are drawn in system colors and the current dot differs', async ({
+    page,
+  }, info) => {
+    test.skip(info.project.name !== 'chromium', 'viewport sweep runs once');
+    await page.setViewportSize({ width: 600, height: 900 });
+    await page.emulateMedia({ forcedColors: 'active' });
+    await page.goto('/');
+    const r = await page.evaluate(() => {
+      const canvas = getComputedStyle(document.body).backgroundColor;
+      const pips = [...document.querySelectorAll<HTMLElement>('.dot .pip')].filter(
+        (p) => p.getBoundingClientRect().width > 0,
       );
-      expect(bare, `${route}: controls without a border in forced colors`).toEqual([]);
-    }
+      return {
+        canvas,
+        count: pips.length,
+        invisible: pips.filter((p) => getComputedStyle(p).backgroundColor === canvas).length,
+        current: [
+          ...new Set(
+            pips
+              .filter((p) => p.closest('.dot')?.getAttribute('aria-current') === 'true')
+              .map((p) => getComputedStyle(p).backgroundColor),
+          ),
+        ],
+        others: [
+          ...new Set(
+            pips
+              .filter((p) => p.closest('.dot')?.getAttribute('aria-current') !== 'true')
+              .map((p) => getComputedStyle(p).backgroundColor),
+          ),
+        ],
+      };
+    });
+    expect(r.count, 'dots present at 600px').toBeGreaterThan(1);
+    expect(r.invisible, 'dots with the Canvas colour are invisible').toBe(0);
+    expect(r.current.length).toBeGreaterThan(0);
+    for (const c of r.current) expect(r.others, 'the current dot must differ in colour').not.toContain(c);
   });
 });
 
@@ -312,14 +396,24 @@ test.describe('reduced motion', () => {
     }
   });
 
-  test('@fixtures sliders do not auto-advance and show no pause control', async ({ page }) => {
+  test('@fixtures sliders do not auto-advance and show no pause control', async ({ page }, info) => {
+    test.skip(info.project.name !== 'chromium', 'timing test runs once');
+    test.setTimeout(60_000);
+    await page.setViewportSize({ width: 600, height: 900 }); // every fixture slider scrolls here
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto('/');
-    const tracks = page.locator('[data-slider] [data-track], [data-track]');
+    const tracks = page.locator('[data-slider-track]');
+    expect(await tracks.count(), 'sliders found').toBeGreaterThanOrEqual(1);
+    const scrollable = await tracks.evaluateAll(
+      (els) => els.filter((e) => e.scrollWidth > e.clientWidth).length,
+    );
+    expect(scrollable, 'at least one slider can scroll, so a tick would be visible').toBeGreaterThanOrEqual(
+      1,
+    );
     const before = await tracks.evaluateAll((els) => els.map((e) => e.scrollLeft));
-    await page.waitForTimeout(7000);
+    await page.waitForTimeout(11_500); // > 2 autoplay intervals (5 s)
     expect(await tracks.evaluateAll((els) => els.map((e) => e.scrollLeft))).toEqual(before);
-    await expect(page.getByRole('button', { name: /Pause automatic/ })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: /Pause automatic/ })).toBeHidden();
   });
 });
 

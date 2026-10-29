@@ -385,6 +385,10 @@ const crumbs = [
   .cta p {
     font-size: 18px;
   }
+  /* The band is accent-coloured, so the default accent focus ring would be invisible on it (2.4.11). */
+  .cta :global(:focus-visible) {
+    outline-color: var(--on-acc);
+  }
   .cta-actions :global(.cta-dark) {
     background: var(--on-acc);
     color: var(--acc);
