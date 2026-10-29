@@ -9,7 +9,11 @@ const env = {
   PUBLIC_INCLUDE_DRAFTS: 'false',
   PUBLIC_INDEXABLE: 'false',
 };
-for (const args of [['content:check'], ['exec', 'astro', 'build', '--outDir', 'dist-fixtures']]) {
+for (const args of [
+  ['content:check'],
+  ['exec', 'astro', 'build', '--outDir', 'dist-fixtures'],
+  ['exec', 'tsx', 'scripts/check-links.ts', 'dist-fixtures'],
+]) {
   const r = spawnSync('pnpm', args, { stdio: 'inherit', env });
   if (r.status !== 0) process.exit(r.status ?? 1);
 }
