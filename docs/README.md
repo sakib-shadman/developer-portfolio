@@ -6,6 +6,8 @@
 | `SRS.md`                 | Requirements (FR/NFR ids) — **add from the claude.ai project "My Developer Portfolio"** |
 | `HANDOFF.md`             | Design handoff — **add from the project**                                               |
 | `design/*.dc.html`       | Screen designs (reference only, never imported) — **add from the project**              |
+| `MAINTENANCE.md`         | How to add content, swap the resume, roll back, Spark limits, rotate tokens             |
+| `browser-support.md`     | Browser matrix, modern-feature floors, link checks, real-device checklist               |
 | `adr/`                   | Architecture decision records                                                           |
 | `contract/`              | JSON Schemas generated from `src/lib/content/schemas.ts` (`pnpm schemas:export`)        |
 

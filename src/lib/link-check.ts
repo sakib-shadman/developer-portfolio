@@ -202,9 +202,16 @@ export function checkSite(site: Site): Issue[] {
       }
       const walk = (v: unknown): void => {
         if (typeof v === 'string') {
-          if (/^https?:\/\//i.test(v) && new URL(v, origin).origin === origin)
-            // `@id` values like https://site/#person are node identifiers, not links: ignore the fragment.
-            checkOwnUrl(page, v.split('#')[0]!);
+          if (!/^https?:\/\//i.test(v)) return;
+          let u: URL;
+          try {
+            u = new URL(v);
+          } catch {
+            issues.push({ page, kind: 'broken-url', detail: `${v} in JSON-LD is not a valid URL` });
+            return;
+          }
+          // `@id` values like https://site/#person are node identifiers, not links: ignore the fragment.
+          if (u.origin === origin) checkOwnUrl(page, v.split('#')[0]!);
         } else if (Array.isArray(v)) v.forEach(walk);
         else if (v && typeof v === 'object') Object.values(v).forEach(walk);
       };
