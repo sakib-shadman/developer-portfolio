@@ -128,9 +128,9 @@ pnpm build:fixtures      # just the build (also runs the link check on it)
 
 ## Roll back
 
-- **Bad deploy on production:** Firebase console, Hosting, Release history, Rollback to the previous version. Or from a terminal logged in with `pnpm exec firebase login`: `pnpm exec firebase hosting:clone shadman-portfolio:<version-id> shadman-portfolio:live`.
+- **Bad deploy on production:** Firebase console, Hosting, Release history, Rollback to the previous version. Or from a terminal logged in with `pnpm exec firebase login`: `pnpm exec firebase hosting:clone shadman-portfolio:@<version-id> shadman-portfolio:live`. The `@` matters: without it the CLI reads the source as a channel name and fails. The version id is in the console's Release history (each release row), or in the `deploy` workflow log of the release you want back.
 - **Then fix the source:** revert the offending squash commit on `develop` with `git revert <sha>` through a PR, and release again, so `main` stops containing it.
-- Hosting keeps the last 10 versions (set once in the Firebase console), so only recent releases can be rolled back.
+- Set release retention to 10 when setting up Hosting (#38, plan PF-04); Hosting then keeps only the last 10 versions, so only recent releases can be rolled back.
 
 ## Spark plan limits
 

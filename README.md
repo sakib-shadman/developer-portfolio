@@ -73,7 +73,7 @@ The working agreement (commit rules, no AI trailers, link and content rules, def
 ## Maintenance and docs
 
 - `docs/MAINTENANCE.md`: add an article, project, case study or experience entry, swap the resume, update the profile, run the fixtures suite, roll back, Spark limits, rotate tokens.
-- `docs/IMPLEMENTATION_PLAN.md` (tasks, workflow, deployment), `docs/adr/` (decisions), `docs/browser-support.md` (browser matrix and link checks).
+- `docs/IMPLEMENTATION_PLAN.md` (tasks, workflow, deployment), `docs/adr/` (decisions), `docs/browser-support.md` (browser matrix and link checks), `docs/a11y-audit.md` (accessibility audit and manual checklist).
 
 ## Known limitations
 
