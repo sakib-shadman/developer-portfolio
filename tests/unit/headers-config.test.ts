@@ -39,6 +39,13 @@ describe('firebase.json header rules', () => {
     for (const host of csp.match(/https:\/\/[^\s;]+/g) ?? []) expect(host).toMatch(/^https:\/\/[a-z.]+$/);
   });
 
+  it('OG images are embeddable cross-origin (link previews) and cached for a day, after the defaults', () => {
+    const idx = (source: string) => rules.findIndex((r) => r.source === source);
+    expect(idx('/og/**')).toBeGreaterThan(idx('**'));
+    const corp = rules[idx('/og/**')]!.headers.find((h) => h.key === 'Cross-Origin-Resource-Policy')?.value;
+    expect(corp).toBe('cross-origin');
+  });
+
   it('cache rules: immutable only under /_astro, no-cache default, short-lived feed/resume', () => {
     const cache = (source: string) =>
       rules.find((r) => r.source === source)?.headers.find((h) => h.key === 'Cache-Control')?.value;
@@ -46,6 +53,7 @@ describe('firebase.json header rules', () => {
     expect(cache('/_astro/**')).toBe('public, max-age=31536000, immutable');
     expect(cache('/rss.xml')).toBe('public, max-age=3600');
     expect(cache('/resume/**')).toBe('public, max-age=3600');
+    expect(cache('/og/**')).toBe('public, max-age=86400');
     for (const r of rules) {
       if (r.source === '/_astro/**') continue;
       expect(r.headers.find((h) => h.key === 'Cache-Control')?.value ?? '').not.toContain('immutable');

@@ -79,6 +79,21 @@ test('@smoke cache: hashed assets are immutable, feed and favicon are short-live
   expect((await request.get('/robots.txt')).headers()['cache-control']).toBe('no-cache');
 });
 
+test('@smoke @any-content generated OG images are PNGs, cached for a day and embeddable cross-origin', async ({
+  request,
+}) => {
+  const res = await request.get('/og/default.png');
+  expect(res.status()).toBe(200);
+  const h = res.headers();
+  expect(h['content-type']).toBe('image/png');
+  expect(h['cache-control']).toBe('public, max-age=86400');
+  expect(h['cross-origin-resource-policy']).toBe('cross-origin');
+  // Everything else still comes from the site-wide defaults.
+  expect(h['x-content-type-options']).toBe('nosniff');
+  expect(h['x-frame-options']).toBe('DENY');
+  expect(h['content-security-policy']).toContain("default-src 'self'");
+});
+
 // The CSP must not break the site: load every page in a real browser and fail on any violation
 // (blocked image, font, script, style, connection). Also proves no inline scripts crept in.
 async function collectViolations(page: Page, url: string): Promise<string[]> {
