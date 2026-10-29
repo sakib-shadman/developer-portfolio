@@ -11,6 +11,8 @@ import LinkPill from '../components/ui/LinkPill.astro';
 import { getProfile, getSkillGroups } from '../lib/content/queries';
 import { buildAbout } from '../lib/about';
 import { linkAttrs } from '../lib/link';
+import { breadcrumbLd, profilePersonLd } from '../lib/seo/jsonld';
+import { aboutDescription, siteOrigin } from '../lib/seo/text';
 
 const [profile, groups] = await Promise.all([getProfile(), getSkillGroups()]);
 const about = buildAbout(profile, groups);
@@ -25,23 +27,26 @@ const community = about.community.map((c) => ({ text: c.text, link: linkAttrs(c.
 const resume = profile.resume;
 const photo = profile.photo;
 const hasBeyond = about.community.length > 0 || Boolean(about.objective) || about.interests.length > 0;
+const crumbs = [
+  { label: 'Home', href: '/' },
+  { label: 'About', href: '/about' },
+];
 ---
 
 <PageLayout
   title={`About — ${profile.name}`}
-  description={about.lead[0] ?? profile.intro}
+  description={aboutDescription(profile)}
   path="/about"
   type="profile"
+  jsonLd={[
+    profilePersonLd(profile, siteOrigin(Astro.site)),
+    breadcrumbLd(crumbs, '/about', siteOrigin(Astro.site)),
+  ]}
 >
   <div class="wrap page">
     <section class:list={['hero', { 'has-photo': Boolean(photo) }]} aria-labelledby="about-title">
       <div class="hero-copy">
-        <Breadcrumbs
-          items={[
-            { label: 'Home', href: '/' },
-            { label: 'About', href: '/about' },
-          ]}
-        />
+        <Breadcrumbs items={crumbs} />
         <SectionHeading level="h1" id="about-title" title={about.title} />
         {about.years && <p class="years">{about.years} of professional experience</p>}
         <div class="lead">

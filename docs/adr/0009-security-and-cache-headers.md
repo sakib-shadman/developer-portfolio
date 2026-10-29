@@ -23,7 +23,7 @@ CSP review against what the site loads: images come from astro:assets (same orig
 - **`object-src 'none'`**: `default-src 'self'` already limits objects to same-origin, and `'none'` would break the browser's built-in PDF viewer for `/resume/*.pdf` in some browsers.
 - **`Strict-Transport-Security`**: `.app` is an HSTS-preloaded TLD (browsers force HTTPS for every `*.web.app` host before the first request) and Firebase Hosting also sends HSTS on `web.app`, so a header here adds nothing. Revisit with `includeSubDomains; preload` if a custom domain is added (ADR-0007).
 - **`upgrade-insecure-requests`**: would break the http emulator used by e2e; every subresource is same-origin relative.
-- **CORP and OG images (PF-40)**: `Cross-Origin-Resource-Policy: same-origin` blocks browser-side cross-origin embeds. Social crawlers fetch server-side and are unaffected, but if any client renders the OG images or feed thumbnails directly from our origin (e.g. a web feed reader), set `Cross-Origin-Resource-Policy: cross-origin` on those paths.
+- **CORP and OG images (PF-40)**: `Cross-Origin-Resource-Policy: same-origin` blocks browser-side cross-origin embeds. The generated cards under `/og/**` are public, meant to be shown elsewhere (link previews, web feed readers), so that rule sets `cross-origin` for them and a one-day cache (names are not hashed; scrapers keep their own copies, see the PF-53 note on refreshing previews). Everything else stays `same-origin`.
 - **COEP**: nothing needs cross-origin isolation, and the beacon would need CORP headers.
 
 ### Cache policy
@@ -34,6 +34,7 @@ CSP review against what the site loads: images come from astro:assets (same orig
 | `/_astro/**`   | `public, max-age=31536000, immutable` | Content-hashed file names.                                       |
 | `/rss.xml`     | `public, max-age=3600`                | Feed readers poll; an hour is fine. Content-Type set explicitly. |
 | `/resume/**`   | `public, max-age=3600`                | PDF name is stable, so it must not be immutable.                 |
+| `/og/**`       | `public, max-age=86400`               | Generated cards, stable names; also `CORP: cross-origin`.        |
 | `/favicon.svg` | `public, max-age=86400`               | Stable name, rarely changes.                                     |
 
 - **Precedence is verified only in the emulator.** Firebase documents no rule for duplicate header keys in production, so PF-51 must re-run `tests/e2e/headers.spec.ts` against the preview channel.

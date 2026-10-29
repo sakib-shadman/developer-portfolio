@@ -4,6 +4,7 @@ import mdx from '@astrojs/mdx';
 import sitemap from '@astrojs/sitemap';
 import { cpSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { isSitemapPage } from './src/lib/seo/sitemap.ts';
 import { buildFlagError, fixturesOn, FIXTURE_PUBLIC } from './src/lib/content/root.ts';
 
 const site = process.env.PUBLIC_SITE_URL ?? 'http://localhost:4321';
@@ -33,7 +34,7 @@ export default defineConfig({
   vite: { build: { assetsInlineLimit: 0 } },
   integrations: [
     mdx(),
-    sitemap({ filter: (page) => !page.endsWith('/404') }),
+    sitemap({ filter: isSitemapPage }),
     ...(fixturesOn(process.env.PUBLIC_CONTENT_FIXTURES) ? [fixturePublic] : []),
   ],
 });

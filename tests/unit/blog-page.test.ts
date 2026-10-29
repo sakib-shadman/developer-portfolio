@@ -80,9 +80,10 @@ describe('/blog page', () => {
       'blog-search',
       'Load more',
       'No articles match',
-      '<script',
     ])
       expect(html).not.toContain(absent);
+    // No page script (JSON-LD data blocks in the head don't count).
+    expect(html).not.toMatch(/<script(?![^>]*ld\+json)/);
   });
 
   it('empty state without a profile link has no links in the page body', async () => {

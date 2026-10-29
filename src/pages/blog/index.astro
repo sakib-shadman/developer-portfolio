@@ -11,30 +11,38 @@ import SectionHeading from '../../components/ui/SectionHeading.astro';
 import { getArticles, getProfile } from '../../lib/content/queries';
 import { ALL_TAGS, PAGE_SIZE, buildTagFilters, counterParts, hasTagRow } from '../../lib/blog';
 import { linkAttrs } from '../../lib/link';
+import { blogLd, breadcrumbLd } from '../../lib/seo/jsonld';
+import { siteOrigin } from '../../lib/seo/text';
 
 const articles = await getArticles();
 const profile = await getProfile();
 // FR-08.8: only when configured and safe; an unsafe href renders nothing.
 const medium = profile.links.medium && linkAttrs(profile.links.medium) ? profile.links.medium : undefined;
 const total = articles.length;
+const blogDescription = `Technical articles ${profile.name} has published on Medium.`;
+// Links to the Medium originals only: the articles are not hosted here (no BlogPosting).
+const blogJsonLd = blogLd(
+  { name: `Writing — ${profile.name}`, description: blogDescription, articles },
+  siteOrigin(Astro.site),
+);
 const tagFilters = buildTagFilters(articles);
 const showTags = hasTagRow(tagFilters);
 // Without JS every article is listed; the script trims to the first page.
 const counter = counterParts(total, total);
+const crumbs = [
+  { label: 'Home', href: '/' },
+  { label: 'Writing', href: '/blog' },
+];
 ---
 
 <PageLayout
-  title="Writing — Shadman Sakib"
-  description="Technical articles Shadman Sakib has published on Medium."
+  title={`Writing — ${profile.name}`}
+  description={blogDescription}
   path="/blog"
+  jsonLd={[breadcrumbLd(crumbs, '/blog', siteOrigin(Astro.site)), ...(blogJsonLd ? [blogJsonLd] : [])]}
 >
   <section class="wrap page" aria-labelledby="blog-title" data-blog data-page-size={PAGE_SIZE}>
-    <Breadcrumbs
-      items={[
-        { label: 'Home', href: '/' },
-        { label: 'Writing', href: '/blog' },
-      ]}
-    />
+    <Breadcrumbs items={crumbs} />
 
     <div class="intro">
       <SectionHeading
