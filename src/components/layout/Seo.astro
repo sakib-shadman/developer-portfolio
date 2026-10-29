@@ -4,6 +4,7 @@
  * false for previews, staging and 0.x; true from v1.0 production.
  */
 import { DEFAULT_OG_PATH, OG_SIZE, absoluteUrl, seoDescription, siteOrigin } from '../../lib/seo/text';
+import { verificationTags } from '../../lib/seo/verification';
 import { serializeJsonLd, type JsonLd } from '../../lib/seo/jsonld';
 
 interface Props {
@@ -38,6 +39,7 @@ const site = siteOrigin(Astro.site);
 const canonical = absoluteUrl(path, site);
 const ogImage = absoluteUrl(image, site);
 const desc = seoDescription(description);
+const verification = noindex ? [] : verificationTags(import.meta.env);
 const indexable = !noindex && import.meta.env.PUBLIC_INDEXABLE === 'true';
 ---
 
@@ -45,6 +47,9 @@ const indexable = !noindex && import.meta.env.PUBLIC_INDEXABLE === 'true';
 <meta name="description" content={desc} />
 {!noindex && <link rel="canonical" href={canonical} />}
 {!indexable && <meta name="robots" content="noindex, nofollow" />}
+{verification.map((tag) => (
+  <meta name={tag.name} content={tag.content} />
+))}
 
 <meta property="og:type" content={type} />
 <meta property="og:title" content={title} />

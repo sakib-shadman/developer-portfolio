@@ -8,6 +8,7 @@
 | `design/*.dc.html`       | Screen designs (reference only, never imported) — **add from the project**              |
 | `MAINTENANCE.md`         | How to add content, swap the resume, roll back, Spark limits, rotate tokens             |
 | `a11y-audit.md`          | WCAG 2.2 AA audit suite, results and manual checklist                                   |
+| `RELEASE.md`             | Release runbook: release candidate, v1.0.0 launch, Search Console, rollback             |
 | `browser-support.md`     | Browser matrix, modern-feature floors, link checks, real-device checklist               |
 | `adr/`                   | Architecture decision records                                                           |
 | `contract/`              | JSON Schemas generated from `src/lib/content/schemas.ts` (`pnpm schemas:export`)        |

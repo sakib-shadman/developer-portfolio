@@ -2,14 +2,14 @@ import { existsSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
 // PF-53: the README and MAINTENANCE guide must only name scripts, files and folders that exist.
-const DOCS = ['README.md', 'docs/MAINTENANCE.md'];
+const DOCS = ['README.md', 'docs/MAINTENANCE.md', 'docs/RELEASE.md'];
 const scripts = Object.keys(
   JSON.parse(readFileSync('package.json', 'utf8')).scripts as Record<string, string>,
 );
 
-/** Paths that are examples, build output or created by the reader, not files of the repo. */
+/** Paths that are examples, build output, the changelog generated at release, or created by the reader, not files of the repo. */
 const NOT_IN_REPO =
-  /<|\*|example|^dist|^public\/resume\/|^src\/content\/(images|projects\/images|articles\/images)\/$/;
+  /<|\*|example|^dist|^CHANGELOG\.md$|^public\/resume\/|^src\/content\/(images|projects\/images|articles\/images)\/$/;
 
 const spans = (text: string) => [...text.matchAll(/`([^`\n]+)`/g)].map((m) => m[1]!);
 const codeBlocks = (text: string) => [...text.matchAll(/```[a-z]*\n([\s\S]*?)```/g)].map((m) => m[1]!);

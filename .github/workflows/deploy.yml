@@ -51,6 +51,9 @@ jobs:
         env:
           PUBLIC_SITE_URL: ${{ env.SITE_URL }}
           PUBLIC_INDEXABLE: ${{ env.IS_LIVE == 'true' && vars.PUBLIC_INDEXABLE || 'false' }}
+          # Optional ownership tokens, live builds only (unset renders nothing).
+          PUBLIC_GOOGLE_SITE_VERIFICATION: ${{ env.IS_LIVE == 'true' && vars.PUBLIC_GOOGLE_SITE_VERIFICATION || '' }}
+          PUBLIC_BING_SITE_VERIFICATION: ${{ env.IS_LIVE == 'true' && vars.PUBLIC_BING_SITE_VERIFICATION || '' }}
           PUBLIC_CONTACT_FORM: 'false'
           # Explicit false also overrides any stray .env file (process.env wins in Vite).
           PUBLIC_INCLUDE_DRAFTS: 'false'
