@@ -2,7 +2,7 @@
 
 ## Why I handed my portfolio to a team of AI agents
 
-My developer portfolio was written, reviewed and merged by AI agents: 25 pull requests in about ten days, each one reviewed before it reached `develop`. I wrote the requirements, made the decisions and approved the plan. The agents did the engineering.
+My developer portfolio was written, reviewed and merged by AI agents: 25 pull requests in about ten days. After the first few PRs set up the tooling, every one was reviewed by an agent before it reached `develop`. I wrote the requirements, made the decisions and approved the plan. The agents did the engineering.
 
 I build Flutter apps and an iOS SDK for a living, not static websites. A portfolio is the side project that never gets finished, so I treated it as an experiment: could an agent team ship it to the standard I'd expect from a human team? That means a spec, architecture decisions on paper, code review on every PR, and a CI pipeline that blocks bad merges.
 
@@ -31,14 +31,13 @@ The brief for each role is plain Markdown. Here is the top of the reviewer's:
 ```markdown
 ---
 name: pr-reviewer
-description: Independent, skeptical code review of a pull request in this repo
-  against the SRS, the design handoff and the repo rules.
+description: Independent, skeptical code review of a pull request in this repo against the SRS, the design handoff and the repo rules. Use for every PR before it is merged.
 tools: Read, Grep, Glob, Bash
 model: opus
 ---
 
-You are a senior front-end reviewer. Review the given PR independently,
-do not assume the author's reasoning is correct, and do not rubber-stamp.
+You are a senior front-end reviewer. Review the given PR independently — do not assume the
+author's reasoning is correct, and do not rubber-stamp.
 ```
 
 I started with three engineers working parallel lanes. I later cut that to one, for reasons covered in the lessons section.
@@ -64,7 +63,7 @@ The reviewer earned its place. On the accessibility PR it showed that two tests 
 
 ## The architecture: a static site with one door to the data
 
-The site is Astro 7 with static output, hosted free on Firebase Hosting. It ships no UI framework runtime: about 95% of it is content, and the four interactive pieces (a writing slider, project filters, blog search, a copy-email button) are small vanilla TypeScript modules.
+The site is Astro 7 with static output, hosted free on Firebase Hosting. It ships no UI framework runtime: about 95% of it is content, and the handful of interactive pieces (sliders, project filters, blog search, a copy-email button) are small vanilla TypeScript modules.
 
 The lead didn't pick this stack by default. It wrote the reasoning down as an architecture decision record (ADR) and listed what it rejected:
 
@@ -77,7 +76,7 @@ The lead didn't pick this stack by default. It wrote the reasoning down as an ar
 The most important line in the codebase is one ESLint rule: no page or component may import `astro:content`. Everything goes through `src/lib/content/`:
 
 - `schemas.ts` holds the Zod schemas. They are the content contract, and a bad record fails the build with a readable message.
-- `mappers.ts` turns raw records into plain domain types such as `Profile`, `Project` and `Article`.
+- `mappers.ts` turns raw records into plain domain types such as `Profile`, `ProjectCard` and `ArticleCard`.
 - `queries.ts` is the only data API the pages may call. Sorting, deduplication and "featured" selection live as pure functions in `logic.ts`.
 
 The point is the future backend. ADR-0008 says content will later come from an API, and that must not force a rewrite of the components. When it does, the file loaders get swapped for an API loader behind `queries.ts`, and the pages don't change. `pnpm schemas:export` already writes the contract as JSON Schema for whoever builds that backend.
@@ -114,7 +113,7 @@ The e2e tests run against the Firebase Hosting emulator, not the Astro dev serve
 
 - **Traffic.** The output is static files on a CDN, so traffic only costs bandwidth. The free plan caps transfer at about 360 MB a day, which is why the page-weight budget exists: smaller pages mean more visitors before the cap.
 - **Content.** Pages are generated from collections, so the 50th article costs the same as the first: one file.
-- **Features.** The contact form is already planned as a Cloud Function behind a feature flag (`PUBLIC_CONTACT_FORM`). It turns on when I move to the paid plan, without changing any page.
+- **Features.** The contact form is planned as a Cloud Function, with a feature flag already reserved (`PUBLIC_CONTACT_FORM`). The form itself isn't built yet; it comes after I move to the paid plan.
 - **Backend.** The content API boundary above means a CMS or my own API can replace the files later. Only pages that need live data would move to server rendering.
 
 ## The CI pipeline: what runs on every pull request
@@ -128,7 +127,7 @@ Every push to a PR starts four required jobs on GitHub Actions, and the PR can't
 - **quality** runs `pnpm install --frozen-lockfile`, lint (ESLint and Prettier), `astro check`, the unit tests with coverage, and the full production build. The build includes the content check, the fixture-leak scan and the link checker, so a broken internal link fails here.
 - **e2e** installs Chromium, WebKit and Firefox and runs three passes:
   1. The full Playwright suite against the Firebase emulator, with drafts visible.
-  2. The `@smoke` and axe tests on the build that actually ships, with drafts hidden. This catches pages that only work because a draft filled them.
+  2. The `@smoke` and axe tests on Chromium, against the build that actually ships, with drafts hidden. This catches pages that only work because a draft filled them.
   3. The `@fixtures` suite on the fictional content, which exercises the blog, the slider and the case studies.
 
 The other workflows:
@@ -144,7 +143,7 @@ Before any of this, git hooks (lefthook) run Prettier and ESLint on staged files
 
 The agents were good, but the setup around them needed fixing more than once. These are the problems that cost the most time.
 
-**A test that passed everywhere except CI.** To stop text jumping when web fonts load, the engineer generated fallback fonts sized to match Inter and Space Grotesk, plus an e2e test checking the widths match within 1%. It passed locally and failed on GitHub's Ubuntu runners, where the fallback for Arial resolves to a different system font and Inter came out 1.66% off. The first fix skipped the test when Arial wasn't really Arial; the runner's font fooled that check too. The final fix kept the precise check where it belongs, in a unit test of the generated numbers, and made the browser test guard what users see: headings wrap onto the same number of lines. Lesson: decide which layer owns a guarantee before writing the test.
+**A test that passed everywhere except CI.** To stop text jumping when web fonts load, the engineer generated fallback fonts sized to match Inter and Space Grotesk. A unit test pins the generated numbers exactly, and a browser test checks that rendered widths match within 1% and that headings wrap onto the same number of lines. The browser test passed locally and failed on GitHub's Ubuntu runners, where the system's stand-in for Arial put Inter 1.66% off. The first fix, skipping the test where Arial isn't metric-compatible, didn't help: the runner's font passed that check. The final fix loosened the Inter width bound to 2% and kept the wrap check strict. That was only safe because the exact guarantee already lived in the unit test. Lesson: give each guarantee to the layer that can check it reliably, and let the noisier layer be looser.
 
 **The cloud agents couldn't push to GitHub.** The agents ran in a cloud workspace without write access to my repository, and every push came back 403. The workaround: the agents package each branch as a `git bundle`, the bundle is copied to my Mac, and a small script there pushes it with a token. It worked, but it made my laptop part of the pipeline: when the Mac slept, finished work waited. Next time I'd sort out repository access on day one.
 

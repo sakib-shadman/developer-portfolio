@@ -1,6 +1,6 @@
 # I let AI agents build my portfolio. Here's the setup that kept them honest.
 
-My developer portfolio was built by a small team of AI agents: 25 pull requests in about ten days, each one reviewed and tested before it merged. I'm a Flutter and iOS engineer, so a static website is a side project for me. I used it to test a question: can agents ship to the standard I'd expect from a human team?
+My developer portfolio was built by a small team of AI agents: 25 pull requests in about ten days. Once the tooling was in place, every one was reviewed and tested before it merged. I'm a Flutter and iOS engineer, so a static website is a side project for me. I used it to test a question: can agents ship to the standard I'd expect from a human team?
 
 My short answer: yes, if you build the gates first.
 
@@ -24,7 +24,7 @@ The review paid for itself. It caught tests that passed even with the bug restor
 
 ## The architecture
 
-The site is Astro 7 with static output on Firebase Hosting's free plan. There is no React or other UI runtime. The four interactive pieces (a slider, filters, search, a copy-email button) are small vanilla TypeScript modules. The lead recorded why in an architecture decision record. A React single-page app would return 200 for unknown URLs and hide metadata from link previews, and a Node server needs paid hosting.
+The site is Astro 7 with static output on Firebase Hosting's free plan. There is no React or other UI runtime. The few interactive pieces (sliders, filters, search, a copy-email button) are small vanilla TypeScript modules. The lead recorded why in an architecture decision record. A React single-page app would return 200 for unknown URLs and hide metadata from link previews, and a Node server needs paid hosting.
 
 The key design rule is enforced by a lint rule: pages never touch the content API directly. Everything goes through `src/lib/content/`, where Zod schemas validate each record, mappers turn records into plain domain types, and `queries.ts` is the only data API. When content later moves to a backend, only the loader behind that API changes. The pages don't.
 
@@ -43,13 +43,13 @@ Every PR runs four required GitHub Actions jobs:
 - **branch-policy** enforces the git flow into `develop` and `main`.
 - **pr-title** checks the Conventional Commit title.
 - **quality** runs lint, type checks, unit tests and the production build, which includes a link checker.
-- **e2e** runs Playwright on Chromium, WebKit, Firefox and a mobile profile against the Firebase emulator. It runs three passes: the full suite, smoke and accessibility tests on the exact build that ships, and the fixtures suite.
+- **e2e** runs Playwright on Chromium, WebKit, Firefox and a mobile profile against the Firebase emulator. It runs three passes: the full suite, smoke and accessibility tests on Chromium against the exact build that ships, and the fixtures suite.
 
 PRs into `main` also run Lighthouse CI on every route, with budgets of 0.95 for performance, a perfect accessibility score, and at most 25 KB of JavaScript and 500 KB per page.
 
 ## What went wrong
 
-- **A font test passed locally and failed on CI,** because Ubuntu's stand-in for Arial is a different font. The fix was to move the exact check into a unit test and have the browser test check what users see: headings wrap onto the same number of lines.
+- **A font test passed locally and failed on CI,** because Ubuntu's stand-in for Arial is a different font. A unit test already pinned the exact numbers, so the fix loosened the browser check to 2% and kept its strict check that headings wrap onto the same number of lines.
 - **The cloud agents couldn't push to GitHub.** They packed branches into git bundles, and a script on my Mac pushed them. It worked, but my sleeping laptop became a bottleneck.
 - **Three parallel engineers caused merge conflicts** and used up my weekly usage limit. One engineer working sequentially was calmer and barely slower.
 - **Agents write from memory.** The reviewer caught a browser-support table that was wrong about Safari.

@@ -1,6 +1,6 @@
 # Building my portfolio with AI agents, part 1: the team and the workflow
 
-My developer portfolio was written, reviewed and merged by a team of AI agents: 25 pull requests in about ten days, none merged without a review and green CI. This first part covers the team and the workflow. [Part 2](./series-part-2.md) covers the architecture they built and the CI pipeline that checks every change.
+My developer portfolio was written, reviewed and merged by a team of AI agents: 25 pull requests in about ten days. After the first few set up the tooling, none merged without a review and green CI. This first part covers the team and the workflow. [Part 2](./series-part-2.md) covers the architecture they built and the CI pipeline that checks every change.
 
 I build Flutter apps and an iOS SDK for a living. A portfolio site is the side project that never gets finished, so I turned it into an experiment: could an agent team work like a disciplined human team, with a spec, decisions on paper, code review and a CI pipeline that blocks bad merges?
 
@@ -29,14 +29,13 @@ Here is the top of the reviewer's brief:
 ```markdown
 ---
 name: pr-reviewer
-description: Independent, skeptical code review of a pull request in this repo
-  against the SRS, the design handoff and the repo rules.
+description: Independent, skeptical code review of a pull request in this repo against the SRS, the design handoff and the repo rules. Use for every PR before it is merged.
 tools: Read, Grep, Glob, Bash
 model: opus
 ---
 
-You are a senior front-end reviewer. Review the given PR independently,
-do not assume the author's reasoning is correct, and do not rubber-stamp.
+You are a senior front-end reviewer. Review the given PR independently — do not assume the
+author's reasoning is correct, and do not rubber-stamp.
 ```
 
 ## The loop
@@ -71,4 +70,4 @@ The review report and fix notes are posted on each PR, so the GitHub history kee
 
 ## Takeaway
 
-The model writing the code mattered less than the system around it: written requirements, an independent reviewer that can't edit, and rules that live in the repo. In part 2, I'll go through the architecture and the CI pipeline that every one of those 25 PRs had to pass.
+The model writing the code mattered less than the system around it: written requirements, an independent reviewer that can't edit, and rules that live in the repo. In part 2, I'll go through the architecture and the CI pipeline every PR had to pass.

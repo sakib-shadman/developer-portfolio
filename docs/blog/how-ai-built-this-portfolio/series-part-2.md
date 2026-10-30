@@ -4,7 +4,7 @@ In [part 1](./series-part-1.md) I described the agent team (a lead, an engineer 
 
 ## A static site, chosen on purpose
 
-The site is Astro 7 with static output, hosted on Firebase Hosting's free Spark plan. There is no UI framework runtime. About 95% of the site is content, and the four interactive pieces (a writing slider, project filters, blog search and a copy-email button) are small vanilla TypeScript modules that enhance pages that already work without JavaScript.
+The site is Astro 7 with static output, hosted on Firebase Hosting's free Spark plan. There is no UI framework runtime. About 95% of the site is content, and the handful of interactive pieces (sliders, project filters, blog search and a copy-email button) are small vanilla TypeScript modules that enhance pages that already work without JavaScript.
 
 The lead wrote the reasoning down in ADR-0001, including what it rejected:
 
@@ -19,7 +19,7 @@ The lead wrote the reasoning down in ADR-0001, including what it rejected:
 One ESLint rule shapes the whole codebase: no page or component may import `astro:content`. All data goes through `src/lib/content/`:
 
 - `schemas.ts`: Zod schemas, the content contract. A bad record fails the build with the file name and the reason.
-- `mappers.ts`: turns raw records into plain domain types (`Profile`, `Project`, `Article`).
+- `mappers.ts`: turns raw records into plain domain types (`Profile`, `ProjectCard`, `ArticleCard`).
 - `queries.ts`: the only data API pages may call. Sorting, deduplication and featured selection are pure functions in `logic.ts`.
 
 The reason is ADR-0008: content will move to a backend one day, and that must not mean rewriting components. When it does, the file loaders are swapped for an API loader behind `queries.ts`. `pnpm schemas:export` already writes the contract as JSON Schema for whoever builds that API.
@@ -48,7 +48,7 @@ The e2e tests run against the Firebase Hosting emulator, not a dev server, so th
 
 - **Traffic:** static files on a CDN. The free plan caps transfer at about 360 MB a day, so a 500 KB page-weight budget keeps that cap far away.
 - **Content:** pages are generated from collections, so the 50th article costs one file, like the first.
-- **Features:** the contact form is planned as a Cloud Function behind a `PUBLIC_CONTACT_FORM` flag, switched on when I move to the paid plan.
+- **Features:** the contact form is planned as a Cloud Function behind a `PUBLIC_CONTACT_FORM` flag that is reserved today; the form gets built after I move to the paid plan.
 - **Backend:** the content boundary means an API can replace the files, and only pages that need live data move to server rendering.
 
 ## The CI pipeline
@@ -60,9 +60,9 @@ Every push to a PR runs four required GitHub Actions jobs, and nothing merges un
 - **branch-policy:** feature, fix, chore and content branches target `develop`; only `develop`, `release/*` and `hotfix/*` may target `main`.
 - **pr-title:** the title must be a Conventional Commit. PRs are squash-merged, so it becomes the commit message and later the changelog.
 - **quality:** frozen-lockfile install, ESLint and Prettier, `astro check`, unit tests with coverage, and the full production build including the link checker.
-- **e2e:** Chromium, WebKit and Firefox run three passes:
-  1. The full suite, with drafts visible.
-  2. The `@smoke` and axe tests on the build that ships, with drafts hidden.
+- **e2e:** three passes:
+  1. The full suite on Chromium, WebKit, Firefox and a mobile profile, with drafts visible.
+  2. The `@smoke` and axe tests on Chromium, against the build that ships, with drafts hidden.
   3. The `@fixtures` suite on fictional content.
 
 Around them:
@@ -75,7 +75,7 @@ Locally, git hooks run Prettier, ESLint and commitlint before a commit even exis
 
 ## The CI failure that taught me the most
 
-To stop text jumping when web fonts load, the engineer generated fallback fonts sized to match the real ones, plus a browser test that the widths match within 1%. It passed on every laptop and failed on GitHub's Ubuntu runners. Their stand-in for Arial is a different font, and Inter came out 1.66% off. The fix wasn't to delete the test. The exact numbers moved into a unit test, and the browser test now guards what users actually see: headings wrap onto the same number of lines. Each guarantee is now owned by the layer that can actually check it.
+To stop text jumping when web fonts load, the engineer generated fallback fonts sized to match the real ones. A unit test pins the generated numbers exactly, and a browser test checks that rendered widths match within 1% and that headings wrap onto the same number of lines. The browser test passed on every laptop and failed on GitHub's Ubuntu runners, where the system's stand-in for Arial put Inter 1.66% off. Skipping the test where Arial isn't metric-compatible didn't help, because the runner's font passed that check. The fix that stuck loosened the Inter width bound to 2% and kept the wrap check strict. That was safe only because the exact guarantee already lived in the unit test: each guarantee belongs to the layer that can check it reliably.
 
 ## Takeaway
 
