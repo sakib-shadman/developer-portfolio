@@ -37,13 +37,15 @@ pnpm build && pnpm serve:firebase # http://localhost:5000, with firebase.json he
 
 Environment variables (read at build time; none is a secret):
 
-| Variable                  | Effect                                                                                                                   |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| `PUBLIC_SITE_URL`         | Origin for canonical URLs, sitemap, OG tags and the link check (default `http://localhost:4321`)                         |
-| `PUBLIC_INDEXABLE`        | `true` lets search engines index (robots meta, `robots.txt`); `false` everywhere until v1.0 (ADR-0007)                   |
-| `PUBLIC_INCLUDE_DRAFTS`   | `true` renders `draft` records (the dev server and e2e builds do; shipped builds never)                                  |
-| `PUBLIC_CONTENT_FIXTURES` | `true` loads `tests/fixtures/content` instead of `src/content` (e2e only; refused together with `PUBLIC_INDEXABLE=true`) |
-| `PUBLIC_CONTACT_FORM`     | Reserved for the later contact form (ADR-0004); `false` in every deploy                                                  |
+| Variable                          | Effect                                                                                                                   |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `PUBLIC_SITE_URL`                 | Origin for canonical URLs, sitemap, OG tags and the link check (default `http://localhost:4321`)                         |
+| `PUBLIC_INDEXABLE`                | `true` lets search engines index (robots meta, `robots.txt`); `false` everywhere until v1.0 (ADR-0007)                   |
+| `PUBLIC_INCLUDE_DRAFTS`           | `true` renders `draft` records (the dev server and e2e builds do; shipped builds never)                                  |
+| `PUBLIC_CONTENT_FIXTURES`         | `true` loads `tests/fixtures/content` instead of `src/content` (e2e only; refused together with `PUBLIC_INDEXABLE=true`) |
+| `PUBLIC_GOOGLE_SITE_VERIFICATION` | Optional Search Console HTML-tag token; renders `<meta name="google-site-verification">` only when set (live builds)     |
+| `PUBLIC_BING_SITE_VERIFICATION`   | Optional Bing Webmaster `msvalidate.01` token; renders nothing when unset                                                |
+| `PUBLIC_CONTACT_FORM`             | Reserved for the later contact form (ADR-0004); `false` in every deploy                                                  |
 
 ## Architecture overview
 
