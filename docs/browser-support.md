@@ -45,7 +45,7 @@ Floors are the first stable version with support (MDN / Baseline); every browser
 
 ## Links
 
-- `pnpm build` and `pnpm build:fixtures` run `scripts/check-links.ts` (rules in `src/lib/link-check.ts`, unit tested): every internal link, asset, `srcset` entry and `#anchor` must exist in the build; every `<a href>` must be what `linkAttrs()` would render; external links must be https with `target="_blank" rel="noopener noreferrer"`; own-origin absolute URLs (canonical, `og:image`, sitemap) must resolve to built files.
+- `pnpm build` and `pnpm build:fixtures` run `scripts/check-links.ts` (rules in `src/lib/link-check.ts`, unit tested): every internal link, asset, `srcset` entry and `#anchor` must exist in the build; every `<a href>` must be what `linkAttrs()` would render (so `tel:` and `data:` links fail the build; only site paths, `#anchors`, `mailto:` and https URLs are accepted); external links must be https with `target="_blank" rel="noopener noreferrer"`; own-origin absolute URLs (canonical, `og:image`, sitemap) must resolve to built files.
 - `.github/workflows/links.yml` (lychee, weekly) checks that external URLs are still alive.
 
 ## Manual checklist (real devices, owner; also PF-51)

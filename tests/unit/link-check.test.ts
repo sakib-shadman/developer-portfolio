@@ -177,6 +177,11 @@ describe('checkSite', () => {
       );
       expect(issues).toEqual([]);
     });
+    it('reports a string that looks like a URL but does not parse, instead of throwing', () => {
+      const issues = site({ 'index.html': ld('{"url":"http://","sameAs":["https://ok.example/x"]}') });
+      expect(kinds(issues)).toEqual(['broken-url']);
+      expect(issues[0]!.detail).toContain('not a valid URL');
+    });
     it('flags invalid JSON', () => {
       expect(kinds(site({ 'index.html': ld('{nope') }))).toEqual(['policy']);
     });
