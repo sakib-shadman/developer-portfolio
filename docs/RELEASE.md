@@ -60,7 +60,7 @@ Tooling that exists for this runbook:
 
    Run the WebKit pass here, not for the first time on live: the header tests only ever ran against the emulator in CI.
 
-   The second command verifies production header precedence on the real channel (the emulator is not the same thing).
+   The `tests/e2e/headers.spec.ts` run (the last command above) verifies production header precedence on the real channel (the emulator is not the same thing).
 
 8. **Manual checklists.** Walk through, on staging, and record results in the PR:
    - Real-device checklist (iPhone Safari, Samsung Internet): `docs/browser-support.md`, section "Manual checklist".
