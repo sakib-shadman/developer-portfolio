@@ -77,6 +77,8 @@ export interface ProjectCard {
   description?: string;
   technologies: Tech[];
   role?: string;
+  /** Months as "YYYY-MM"; `end` is "present" while ongoing. Both set or both absent (schema-enforced). */
+  timeline?: { start: string; end: string };
   contributions: string[];
   links: { repo?: string; demo?: string; store?: string; docs?: string };
   media: Img[];

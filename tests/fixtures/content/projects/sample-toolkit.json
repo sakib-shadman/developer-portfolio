@@ -1,0 +1,17 @@
+{
+  "name": "Sample Toolkit",
+  "label": "Library · Example",
+  "category": "library",
+  "summary": "A fictional toolkit with a case study but no start or end dates.",
+  "description": "A sample project with a case study and no start or end, so its detail page shows no date row (fixture).",
+  "technologies": ["dart"],
+  "role": "Maintainer (sample)",
+  "contributions": ["Sample contribution one", "Sample contribution two"],
+  "links": {
+    "repo": "https://example.com/code/sample-toolkit"
+  },
+  "progress": "shipped",
+  "featured": false,
+  "status": "published",
+  "caseStudy": "sample-toolkit"
+}

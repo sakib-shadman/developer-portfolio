@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatDateRange, formatMonthYear } from '../../src/lib/date-range';
+import { formatDateRange, formatMonthRange, formatMonthYear } from '../../src/lib/date-range';
 import { composeHomeSections, numberSections, splitHeadline } from '../../src/lib/home';
 
 const d = (s: string) => new Date(s);
@@ -24,6 +24,59 @@ describe('formatDateRange', () => {
     expect(formatDateRange({ startDate: d('2020-03-01'), current: false })).toBe('Mar 2020');
     expect(formatDateRange({ endDate: d('2022-02-01'), current: false })).toBe('Until Feb 2022');
     expect(formatDateRange({ current: false })).toBeUndefined();
+  });
+});
+
+describe('formatMonthRange (project timeline)', () => {
+  it('finished: "Mar 2023 — Jun 2024"', () => {
+    expect(formatMonthRange('2023-03', '2024-06')).toBe('Mar 2023 — Jun 2024');
+  });
+  it('ongoing: end "present" reads "Present"', () => {
+    expect(formatMonthRange('2023-03', 'present')).toBe('Mar 2023 — Present');
+  });
+  it('start equal to end is a single month', () => {
+    expect(formatMonthRange('2023-03', '2023-03')).toBe('Mar 2023');
+  });
+  it('covers every month name, the year boundary and old/new years', () => {
+    const names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    names.forEach((n, i) => {
+      const mm = String(i + 1).padStart(2, '0');
+      expect(formatMonthRange(`2020-${mm}`, `2021-${mm}`)).toBe(`${n} 2020 — ${n} 2021`);
+    });
+    expect(formatMonthRange('2022-12', '2023-01')).toBe('Dec 2022 — Jan 2023');
+    expect(formatMonthRange('1999-01', '2100-12')).toBe('Jan 1999 — Dec 2100');
+  });
+  it('is timezone independent (UTC, never local time)', () => {
+    const tz = process.env.TZ;
+    for (const zone of ['Pacific/Kiritimati', 'Pacific/Pago_Pago', 'America/Los_Angeles', 'UTC']) {
+      process.env.TZ = zone;
+      expect(formatMonthRange('2023-01', '2023-12')).toBe('Jan 2023 — Dec 2023');
+    }
+    if (tz === undefined) delete process.env.TZ;
+    else process.env.TZ = tz;
+  });
+  it('reads exactly like the experience range for the same months', () => {
+    expect(formatMonthRange('2022-03', 'present')).toBe(
+      formatDateRange({ startDate: d('2022-03-01'), endDate: null, current: true }),
+    );
+    expect(formatMonthRange('2020-03', '2022-02')).toBe(
+      formatDateRange({ startDate: d('2020-03-01'), endDate: d('2022-02-01'), current: false }),
+    );
+  });
+  it('gives nothing for malformed input instead of a wrong date', () => {
+    for (const [s, e] of [
+      ['2023-13', '2024-01'],
+      ['2023-00', '2024-01'],
+      ['2023-3', '2024-01'],
+      ['2023', '2024-01'],
+      ['present', '2024-01'],
+      ['', 'present'],
+      ['2023-03', '2024-13'],
+      ['2023-03', ''],
+      ['2023-03-01', '2024-01'],
+    ] as const) {
+      expect(formatMonthRange(s, e), `${s} → ${e}`).toBeUndefined();
+    }
   });
 });
 

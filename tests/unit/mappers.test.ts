@@ -50,6 +50,34 @@ describe('mappers', () => {
     expect(categoryLabel('sdk')).toBe('SDK');
   });
 
+  it('toProjectCard maps start/end to a timeline, and none without dates', () => {
+    const entry = (extra: Record<string, unknown>) =>
+      ({
+        id: 'p',
+        collection: 'projects',
+        data: {
+          name: 'P',
+          category: 'sdk',
+          technologies: [],
+          contributions: [],
+          links: {},
+          media: [],
+          featured: false,
+          status: 'draft',
+          ...extra,
+        },
+      }) as never;
+    expect(toProjectCard(entry({ start: '2023-03', end: 'present' }), names).timeline).toEqual({
+      start: '2023-03',
+      end: 'present',
+    });
+    expect(toProjectCard(entry({ start: '2022-01', end: '2022-06' }), names).timeline).toEqual({
+      start: '2022-01',
+      end: '2022-06',
+    });
+    expect(toProjectCard(entry({}), names).timeline).toBeUndefined();
+  });
+
   it('toProjectCard exposes the linked case study id', () => {
     const card = toProjectCard(
       {

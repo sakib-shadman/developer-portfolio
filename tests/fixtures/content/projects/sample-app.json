@@ -6,6 +6,8 @@
   "description": "This second sample project also has a case study (fixture).",
   "technologies": ["flutter", "dart", "android"],
   "role": "Engineer (sample)",
+  "start": "2023-06",
+  "end": "present",
   "contributions": ["Sample contribution one", "Sample contribution two"],
   "links": {
     "repo": "https://example.com/code/sample-app",

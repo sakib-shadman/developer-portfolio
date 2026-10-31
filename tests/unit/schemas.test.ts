@@ -35,6 +35,61 @@ describe('content contract', () => {
     expect(paths).toEqual(expect.arrayContaining(['summary', 'description', 'role', 'technologies']));
   });
 
+  describe('project timeline (start / end)', () => {
+    const base = { name: 'X', category: 'sdk' };
+    const parse = (extra: Record<string, unknown>) => contract.project.safeParse({ ...base, ...extra });
+    const messages = (extra: Record<string, unknown>) =>
+      parse(extra).error?.issues.map((i) => `${i.path.join('.')}: ${i.message}`) ?? [];
+
+    it('accepts no dates, a finished range, an ongoing one, and a single month', () => {
+      expect(parse({}).success).toBe(true);
+      expect(parse({ start: '2023-03', end: '2024-06' }).success).toBe(true);
+      expect(parse({ start: '2023-03', end: 'present' }).success).toBe(true);
+      expect(parse({ start: '2023-03', end: '2023-03' }).success).toBe(true);
+    });
+    it('requires end when start is set, naming the field', () => {
+      expect(messages({ start: '2023-03' })).toEqual([
+        'end: end is required when start is set (YYYY-MM, or "present" for an ongoing project)',
+      ]);
+    });
+    it('forbids end without start, naming the field', () => {
+      expect(messages({ end: '2023-03' })).toEqual(['end: end is not allowed without start']);
+      expect(messages({ end: 'present' })).toEqual(['end: end is not allowed without start']);
+    });
+    it('rejects an end before the start, but "present" is always fine', () => {
+      expect(messages({ start: '2023-03', end: '2023-02' })).toEqual([
+        'end: end (2023-02) is before start (2023-03)',
+      ]);
+      expect(messages({ start: '2023-12', end: '2022-12' })).toHaveLength(1);
+      expect(parse({ start: '2099-01', end: 'present' }).success).toBe(true);
+    });
+    it('rejects bad formats and months outside 01-12', () => {
+      for (const start of [
+        '2023-13',
+        '2023-00',
+        '2023-3',
+        '23-03',
+        '2023/03',
+        '2023-03-01',
+        'present',
+        'March 2023',
+        '',
+      ]) {
+        expect(parse({ start, end: 'present' }).success, `start ${start}`).toBe(false);
+      }
+      for (const end of ['2023-13', '2023-3', 'Present', 'now', '']) {
+        expect(parse({ start: '2023-01', end }).success, `end ${end}`).toBe(false);
+      }
+      expect(parse({ start: 2023, end: 'present' }).success).toBe(false);
+    });
+    it('is independent of publication status (a draft may carry dates, dates never complete a draft)', () => {
+      expect(parse({ start: '2023-03', end: 'present', status: 'draft' }).success).toBe(true);
+      const paths = parse({ status: 'published' }).error?.issues.map((i) => i.path.join('.'));
+      expect(paths).not.toContain('start');
+      expect(paths).not.toContain('end');
+    });
+  });
+
   it('project: rejects non-http links', () => {
     const r = contract.project.safeParse({
       name: 'X',

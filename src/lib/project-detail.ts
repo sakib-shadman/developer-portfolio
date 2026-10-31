@@ -1,5 +1,6 @@
 /** /projects/[slug] logic (FR-05.11, FR-06, FR-14.7): which projects get a page, facts, links, SEO text. */
 import { linkAttrs } from './link';
+import { formatMonthRange } from './date-range';
 import type { ProjectCard, SkillGroup, Tech } from './content/types';
 
 /** FR-05.11/06.8: a dedicated page exists only for projects that have a case study. */
@@ -36,7 +37,7 @@ export interface Fact {
   value: string;
 }
 
-/** Hero facts; an item with no data is omitted (there is no timeline field in the content model). */
+/** Hero facts in design order (Role, Timeline, Platforms, Stack); an item with no data is omitted, never a placeholder. */
 export function detailFacts(
   project: ProjectCard,
   platforms: readonly Tech[],
@@ -44,6 +45,8 @@ export function detailFacts(
 ): Fact[] {
   const facts: Fact[] = [];
   if (project.role) facts.push({ label: 'Role', value: project.role });
+  const timeline = project.timeline && formatMonthRange(project.timeline.start, project.timeline.end);
+  if (timeline) facts.push({ label: 'Timeline', value: timeline });
   if (platforms.length) facts.push({ label: 'Platforms', value: platforms.map((t) => t.name).join(' · ') });
   if (stack.length) facts.push({ label: 'Stack', value: stack.map((t) => t.name).join(' · ') });
   return facts;

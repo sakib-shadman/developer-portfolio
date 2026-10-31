@@ -163,6 +163,29 @@ describe('/projects/[slug] page', () => {
     expect(html).toContain('content="Live scoring."');
   });
 
+  it('renders the Timeline fact between Role and Platforms when the project has dates', async () => {
+    const html = await renderPage({
+      project: { ...base, timeline: { start: '2023-03', end: 'present' } },
+      caseStudy: study(),
+    });
+    expect(html).toMatch(
+      /Role<\/dt>\s*<dd[^>]*>Lead developer[\s\S]*Timeline<\/dt>\s*<dd[^>]*>Mar 2023 — Present[\s\S]*Platforms<\/dt>/,
+    );
+    const done = await renderPage({
+      project: { ...base, timeline: { start: '2023-03', end: '2024-06' } },
+      caseStudy: study(),
+    });
+    expect(done).toMatch(/Timeline<\/dt>\s*<dd[^>]*>Mar 2023 — Jun 2024/);
+  });
+
+  it('renders no Timeline at all without dates: no dt, no placeholder', async () => {
+    const html = await renderPage({ project: base, caseStudy: study() });
+    expect(html).toContain('Role</dt>');
+    expect(html).not.toContain('Timeline');
+    expect(html).not.toMatch(/<dt[^>]*>\s*<\/dt>/);
+    expect(html).not.toMatch(/\[(Start|End)\]/);
+  });
+
   it('omits every optional part when data is missing: no facts, links, role, outcome, nav, screenshots', async () => {
     const bare: ProjectCard = {
       ...base,

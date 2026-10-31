@@ -50,6 +50,8 @@ One JSON file per project in `src/content/projects/`; the file name (without `.j
   "summary": "At most 200 characters.",
   "description": "What it is and why it exists.",
   "role": "Your role",
+  "start": "2023-03",
+  "end": "present",
   "technologies": ["flutter", "dart"],
   "contributions": ["One line each"],
   "links": { "repo": "https://github.com/example/example-app" },
@@ -62,6 +64,7 @@ One JSON file per project in `src/content/projects/`; the file name (without `.j
 
 - `category` is one of `mobile-app`, `sdk`, `library`, `open-source`, `web-app`, `backend`. `links` may hold `repo`, `demo`, `store`, `docs`.
 - `technologies` are ids from `src/content/skills.json` (`{ "id": "dart", "name": "Dart" }`). Add a missing skill there, and group it in `src/content/skill-groups.json` if it should show in the home "Skills" section. An unknown id fails `pnpm content:check`.
+- `start` and `end` are optional and feed the "Timeline" fact on the case-study page (`/projects/<slug>`, shown between Role and Platforms); the cards and the project list never show them. Use `"YYYY-MM"` with a month from `01` to `12`; `end` may be `"present"` for a project that is still going. Rules, checked by `pnpm build` (the error names the project file and the field): `end` is required when `start` is set, `end` is not allowed without `start`, and `end` must not be before `start`. `"start": "2023-03", "end": "2023-03"` shows a single month ("Mar 2023"); `"2023-03"` to `"present"` shows "Mar 2023 — Present"; `"2023-03"` to `"2024-06"` shows "Mar 2023 — Jun 2024". Leave both out if you do not know the dates: the Timeline row then does not appear (never invent dates). The JSON Schema in `docs/contract/project.schema.json` lists both fields; the cross-field rules live in `src/lib/content/schemas.ts`.
 - Images go in `src/content/projects/images/`.
 - `status: published` requires `summary`, `description`, `role` and at least one technology; otherwise keep `draft`.
 
