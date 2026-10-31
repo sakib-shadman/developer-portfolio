@@ -48,8 +48,10 @@ export function qualitySteps(ciYaml) {
  * purge an existing node_modules (installed from another store path, pnpm version or layout) and would have
  * to ask first. CI never hits this (fresh checkout, and CI=true skips the prompt). We run the install with
  * `--config.confirmModulesPurge=false` so it purges and reinstalls without asking: that is what the
- * frozen-lockfile install would do after a "yes" anyway. pnpm documents the setting at
- * https://pnpm.io/settings#confirmmodulespurge (the error text suggests CI=true or this setting).
+ * frozen-lockfile install would do after a "yes" anyway. Source: pnpm's validateModules.js prompts only
+ * `if (opts.confirmModulesPurge ?? true)`
+ * (https://app.unpkg.com/@pnpm/core@1010.0.0/files/lib/install/validateModules.js); the observed error with
+ * pnpm 10.34.7 is ERR_PNPM_ABORTED_REMOVE_MODULES_DIR_NO_TTY, whose text suggests CI=true or this setting.
  * Only `pnpm install` steps are touched, and a command that already sets the option is left alone.
  * @param {string} command
  * @returns {string}
@@ -59,6 +61,14 @@ export function nonInteractive(command) {
   return `${command} --config.confirmModulesPurge=false`;
 }
 
+/**
+ * What verify actually runs: ci.yml's quality steps with the local-only non-interactive tweak applied.
+ * @param {string} ciYaml
+ */
+export function stepsToRun(ciYaml) {
+  return qualitySteps(ciYaml).map((s) => ({ ...s, command: nonInteractive(s.command) }));
+}
+
 function sh(command, env = {}) {
   console.log(`\n$ ${command}`);
   return spawnSync(command, { shell: true, stdio: 'inherit', env: { ...process.env, ...env } }).status === 0;
@@ -66,8 +76,8 @@ function sh(command, env = {}) {
 
 function main() {
   const flags = new Set(process.argv.slice(2));
-  for (const step of qualitySteps(readFileSync('.github/workflows/ci.yml', 'utf8'))) {
-    if (!sh(nonInteractive(step.command), step.env)) {
+  for (const step of stepsToRun(readFileSync('.github/workflows/ci.yml', 'utf8'))) {
+    if (!sh(step.command, step.env)) {
       console.error(`\nverify FAILED at: ${step.command}`);
       process.exit(1);
     }
