@@ -57,7 +57,7 @@ PRs into `main` also run Lighthouse CI on every route, with budgets of 0.95 for 
 
 ## What I changed afterwards
 
-- **One gate:** `pnpm verify` runs exactly what CI runs, read from the CI workflow.
+- **One gate:** `pnpm verify` runs CI's quality steps, read from the CI workflow, plus the three e2e passes, in the same container when Docker is available.
 - **Skills:** the lead's per-PR routine is now four repo skills (`ship-pr`, `watch-ci`, `merge-pr`, `rebase-stack`) backed by tested scripts.
 - **Cheaper verification:** Opus does the first review; a Sonnet verifier checks the fixes.
 - **Mandatory habits:** the reviewer must put the bug back to prove a test bites, and cite a primary source for any browser or platform claim.
