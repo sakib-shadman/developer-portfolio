@@ -110,12 +110,24 @@ Edit the `main` record in `src/content/profile.json`. Required: `name`, `title`,
 3. `pnpm build` fails if the file is missing. The Download/View resume actions (home, About, header, footer) appear on their own, and none are shown while `resume` is unset.
 4. To replace the file, overwrite it (or change the name and the setting) and delete the old one. `firebase.json` caches `/resume/**` for an hour, so a replaced file can take up to an hour to show for returning visitors.
 
+## Run the checks the way CI does
+
+CI runs e2e in the official Playwright container (`mcr.microsoft.com/playwright:v<version>-noble`, the version of `@playwright/test` in `pnpm-lock.yaml`; `tests/unit/ci-parity.test.ts` fails if they drift). Browsers and fonts differ between machines, so the same container is available locally:
+
+```bash
+pnpm verify            # frozen install, lint, typecheck, unit tests, build, then every e2e pass
+pnpm e2e:docker        # only the e2e passes in the container: real, shipped, fixtures (or name one)
+pnpm e2e:docker fixtures
+```
+
+`pnpm verify` is the single "ready for PR" gate. It uses Docker for e2e when `docker info` works. Without Docker it runs local Playwright and prints a warning: that run does not match CI, so CI is the authority for webkit, firefox and fonts. `E2E_PROJECTS=chromium,mobile` limits the browsers when some are not installed (local runs only). `pnpm e2e:docker` keeps `node_modules` in the Docker volume `dev-portfolio-e2e-node-modules` (Mac binaries never mix with the Linux ones); `pnpm e2e:docker --reset` deletes it, and `--print` shows the docker command without running it. The Lighthouse job stays on the plain runner (see the comment in `.github/workflows/ci.yml`).
+
 ## Run the fixtures suite
 
 Real content has no articles, case studies, photo, email or resume yet, so tests that need them run against fictional content in `tests/fixtures/content` (tagged `@fixtures`):
 
 ```bash
-pnpm exec playwright install --with-deps chromium webkit firefox   # once
+pnpm exec playwright install --with-deps chromium webkit firefox   # once (not needed with pnpm e2e:docker)
 pnpm e2e:fixtures        # builds dist-fixtures/ and serves it on :5390 (E2E_FIXTURES_PORT changes it)
 pnpm build:fixtures      # just the build (also runs the link check on it)
 ```

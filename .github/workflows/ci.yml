@@ -40,29 +40,37 @@ jobs:
 
   e2e:
     runs-on: ubuntu-latest
+    # The official Playwright image: the browsers (chromium, firefox, webkit) and the system fonts are baked
+    # in, so CI and `pnpm e2e:docker` run on the same OS, fonts and browser builds. The tag MUST equal the
+    # @playwright/test version in pnpm-lock.yaml (tests/unit/ci-parity.test.ts enforces it). The hosting
+    # emulator serves static files in-process and needs no Java.
+    container:
+      image: mcr.microsoft.com/playwright:v1.64.1-noble
+      options: --ipc=host
+    env:
+      E2E_CONTAINER: 'true'
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with: { node-version-file: .nvmrc, cache: pnpm }
       - run: pnpm install --frozen-lockfile
-      - run: pnpm exec playwright install --with-deps chromium webkit firefox
-      - run: pnpm e2e
-        env: { CI: 'true', PUBLIC_INCLUDE_DRAFTS: 'true', PUBLIC_CONTENT_FIXTURES: 'false' }
+      # The three passes are defined once in scripts/e2e-passes.mjs (shared with `pnpm e2e:docker`).
+      - name: e2e (real content, drafts included, all browsers)
+        run: node scripts/e2e-passes.mjs real
       # What ships has no drafts: smoke + axe must pass on that build too.
       - name: e2e smoke + axe without drafts
-        run: pnpm exec playwright test --project=chromium --grep "@smoke|axe"
-        env:
-          { CI: 'true', PUBLIC_INCLUDE_DRAFTS: 'false', PUBLIC_CONTENT_FIXTURES: 'false', E2E_PORT: '5050' }
+        run: node scripts/e2e-passes.mjs shipped
       # Fictional, fully populated content (tests/fixtures/content): blog, case studies, photo, email,
       # resume. Builds into dist-fixtures/ on its own port; never touches the real-content build.
       - name: e2e @fixtures suite
-        run: pnpm e2e:fixtures
-        env: { CI: 'true', E2E_FIXTURES_PORT: '5390' }
+        run: node scripts/e2e-passes.mjs fixtures
       - if: failure()
         uses: actions/upload-artifact@v4
         with: { name: playwright-report, path: playwright-report, retention-days: 7 }
 
+  # Stays on the plain runner: Lighthouse launches the runner's Chrome (the Playwright image has none on
+  # chrome-launcher's search path) and the ADR-0006 budgets were calibrated there.
   lighthouse:
     if: github.base_ref == 'main'
     runs-on: ubuntu-latest

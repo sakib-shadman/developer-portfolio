@@ -16,7 +16,14 @@ pnpm test                # vitest + coverage (≥ 90% on src/lib)
 pnpm e2e                 # playwright + axe via the Firebase Hosting emulator (:5000), real content
 pnpm e2e:fixtures        # @fixtures suite against tests/fixtures/content (builds dist-fixtures, :5390)
 pnpm build               # content:check + astro build
+pnpm verify              # THE "ready for PR" gate: CI's quality steps + all e2e passes
+pnpm e2e:docker [pass]   # e2e in the CI Playwright container (Docker); pass = real|shipped|fixtures|all
 ```
+
+`pnpm verify` is the single gate before a PR. It runs e2e in the CI container when Docker exists. Where it
+does not (e.g. the cloud workspace), it falls back to local Playwright with a warning that the run does not
+match CI: then **CI is the authority** for webkit, firefox and fonts, and a green local run is not proof
+of those. Never loosen a test to make a local run pass.
 
 Node ≥ 22.23 (CI: `.nvmrc`), pnpm 10.
 
@@ -47,7 +54,7 @@ Node ≥ 22.23 (CI: `.nvmrc`), pnpm 10.
 
 1. **Develop** — by a `senior-engineer` agent (Sonnet, `.claude/agents/senior-engineer.md`) or the
    lead — on a `feature/PF-<id>-<slug>` (or `fix/` / `chore/` / `content/`) branch from `develop`;
-   run lint, typecheck, unit + e2e tests and build locally.
+   run `pnpm verify` locally (lint, typecheck, unit, build, e2e).
 2. **Raise a PR** into `develop` (Conventional-Commit title, DoD checklist filled in).
 3. **Review** by the `pr-reviewer` agent (Opus) (`.claude/agents/pr-reviewer.md`) — an independent agent
    with fresh context, plus `.github/workflows/claude-review.yml` once a Claude secret is set.

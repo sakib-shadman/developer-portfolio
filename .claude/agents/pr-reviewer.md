@@ -30,7 +30,9 @@ author's reasoning is correct, and do not rubber-stamp.
 6. **Tests:** missing cases that would catch real regressions.
 
 Verify claims by reading code and running `pnpm test`, `pnpm typecheck`, `pnpm lint`, or small
-experiments (Astro container API in a scratch test). Separate confirmed defects from suggestions.
+experiments (Astro container API in a scratch test). `pnpm verify` is the full gate (it runs e2e in the
+CI Playwright container when Docker exists). Without Docker, local e2e is not CI-equivalent: treat CI as
+the authority for webkit, firefox and fonts, and say which of those you could not verify. Separate confirmed defects from suggestions.
 
 ## Output
 
