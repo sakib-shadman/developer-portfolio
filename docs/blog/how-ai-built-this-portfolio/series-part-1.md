@@ -16,7 +16,8 @@ The lead agent also wrote architecture decision records (ADRs) for anything weig
 | --------------- | ------------- | --------------- | -------------------------------------------------------------------------------- |
 | Team lead       | Claude Opus   | No, coordinates | Plans tasks, routes PRs through review, merges only when review and CI are green |
 | Senior engineer | Claude Sonnet | Yes             | Builds one task end to end on its own branch, then fixes every finding           |
-| PR reviewer     | Claude Opus   | No              | Reviews each PR with fresh context, runs tests and experiments, verifies fixes   |
+| PR reviewer     | Claude Opus   | No              | Reviews each PR with fresh context, runs tests and experiments, cites sources    |
+| PR verifier     | Claude Sonnet | No              | Checks that each fix answers its finding; big fixes go back to the reviewer      |
 
 Three design choices made this work:
 
@@ -29,8 +30,8 @@ Here is the top of the reviewer's brief:
 ```markdown
 ---
 name: pr-reviewer
-description: Independent, skeptical code review of a pull request in this repo against the SRS, the design handoff and the repo rules. Use for every PR before it is merged.
-tools: Read, Grep, Glob, Bash
+description: Independent, skeptical code review of a pull request in this repo against the SRS, the design handoff and the repo rules. Use for the first review of every PR; fix rounds are verified by pr-verifier (Sonnet) unless a fix is large or changes the design.
+tools: Read, Grep, Glob, Bash, WebFetch, WebSearch
 model: opus
 ---
 
@@ -46,7 +47,7 @@ author's reasoning is correct, and do not rubber-stamp.
 2. The engineer builds it in its own clone and must pass lint, type checks, unit tests, the build and the e2e suites locally before opening a PR.
 3. The reviewer reads the diff against the plan, the ADRs and the design. It runs the tests, writes small experiments to confirm suspicions, and reports a verdict with a findings table: severity, file and line, problem, fix.
 4. The engineer fixes every finding, non-blocking ones included, and writes a note mapping each finding to a change.
-5. The reviewer verifies the fixes. A favourite move: put the original bug back and check the new test now fails.
+5. A verifier checks the fixes: the Sonnet verifier for small ones, the Opus reviewer for big ones. It must put the original bug back and check the new test now fails.
 6. The lead checks the verdict, open findings, the four required CI checks and that the branch is current, then squash-merges.
 
 The review report and fix notes are posted on each PR, so the GitHub history keeps the reasoning, not just the diff.
@@ -67,6 +68,16 @@ The review report and fix notes are posted on each PR, so the GitHub history kee
 **Unwritten rules don't stick.** Early commits carried an AI co-author line I didn't want. I asked for it removed, the history was rewritten, and the rule went into `CLAUDE.md`. Anything I only said once in chat had to be said again; anything in the repo stuck.
 
 **Some things stay human.** The agents won't write my bio or pick my analytics provider, and they shouldn't. Content, decisions, accounts and testing on a real phone are mine.
+
+## Tightening the setup afterwards
+
+Before the release, I had the team fix its own process:
+
+- **Repeated routines became skills.** Pushing or relaying a branch, opening the PR, posting review notes, waiting for CI, merging and rebasing stacked branches now live in `.claude/skills/` as `ship-pr`, `watch-ci`, `merge-pr` and `rebase-stack`, backed by tested scripts. Merges are pinned to the exact commit CI checked, and a rebase refuses to overwrite a teammate's commits.
+- **The expensive model only where it pays.** Opus does the first review; a Sonnet verifier checks the fixes, and CI is watched with `gh pr checks --watch` instead of polling loops.
+- **The reviewer's best habits are rules.** Putting the bug back to prove a test fails, and citing a primary source for any browser or platform claim, are required steps, and the reviewer has web access to do them.
+
+The reviewer found holes in these changes too, including a way to bypass the merge gate with an environment variable. The process caught its own bugs.
 
 ## Takeaway
 

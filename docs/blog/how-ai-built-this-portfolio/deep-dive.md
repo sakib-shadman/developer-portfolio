@@ -8,15 +8,16 @@ I build Flutter apps and an iOS SDK for a living, not static websites. A portfol
 
 This post covers how the team is set up, how a change moves from task to merge, the architecture the agents built, and the CI that keeps them honest. It also covers what went wrong, because a fair amount did.
 
-## The team: one lead, one engineer, one reviewer
+## The team: a lead, an engineer, a reviewer and a verifier
 
-The team has three roles, each a Claude agent with its own model, tools and written brief. I'm the product owner: I write requirements, make decisions and supply the real content.
+The team has four roles, each a Claude agent with its own model, tools and written brief. I'm the product owner: I write requirements, make decisions and supply the real content.
 
-| Role            | Model         | Tools                                     | Job                                                                                                       |
-| --------------- | ------------- | ----------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| Team lead       | Claude Opus   | Agent, Read, Grep, Glob, Bash             | Plans the work, hands out tasks, routes every PR through review, merges only when review and CI are green |
-| Senior engineer | Claude Sonnet | Read, Write, Edit, Grep, Glob, Bash       | Implements one task end to end on its own branch, then fixes every review finding                         |
-| PR reviewer     | Claude Opus   | Read, Grep, Glob, Bash (no Write or Edit) | Reviews each PR with fresh context, then verifies the fixes                                               |
+| Role            | Model         | Tools                                                          | Job                                                                                                       |
+| --------------- | ------------- | -------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| Team lead       | Claude Opus   | Agent, Read, Grep, Glob, Bash, plus repo skills                | Plans the work, hands out tasks, routes every PR through review, merges only when review and CI are green |
+| Senior engineer | Claude Sonnet | Read, Write, Edit, Grep, Glob, Bash                            | Implements one task end to end on its own branch, then fixes every review finding                         |
+| PR reviewer     | Claude Opus   | Read, Grep, Glob, Bash, WebFetch, WebSearch (no Write or Edit) | Reviews each PR with fresh context                                                                        |
+| PR verifier     | Claude Sonnet | Read, Grep, Glob, Bash, WebFetch, WebSearch (no Write or Edit) | Checks that each fix answers its finding; large or design-changing fixes go back to the Opus reviewer     |
 
 A few choices matter more than they look:
 
@@ -31,8 +32,8 @@ The brief for each role is plain Markdown. Here is the top of the reviewer's:
 ```markdown
 ---
 name: pr-reviewer
-description: Independent, skeptical code review of a pull request in this repo against the SRS, the design handoff and the repo rules. Use for every PR before it is merged.
-tools: Read, Grep, Glob, Bash
+description: Independent, skeptical code review of a pull request in this repo against the SRS, the design handoff and the repo rules. Use for the first review of every PR; fix rounds are verified by pr-verifier (Sonnet) unless a fix is large or changes the design.
+tools: Read, Grep, Glob, Bash, WebFetch, WebSearch
 model: opus
 ---
 
@@ -54,7 +55,7 @@ A "changes requested" verdict loops back to the engineer, and the reviewer re-ch
 2. **The engineer builds it on its own branch, in its own clone.** Before opening a PR it must pass lint, type checks, unit tests, the production build and the end-to-end suites locally.
 3. **The reviewer reviews with fresh context.** It reads the diff, the plan, the architecture decisions and the design, runs the tests, and writes small experiments to confirm suspicions. Its report has a verdict and a findings table: severity, file and line, the problem, a concrete fix.
 4. **The engineer fixes every finding,** including the non-blocking ones, and writes a short note mapping each finding to its change.
-5. **The reviewer verifies the fixes.** It often re-applies the original bug to prove the new test now fails, which catches tests that pass no matter what.
+5. **A verifier checks the fixes.** Small fixes go to the Sonnet verifier, large ones back to the Opus reviewer. Either way it must re-apply the original bug to prove the new test now fails, which catches tests that pass no matter what.
 6. **The lead merges.** It checks that the verdict is approve, no findings are open, the four required checks pass and the branch is up to date with `develop`. Then it squash-merges and tells other in-flight branches to rebase.
 
 The review report and the fix note are posted as comments on the PR, so the GitHub history shows the whole conversation, not just the final diff.
@@ -101,7 +102,7 @@ One problem surprised me: my real content isn't finished. There are no articles 
 
 | Layer         | Tool                                                             | What it catches                                                                                |
 | ------------- | ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| Unit          | Vitest, plus the Astro container API to render components        | Logic bugs, schema rules, component output (375 tests)                                         |
+| Unit          | Vitest, plus the Astro container API to render components        | Logic bugs, schema rules, component output (489 tests)                                         |
 | End to end    | Playwright on Chromium, WebKit, Firefox and a Pixel 7 profile    | Broken pages, navigation, headers, keyboard flows, layout shift                                |
 | Accessibility | axe-core inside the e2e run, plus a manual WCAG 2.2 AA checklist | Missing names, contrast, focus problems                                                        |
 | Performance   | Lighthouse CI on every route                                     | Performance under 0.95, accessibility or SEO under 1, more than 25 KB of JS or 500 KB per page |
@@ -124,8 +125,8 @@ Every push to a PR starts four required jobs on GitHub Actions, and the PR can't
 
 - **branch-policy** enforces the git flow. Feature, fix, chore and content branches go into `develop`; only `develop`, `release/*` and `hotfix/*` may target `main`.
 - **pr-title** checks the title is a Conventional Commit. PRs are squash-merged, so the title becomes the commit message, and later the changelog.
-- **quality** runs `pnpm install --frozen-lockfile`, lint (ESLint and Prettier), `astro check`, the unit tests with coverage, and the full production build. The build includes the content check, the fixture-leak scan and the link checker, so a broken internal link fails here.
-- **e2e** installs Chromium, WebKit and Firefox and runs three passes:
+- **quality** runs `pnpm install --frozen-lockfile`, lint (ESLint and Prettier), `astro check`, the unit tests with coverage, and the full production build. The build includes the content check, the fixture-leak scan and the link checker, so a broken internal link fails here. Locally, `pnpm verify` runs the same steps; it reads them from `ci.yml`, so the two can't drift apart.
+- **e2e** runs inside Playwright's official Docker image, so browsers and fonts match a local `pnpm e2e:docker` run exactly. It runs three passes:
   1. The full Playwright suite against the Firebase emulator, with drafts visible.
   2. The `@smoke` and axe tests on Chromium, against the build that actually ships, with drafts hidden. This catches pages that only work because a draft filled them.
   3. The `@fixtures` suite on the fictional content, which exercises the blog, the slider and the case studies.
@@ -154,6 +155,17 @@ The agents were good, but the setup around them needed fixing more than once. Th
 **My own rules had to be written down.** Early commits carried an AI co-author trailer, which I didn't want in my history. I asked for it removed, the history was rewritten, and the rule went into `CLAUDE.md` and each agent brief. Every preference I only said out loud once had to be repeated; the ones in the repo stuck.
 
 **What still needs me.** The agents won't write my bio, invent project results or pick my analytics provider, and they shouldn't. Real content, product decisions, the Firebase account and testing on a real iPhone are mine. The repo makes that explicit: missing content hides a section rather than faking it.
+
+## Tightening the setup afterwards
+
+After v1's engineering work was merged, I had the team fix its own process before the release. Four changes, each from a lesson above:
+
+- **Local runs match CI.** The e2e job now runs in Playwright's official Docker image, and `pnpm e2e:docker` runs the same image on a laptop. One command, `pnpm verify`, is the "ready for PR" gate, and it reads its steps from the CI workflow so the two can't drift. The font test that once failed only on CI now runs in the same environment wherever Docker runs.
+- **Repeated routines became skills.** The lead used to type the same steps for every PR: push or relay the branch, open the PR, post the review notes, wait for CI, merge, rebase what was stacked on top. They now live in `.claude/skills/` as `ship-pr`, `watch-ci`, `merge-pr` and `rebase-stack`, each backed by tested scripts. The reviewer made them safe: merge is pinned to the exact commit CI checked, and a rebase refuses to force-push over a teammate's commits.
+- **The expensive model only where it pays.** Opus does the first review. Checking that a fix answers its finding goes to a Sonnet verifier, and CI is watched with `gh pr checks --watch` rather than polling loops.
+- **The reviewer's best habits are rules.** Putting the original bug back to prove the new test fails, and checking browser or platform claims against a primary source with the link cited, are now required steps. The reviewer has web access to do it.
+
+The reviewer found real holes in these changes too, including a way to bypass the merge gate with an environment variable. The process caught its own bugs, which is the point.
 
 ## Was it worth it?
 
