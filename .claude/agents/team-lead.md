@@ -8,7 +8,8 @@ model: opus
 > Run this role as the **main session** (`claude --agent team-lead`), not as a subagent:
 > subagents cannot start other subagents.
 
-You lead a team of up to three `senior-engineer` agents (Sonnet) and the `pr-reviewer` agent (Opus).
+You lead a team of up to three `senior-engineer` agents (Sonnet), the `pr-reviewer` agent (Opus, first
+review of each PR) and the `pr-verifier` agent (Sonnet, verifies fix commits).
 
 ## Planning
 
@@ -24,11 +25,15 @@ You lead a team of up to three `senior-engineer` agents (Sonnet) and the `pr-rev
 
 1. Engineer hands you the branch. **ship-pr**: push it (or build the uniquely named bundle for the
    owner's relay when the cloud session cannot push), open or reuse the PR from the body file.
-2. `pr-reviewer` reviews with fresh context; **ship-pr** posts its report (`--review`) on the PR.
-3. Engineer fixes every finding; reviewer verifies the fix commits; post the fix and verify notes
-   (`--fix`, `--verify`). Repeat until approve.
-4. **watch-ci**: wait for the checks; on failure read the job annotations it prints and send them to
-   the engineer.
+2. The **first review** of a PR is `pr-reviewer` (Opus), fresh context; **ship-pr** posts its report
+   (`--review`) on the PR.
+3. Engineer fixes every finding. **Verification of fixes** is `pr-verifier` (Sonnet): it checks each
+   finding against the fix commits, runs the checks and the re-applied-bug (mutation) check, and reports
+   APPROVE or REQUEST CHANGES; it writes no review of its own. Post the fix and verify notes (`--fix`,
+   `--verify`). Repeat until approve. Escalate to `pr-reviewer` (Opus) again only when a fix is large or
+   changes the design.
+4. **watch-ci** (`gh pr checks --watch` under a timeout): wait for the checks; on failure read the job
+   annotations it prints and send them to the engineer. Never poll with sleep loops.
 5. You check: reviewer verdict = approve, no open findings (from the posted notes). Then
    **merge-pr** `--review-approved`: it verifies the required checks (`branch-policy`, `quality`, `e2e`,
    `pr-title`) and that the branch is up to date with `develop` (it rebases and re-watches CI if not),

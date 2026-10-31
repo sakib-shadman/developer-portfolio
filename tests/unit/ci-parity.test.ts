@@ -102,14 +102,40 @@ describe('e2e passes', () => {
   });
 });
 
-describe('pnpm verify mirrors the CI quality job', () => {
-  const quality = ci.jobs.quality?.steps.map((s) => s.run).filter((r): r is string => !!r);
-  it('runs the same commands in the same order', () => {
-    expect(QUALITY_STEPS).toEqual(quality);
+describe('CI quality job is `pnpm verify --skip-e2e`, which keeps every gate', () => {
+  const runs = (ci.jobs.quality?.steps ?? []).map((s) => s.run).filter((r): r is string => !!r);
+  it('calls verify instead of listing the steps itself', () => {
+    expect(runs).toEqual(['pnpm verify --skip-e2e']);
   });
-  it('gives the build the same env as CI', () => {
-    const build = ci.jobs.quality?.steps.find((s) => s.run === 'pnpm build');
-    expect(build?.env).toEqual(BUILD_ENV);
+  it('verify runs exactly these quality steps, in order, starting with the frozen-lockfile install', () => {
+    expect(QUALITY_STEPS).toEqual([
+      'pnpm install --frozen-lockfile',
+      'pnpm lint',
+      'pnpm typecheck',
+      'pnpm test',
+      'pnpm build',
+    ]);
+  });
+  it('verify builds with the env CI used for its build step', () => {
+    expect(BUILD_ENV).toEqual({
+      PUBLIC_SITE_URL: 'https://shadman-portfolio.web.app',
+      PUBLIC_INDEXABLE: 'false',
+      PUBLIC_INCLUDE_DRAFTS: 'false',
+      PUBLIC_CONTENT_FIXTURES: 'false',
+    });
+  });
+  it('pnpm build still runs the content check, the dist check and the link check', () => {
+    const build = (JSON.parse(read('package.json')) as { scripts: Record<string, string> }).scripts.build;
+    expect(build).toContain('pnpm content:check');
+    expect(build).toContain('scripts/check-dist.ts');
+    expect(build).toContain('scripts/check-links.ts');
+  });
+  it('verify runs all three e2e passes through scripts/e2e-passes.mjs, in docker or locally', () => {
+    const verify = read('scripts/verify.mjs');
+    expect(verify).toContain("runInDocker('all')");
+    expect(verify).toContain('node scripts/e2e-passes.mjs all');
+    expect(selectPasses('all')).toEqual(['real', 'shipped', 'fixtures']);
+    expect(read('scripts/e2e-docker.mjs')).toContain('node scripts/e2e-passes.mjs "$PASS"');
   });
 });
 

@@ -66,7 +66,8 @@ Development is done with Claude Code agents defined in `.claude/agents/` (repo-s
 | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `team-lead`       | Plans waves of tasks, routes every PR through review, merges when findings are resolved and CI is green. Run as the main session (`claude --agent team-lead`). |
 | `senior-engineer` | Implements one PF task end to end on its own branch and checkout, then fixes review findings.                                                                  |
-| `pr-reviewer`     | Independent review with fresh context; reports findings, verifies fixes.                                                                                       |
+| `pr-reviewer`     | First, independent review of each PR with fresh context (Opus); mandatory mutation check and external-fact check with cited sources.                           |
+| `pr-verifier`     | Verifies fix commits against the review and fix note (Sonnet): re-applies each fixed bug, checks facts, reports APPROVE or REQUEST CHANGES; edits no code.     |     |
 
 Repo-scoped skills in `.claude/skills/` carry the lead's repeated PR routines (each has a SKILL.md and bundled bash scripts):
 
