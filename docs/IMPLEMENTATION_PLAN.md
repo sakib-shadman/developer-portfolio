@@ -812,7 +812,8 @@ from commits since the last tag (`git cliff`), and a version bump in `package.js
 ### 3.8 Agent team (M1)
 
 Roles live in `.claude/agents/`: `senior-engineer` (Sonnet) ×3, `pr-reviewer` (Opus), `team-lead`
-(Opus). Lanes run in parallel; tasks in a lane are sequential.
+(Opus). Lanes run in parallel; tasks in a lane are sequential. The lead's repeated PR routines are
+repo-scoped skills in `.claude/skills/`: `ship-pr`, `watch-ci`, `merge-pr`, `rebase-stack`.
 
 | Wave | Lane A — home                                              | Lane B — projects                                    | Lane C — pages                |
 | ---- | ---------------------------------------------------------- | ---------------------------------------------------- | ----------------------------- |

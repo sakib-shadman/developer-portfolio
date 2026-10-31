@@ -138,6 +138,10 @@ pnpm build:fixtures      # just the build (also runs the link check on it)
 
 `pnpm build` runs a link check over `dist/` (`scripts/check-links.ts`, also `pnpm exec tsx scripts/check-links.ts dist-fixtures`). It fails on a broken internal link, asset or `#anchor`; on an own-origin absolute URL that does not exist; and on any link `linkAttrs()` would not render. That includes `tel:` and `data:` links, which the site does not support (only site paths, `#anchors`, `mailto:` and https URLs). External links must be https and open in a new tab with `rel="noopener noreferrer"` (the components do this). Dead external links are found weekly by `.github/workflows/links.yml` (lychee).
 
+## Ship and merge a PR (agents and maintainers)
+
+The routine is packaged as skills in `.claude/skills/` (see `CLAUDE.md`): `ship-pr` pushes the branch and opens the PR, `watch-ci` waits for the checks and prints failing annotations, `merge-pr` squash-merges once the review is approved and `branch-policy`, `quality`, `e2e`, `pr-title` are green, and `rebase-stack` moves stacked branches onto `develop` afterwards. If a session cannot push, `ship-pr` builds a uniquely named bundle for the owner's machine to push. Stale `.git/*.lock` and `tmp_*` files (from a killed git or a folder that refuses deletes) are listed and removed by following the "Rules" section of `.claude/skills/ship-pr/SKILL.md`.
+
 ## Roll back
 
 - **Bad deploy on production:** Firebase console, Hosting, Release history, Rollback to the previous version. Or from a terminal logged in with `pnpm exec firebase login`: `pnpm exec firebase hosting:clone shadman-portfolio:@<version-id> shadman-portfolio:live`. The `@` matters: without it the CLI reads the source as a channel name and fails. The version id is in the console's Release history (each release row), or in the `deploy` workflow log of the release you want back.

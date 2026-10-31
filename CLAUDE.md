@@ -16,7 +16,7 @@ pnpm test                # vitest + coverage (≥ 90% on src/lib)
 pnpm e2e                 # playwright + axe via the Firebase Hosting emulator (:5000), real content
 pnpm e2e:fixtures        # @fixtures suite against tests/fixtures/content (builds dist-fixtures, :5390)
 pnpm build               # content:check + astro build
-pnpm verify              # THE "ready for PR" gate: CI's quality steps + all e2e passes
+pnpm verify              # THE "ready for PR" gate; it reads the quality steps from the `quality` job of ci.yml (the visible source of truth); the e2e job runs the passes of scripts/e2e-passes.mjs
 pnpm e2e:docker [pass]   # e2e in the CI Playwright container (Docker); pass = real|shipped|fixtures|all
 ```
 
@@ -50,16 +50,27 @@ Node ≥ 22.23 (CI: `.nvmrc`), pnpm 10.
   icons `aria-hidden`, styled lists keep `role="list"`.
 - **Definition of Done:** `.github/pull_request_template.md`.
 
+## Skills
+
+Repo-scoped Claude Code skills in `.claude/skills/<name>/SKILL.md` (scripts in each `scripts/` folder; they
+never add trailers, never print tokens). Used by the `team-lead` for each PR:
+
+- `ship-pr`: push the branch (or bundle it for the owner's relay), open/reuse the PR, post notes.
+- `watch-ci`: wait for CI and print failing jobs' annotations.
+- `merge-pr`: verify the gate, squash-merge, list branches needing a rebase.
+- `rebase-stack`: `git rebase --onto origin/develop <old-base-sha> <branch>` after a squash merge.
+
 ## Workflow (agreed with the owner)
 
 1. **Develop** — by a `senior-engineer` agent (Sonnet, `.claude/agents/senior-engineer.md`) or the
    lead — on a `feature/PF-<id>-<slug>` (or `fix/` / `chore/` / `content/`) branch from `develop`;
    run `pnpm verify` locally (lint, typecheck, unit, build, e2e).
 2. **Raise a PR** into `develop` (Conventional-Commit title, DoD checklist filled in).
-3. **Review** by the `pr-reviewer` agent (Opus) (`.claude/agents/pr-reviewer.md`) — an independent agent
+3. **Review** by the `pr-reviewer` agent (Opus) (`.claude/agents/pr-reviewer.md`), mutation check and cited external facts mandatory — an independent agent
    with fresh context, plus `.github/workflows/claude-review.yml` once a Claude secret is set.
 4. **Address every finding** in follow-up commits and post a findings → resolution table on the PR.
-   Re-run the reviewer on the fix commits until it confirms nothing blocking is left.
+   Fix rounds are verified by the `pr-verifier` agent (Sonnet, `.claude/agents/pr-verifier.md`: maps findings to fixes, re-applies each bug,
+   reports APPROVE / REQUEST CHANGES, edits nothing) until nothing blocking is left; the lead re-runs `pr-reviewer` only for large or design-changing fixes.
 5. **Merge** (squash, delete branch) only when all review findings are resolved **and** all required
    CI checks pass. The `team-lead` (Opus, `.claude/agents/team-lead.md`, run as the main session)
    merges; the owner can review or veto any PR.

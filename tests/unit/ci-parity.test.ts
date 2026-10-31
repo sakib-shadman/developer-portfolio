@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { parse } from 'yaml';
 import { dockerArgs, INNER_SCRIPT, playwrightImage, volumeName } from '../../scripts/e2e-docker.mjs';
 import { PASS_NAMES, PASSES, passCommand, selectPasses } from '../../scripts/e2e-passes.mjs';
-import { BUILD_ENV, QUALITY_STEPS } from '../../scripts/verify.mjs';
+import { qualitySteps } from '../../scripts/verify.mjs';
 
 const read = (p: string) => readFileSync(p, 'utf8');
 const ciText = read('.github/workflows/ci.yml');
@@ -102,14 +102,60 @@ describe('e2e passes', () => {
   });
 });
 
-describe('pnpm verify mirrors the CI quality job', () => {
-  const quality = ci.jobs.quality?.steps.map((s) => s.run).filter((r): r is string => !!r);
-  it('runs the same commands in the same order', () => {
-    expect(QUALITY_STEPS).toEqual(quality);
+describe('CI quality job: ci.yml is the visible source of truth, verify reads it', () => {
+  const steps = ci.jobs.quality?.steps ?? [];
+  const runs = steps.map((s) => s.run).filter((r): r is string => !!r);
+  it('ci.yml lists the required gates explicitly, frozen-lockfile install first', () => {
+    expect(runs).toEqual([
+      'pnpm install --frozen-lockfile',
+      'pnpm lint',
+      'pnpm typecheck',
+      'pnpm test',
+      'pnpm build',
+    ]);
   });
-  it('gives the build the same env as CI', () => {
-    const build = ci.jobs.quality?.steps.find((s) => s.run === 'pnpm build');
-    expect(build?.env).toEqual(BUILD_ENV);
+  it('ci.yml gives the build the shipped-build env', () => {
+    expect(steps.find((s) => s.run === 'pnpm build')?.env).toEqual({
+      PUBLIC_SITE_URL: 'https://shadman-portfolio.web.app',
+      PUBLIC_INDEXABLE: 'false',
+      PUBLIC_INCLUDE_DRAFTS: 'false',
+      PUBLIC_CONTENT_FIXTURES: 'false',
+    });
+  });
+  it('verify derives its steps and env from ci.yml (same as a real YAML parse), not from its own list', () => {
+    const parsed = qualitySteps(ciText);
+    expect(parsed.map((p) => p.command)).toEqual(runs);
+    for (const [i, step] of steps.filter((s) => s.run).entries()) {
+      expect(parsed[i]?.env, step.run).toEqual(step.env ?? {});
+    }
+    const verify = read('scripts/verify.mjs');
+    expect(verify).toContain('.github/workflows/ci.yml');
+    expect(verify).not.toMatch(/'pnpm (lint|typecheck|test|build)'/);
+  });
+  it('the parser refuses a ci.yml without a quality job or without run steps', () => {
+    expect(() => qualitySteps('jobs:\n  other:\n    steps:\n      - run: pnpm lint\n')).toThrow(
+      /no `quality` job/,
+    );
+    expect(() => qualitySteps('jobs:\n  quality:\n    steps:\n      - uses: actions/checkout@v4\n')).toThrow(
+      /no `run:` steps/,
+    );
+  });
+  it('the parser reads a dropped gate as dropped (it follows ci.yml)', () => {
+    const without = ciText.replace('      - run: pnpm lint\n', '');
+    expect(qualitySteps(without).map((p) => p.command)).not.toContain('pnpm lint');
+  });
+  it('pnpm build still runs the content check, the dist check and the link check', () => {
+    const build = (JSON.parse(read('package.json')) as { scripts: Record<string, string> }).scripts.build;
+    expect(build).toContain('pnpm content:check');
+    expect(build).toContain('scripts/check-dist.ts');
+    expect(build).toContain('scripts/check-links.ts');
+  });
+  it('verify runs all three e2e passes through scripts/e2e-passes.mjs, in docker or locally', () => {
+    const verify = read('scripts/verify.mjs');
+    expect(verify).toContain("runInDocker('all')");
+    expect(verify).toContain('node scripts/e2e-passes.mjs all');
+    expect(selectPasses('all')).toEqual(['real', 'shipped', 'fixtures']);
+    expect(read('scripts/e2e-docker.mjs')).toContain('node scripts/e2e-passes.mjs "$PASS"');
   });
 });
 
