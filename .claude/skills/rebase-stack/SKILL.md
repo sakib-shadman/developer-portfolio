@@ -20,10 +20,10 @@ A squash merge turns the base branch's N commits into **one new commit** with di
 
 1. Stops on stale `.git/*.lock` or `tmp_*` files (`--clean-locks` removes them when no git process runs; see the rules below).
 2. Needs a committer identity to rewrite commits: uses the repo/user git config, else `GIT_COMMITTER_NAME`/`GIT_COMMITTER_EMAIL` (or the `GIT_AUTHOR_*` pair) from the environment without writing config; fails with a clear message if neither exists.
-3. Requires a clean tree, fetches, checks `<old-base-sha>` is an ancestor of the branch, lists the commits it will replay, then runs the `--onto` rebase.
-4. **Conflicts: exit 5**, with the conflicting files. Resolve, `git add`, `git rebase --continue`, then re-run with `--post-only`. Do not resolve by taking either side blindly: the stacked change must still do what it did.
+3. Requires a clean tree, fetches, and **refuses unless the local branch equals `origin/<branch>`** (otherwise the force-push would silently drop a teammate's commit: inspect with `git log --oneline <branch>..origin/<branch>`). It records that remote tip, checks `<old-base-sha>` is an ancestor of the branch, lists the commits it will replay, then runs the `--onto` rebase.
+4. **Conflicts: exit 5**, with the conflicting files. Resolve, `git add`, `git rebase --continue`, then re-run with `--post-only`, which refuses while a `rebase-merge`/`rebase-apply` directory exists, when HEAD is not on the branch, or when the branch does not contain `origin/develop`. Do not resolve by taking either side blindly: the stacked change must still do what it did.
 5. Runs `pnpm verify --skip-e2e` (override with `VERIFY_CMD`). A failure stops before any push.
-6. Publishes: `git push --force-with-lease` through `ship-pr/scripts/push.sh`. If the push is rejected, or with `--relay`, it builds a **new uniquely named bundle** instead (see the ship-pr skill for the relay path). After a force-push or relay, the PR base changes to develop automatically when the old base branch was deleted; otherwise run `gh pr edit <pr> --base develop`.
+6. Publishes through `ship-pr/scripts/push.sh --lease-sha <recorded remote tip>`, i.e. `--force-with-lease=<branch>:<sha> --force-if-includes`, so it can only replace the tip you inspected. If the push is rejected, or with `--relay`, it builds a **new uniquely named bundle** instead (see the ship-pr skill for the relay path). After a force-push or relay, the PR base changes to develop automatically when the old base branch was deleted; otherwise run `gh pr edit <pr> --base develop`.
 
 Then run the watch-ci skill on the PR.
 

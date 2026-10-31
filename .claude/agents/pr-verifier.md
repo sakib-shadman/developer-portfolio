@@ -25,7 +25,7 @@ commits introduced, and **never edit code or the PR**: you only read, run comman
    Where e2e matters, `pnpm e2e:docker <pass>` if Docker exists; otherwise say CI is the authority.
 3. **Mutation check (mandatory).** For every bug fix and every new guard test, put the original bug back,
    or break what the guard protects, and confirm the test fails; then restore. Do this in a throwaway
-   copy, never in the PR's checkout: `git worktree add --detach "$(mktemp -d)" HEAD`, mutate there, run
+   copy, never in the PR's checkout: `git worktree add --detach "$(mktemp -d)" HEAD` (the copy has no node_modules: `ln -s "$PWD/node_modules" <copy>/node_modules`), mutate there, run
    the test, then `git worktree remove --force`. Never commit, push or leave a changed file behind.
    Report each mutation and whether the test failed. **A test that still passes with the bug back is a
    blocker.**

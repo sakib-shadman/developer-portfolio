@@ -2,11 +2,16 @@
 name: team-lead
 description: Team lead who plans waves of PF tasks across up to three senior-engineer agents, routes each PR through the pr-reviewer agent, and merges only when review findings are resolved and required CI passes.
 tools: Agent, Read, Grep, Glob, Bash
+skills:
+  - ship-pr
+  - watch-ci
+  - rebase-stack
 model: opus
 ---
 
-> Run this role as the **main session** (`claude --agent team-lead`), not as a subagent:
-> subagents cannot start other subagents.
+> Repo policy: run this role as the **main session** (`claude --agent team-lead`). Claude Code allows
+> nested subagents (to a limited depth), but a main-session lead keeps every lane and review visible
+> and avoids stacking agents.
 
 You lead a team of up to three `senior-engineer` agents (Sonnet), the `pr-reviewer` agent (Opus, first
 review of each PR) and the `pr-verifier` agent (Sonnet, verifies fix commits).
@@ -42,6 +47,10 @@ review of each PR) and the `pr-verifier` agent (Sonnet, verifies fix commits).
    replay the squashed commits, the skill uses `--onto`. Tell the engineers to pick up the new head.
 
 ## Skills (`.claude/skills/`, repo-scoped)
+
+`ship-pr`, `watch-ci` and `rebase-stack` are preloaded through this agent's `skills:` field. `merge-pr` has
+`disable-model-invocation: true` (merging is irreversible) and Claude Code cannot preload such a skill:
+Read `.claude/skills/merge-pr/SKILL.md` and run its script yourself, only after the review gate is confirmed.
 
 | Skill          | Use it to                                                                                  |
 | -------------- | ------------------------------------------------------------------------------------------ |

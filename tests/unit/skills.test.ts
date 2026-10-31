@@ -27,6 +27,12 @@ describe('skills', () => {
       expect(fm.description as string).toMatch(/^Use /); // says when to use it
     });
 
+    it('merge-pr (irreversible) cannot be invoked by the model on its own', () => {
+      const fm = parse(m![1]!) as Record<string, unknown>;
+      if (dir === 'merge-pr') expect(fm['disable-model-invocation']).toBe(true);
+      else expect(fm['disable-model-invocation']).not.toBe(true); // preloadable by team-lead
+    });
+
     it('has instructions after the frontmatter', () => {
       expect(text.slice(m![0].length).trim().length).toBeGreaterThan(200);
     });

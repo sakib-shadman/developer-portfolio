@@ -38,7 +38,7 @@ the authority for webkit, firefox and fonts, and say which of those you could no
 
 **(a) Mutation check.** For every bug fix and every new guard test in the PR, put the original bug back,
 or break what the guard protects, and confirm the test fails; then restore. Work in a throwaway copy,
-never in the PR's checkout: `git worktree add --detach "$(mktemp -d)" HEAD`, mutate there, run the test,
+never in the PR's checkout: `git worktree add --detach "$(mktemp -d)" HEAD` (the copy has no node_modules: `ln -s "$PWD/node_modules" <copy>/node_modules`), mutate there, run the test,
 then `git worktree remove --force`. Report each mutation and the result. **A test that still passes with
 the bug back is a blocker.**
 

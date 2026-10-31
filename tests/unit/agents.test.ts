@@ -6,6 +6,40 @@ import { parse } from 'yaml';
 // Repo-scoped agents (.claude/agents/<name>.md): valid frontmatter everywhere, and the review agents keep
 // their mandatory habits (mutation check, external-fact check) and web tools.
 const DIR = '.claude/agents';
+// Tool names from https://code.claude.com/docs/en/sub-agents (a typo such as "Bassh" silently grants nothing).
+const KNOWN_TOOLS = new Set([
+  'Read',
+  'Write',
+  'Edit',
+  'Grep',
+  'Glob',
+  'Bash',
+  'PowerShell',
+  'LSP',
+  'NotebookEdit',
+  'WebFetch',
+  'WebSearch',
+  'TodoWrite',
+  'Skill',
+  'ToolSearch',
+  'EnterWorktree',
+  'ExitWorktree',
+  'Monitor',
+  'TaskStop',
+  'SendMessage',
+  'Artifact',
+  'ListAgents',
+  'Agent',
+  'Task',
+  'TaskCreate',
+  'TaskGet',
+  'TaskList',
+  'TaskUpdate',
+  'CronCreate',
+  'CronDelete',
+  'CronList',
+]);
+const MODEL = /^(sonnet|opus|haiku|fable|inherit|claude-[\w.-]+)$/;
 const files = readdirSync(DIR).filter((f) => f.endsWith('.md'));
 
 function load(file: string) {
@@ -31,7 +65,8 @@ describe('agents', () => {
       expect(fm.name).toBe(file.replace(/\.md$/, ''));
       expect(String(fm.description).trim().length).toBeGreaterThan(40);
       expect(tools.length).toBeGreaterThan(0);
-      expect(['opus', 'sonnet', 'haiku']).toContain(fm.model);
+      expect(String(fm.model)).toMatch(MODEL);
+      for (const t of tools) expect(KNOWN_TOOLS.has(t) || /^mcp__/.test(t), `unknown tool "${t}"`).toBe(true);
       expect(body.trim().length).toBeGreaterThan(200);
     });
   });
@@ -85,6 +120,20 @@ describe('agents', () => {
       expect(body).toMatch(
         /Escalate to `pr-reviewer` \(Opus\) again only when a fix is large or changes the design/,
       );
+    });
+    it('preloads skills that exist and can be preloaded (not disable-model-invocation)', () => {
+      const raw = readFileSync(join(DIR, 'team-lead.md'), 'utf8');
+      const fm = parse(/^---\n([\s\S]*?)\n---\n/.exec(raw)![1]!) as { skills?: string[] };
+      expect(fm.skills).toEqual(expect.arrayContaining(['ship-pr', 'watch-ci', 'rebase-stack']));
+      for (const name of fm.skills ?? []) {
+        const skill = readFileSync(join('.claude/skills', name, 'SKILL.md'), 'utf8');
+        expect(skill, `${name} is preloaded, so it cannot disable model invocation`).not.toMatch(
+          /disable-model-invocation: true/,
+        );
+      }
+    });
+    it('does not claim subagents cannot start subagents (the docs allow nesting)', () => {
+      expect(body).not.toMatch(/subagents cannot start other subagents/i);
     });
     it('waits for CI with the watch-ci skill, never sleep loops', () => {
       expect(body).toContain('watch-ci');

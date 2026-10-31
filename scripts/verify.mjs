@@ -4,24 +4,43 @@
 // Without Docker it falls back to local Playwright and says loudly that the run does not match CI.
 import { spawnSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
+import { readFileSync } from 'node:fs';
 import { dockerAvailable, runInDocker } from './e2e-docker.mjs';
 
-/** Must stay equal to the `quality` job's run steps in .github/workflows/ci.yml (guarded by a unit test). */
-export const QUALITY_STEPS = [
-  'pnpm install --frozen-lockfile',
-  'pnpm lint',
-  'pnpm typecheck',
-  'pnpm test',
-  'pnpm build',
-];
-
-/** The env CI gives `pnpm build` in the quality job. */
-export const BUILD_ENV = {
-  PUBLIC_SITE_URL: 'https://shadman-portfolio.web.app',
-  PUBLIC_INDEXABLE: 'false',
-  PUBLIC_INCLUDE_DRAFTS: 'false',
-  PUBLIC_CONTENT_FIXTURES: 'false',
-};
+/**
+ * The quality steps are NOT listed here: they are read from the `quality` job of .github/workflows/ci.yml,
+ * so that file is the single, visible source of truth for what CI checks (a PR that drops lint or test must
+ * show up as a ci.yml diff). Needs no dependencies, because it runs before `pnpm install`.
+ * Supported shape (guarded by tests/unit/ci-parity.test.ts against a real YAML parse): `- run: <command>`
+ * steps, each optionally followed by an `env:` block of `KEY: 'value'` lines.
+ * @param {string} ciYaml
+ * @returns {{ command: string; env: Record<string, string> }[]}
+ */
+export function qualitySteps(ciYaml) {
+  const lines = ciYaml.split('\n');
+  const start = lines.findIndex((l) => /^ {2}quality:\s*$/.test(l));
+  if (start === -1) throw new Error('no `quality` job in ci.yml');
+  /** @type {{ command: string; env: Record<string, string> }[]} */
+  const steps = [];
+  let inEnv = false;
+  for (const line of lines.slice(start + 1)) {
+    if (/^ {2}\S/.test(line)) break; // next job
+    const run = /^ {6}- run: (.+?)\s*$/.exec(line);
+    if (run) {
+      steps.push({ command: run[1], env: {} });
+      inEnv = false;
+    } else if (/^ {6}- /.test(line)) {
+      inEnv = false; // a `uses:` step
+    } else if (/^ {8}env:\s*$/.test(line)) {
+      inEnv = steps.length > 0;
+    } else if (inEnv) {
+      const kv = /^ {10}(\w+): '?([^']*)'?\s*$/.exec(line);
+      if (kv) steps.at(-1).env[kv[1]] = kv[2];
+    }
+  }
+  if (steps.length === 0) throw new Error('the `quality` job in ci.yml has no `run:` steps');
+  return steps;
+}
 
 function sh(command, env = {}) {
   console.log(`\n$ ${command}`);
@@ -30,9 +49,9 @@ function sh(command, env = {}) {
 
 function main() {
   const flags = new Set(process.argv.slice(2));
-  for (const step of QUALITY_STEPS) {
-    if (!sh(step, step === 'pnpm build' ? BUILD_ENV : {})) {
-      console.error(`\nverify FAILED at: ${step}`);
+  for (const step of qualitySteps(readFileSync('.github/workflows/ci.yml', 'utf8'))) {
+    if (!sh(step.command, step.env)) {
+      console.error(`\nverify FAILED at: ${step.command}`);
       process.exit(1);
     }
   }

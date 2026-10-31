@@ -16,7 +16,7 @@ pnpm test                # vitest + coverage (≥ 90% on src/lib)
 pnpm e2e                 # playwright + axe via the Firebase Hosting emulator (:5000), real content
 pnpm e2e:fixtures        # @fixtures suite against tests/fixtures/content (builds dist-fixtures, :5390)
 pnpm build               # content:check + astro build
-pnpm verify              # THE "ready for PR" gate; CI's quality job runs `pnpm verify --skip-e2e`, its e2e job the passes of scripts/e2e-passes.mjs
+pnpm verify              # THE "ready for PR" gate; it reads the quality steps from the `quality` job of ci.yml (the visible source of truth); the e2e job runs the passes of scripts/e2e-passes.mjs
 pnpm e2e:docker [pass]   # e2e in the CI Playwright container (Docker); pass = real|shipped|fixtures|all
 ```
 

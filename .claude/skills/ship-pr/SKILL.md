@@ -20,9 +20,17 @@ It does, in order (each step is also a script you can run alone):
 3. `scripts/comment.sh <pr> <review|fix|verify> <file>`: posts each note given as a comment headed with its kind.
 4. Prints the PR URL (last line).
 
-## When the push is rejected (exit code 3)
+## When the push fails
 
-Auth or the egress proxy can refuse the push from a cloud session. Do **not** try other remotes, tokens or tunnels. `push.sh` has already built a bundle with `scripts/bundle.sh` (`git bundle create <unique>.bundle <branch> ^origin/develop`, then `git bundle verify`) and printed its path and these steps:
+`push.sh` classifies the failure and never prints push output raw (URL credentials are redacted):
+
+- **Stale lease / non-fast-forward / "fetch first" (exit 1):** an error, not an auth problem. No bundle. Run `git fetch origin && git log --oneline <branch>..origin/<branch>`, inspect, integrate, push again.
+- **Anything else unrecognised (exit 1):** shown redacted; no relay.
+- **Auth, proxy or network (403, "not in this session's authorized repository set", authentication failures, DNS or tunnel errors): exit code 3**, the relay below.
+- A branch with a Claude trailer (exit 4), or an unreadable `origin/develop..<branch>` range (exit 2), also stops before pushing.
+- `push.sh <branch> --lease-sha <sha>` force-pushes as `--force-with-lease=<branch>:<sha> --force-if-includes` (used by rebase-stack).
+
+Auth or the egress proxy can refuse the push from a cloud session (exit 3). Do **not** try other remotes, tokens or tunnels. `push.sh` has already built a bundle with `scripts/bundle.sh` (`git bundle create <unique>.bundle <branch> ^origin/develop`, then `git bundle verify`) and printed its path and these steps:
 
 1. Copy the bundle to the owner's machine with the session's file-copy tool. **The name is unique every time (branch, UTC timestamp, short sha, pid) because that tool caches by name**: never reuse or overwrite an older bundle, and always pass the path the script printed.
 2. The owner's machine fetches it into a clone and pushes: `git fetch <bundle> '<branch>:<branch>' && git push origin '<branch>'`. The script that automates this lives outside this repo and is machine-specific; do not add it here.

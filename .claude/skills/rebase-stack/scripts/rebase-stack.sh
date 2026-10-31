@@ -3,7 +3,9 @@
 # Usage: rebase-stack.sh <branch> <old-base-sha> [--relay] [--post-only] [--clean-locks]
 #   <old-base-sha>  the tip of the base branch BEFORE the squash (merge-pr prints it)
 #   --relay         cannot push from here: re-bundle the rebased branch instead (see ship-pr)
-#   --post-only     skip the rebase (you resolved conflicts and ran `git rebase --continue`), only verify + push
+#                   (origin/<branch> may then be absent; if present it must still equal the local branch)
+#   --post-only     skip the rebase (you resolved conflicts and ran `git rebase --continue`), only verify + push;
+#                   refused while a rebase is in progress, off the branch, or if the branch lacks origin/develop
 #   --clean-locks   remove stale .git/*.lock and tmp_* files when no git process is running
 # Env: VERIFY_CMD (default "pnpm verify --skip-e2e"), GIT_COMMITTER_NAME/EMAIL as a fallback identity.
 # Exit: 0 done, 5 conflicts (resolve, then re-run with --post-only), others are errors.
@@ -50,10 +52,26 @@ if [ -z "$(git config user.name || true)" ] || [ -z "$(git config user.email || 
   export GIT_COMMITTER_NAME="$name" GIT_COMMITTER_EMAIL="$email"
 fi
 
+# The remote tip this rebase replaces. It is recorded BEFORE rewriting anything and is the only thing the
+# final push may overwrite (--force-with-lease=<branch>:<sha> --force-if-includes). --post-only does not
+# fetch, so the recorded ref is still the one inspected during the first run.
 if [ "$post_only" = 0 ]; then
   [ -z "$(git status --porcelain --untracked-files=no)" ] || { echo "rebase-stack: working tree has uncommitted changes" >&2; exit 1; }
   git fetch --quiet origin
   git rev-parse --verify --quiet "$branch^{commit}" >/dev/null || { echo "rebase-stack: no such branch $branch" >&2; exit 2; }
+  if remote_tip="$(git rev-parse --verify --quiet "origin/$branch^{commit}")"; then
+    # A local branch that differs from the remote one (a teammate pushed, or this copy is stale) would be
+    # silently overwritten by the force-push: refuse and let a human inspect.
+    if [ "$(git rev-parse "$branch")" != "$remote_tip" ]; then
+      echo "rebase-stack: $branch differs from origin/$branch; refusing to rewrite and force-push." >&2
+      echo "  Inspect:  git log --oneline $branch..origin/$branch   and   git log --oneline origin/$branch..$branch" >&2
+      echo "  Integrate or reset deliberately (for example git switch $branch && git reset --hard origin/$branch), then re-run." >&2
+      exit 1
+    fi
+  elif [ "$relay" = 0 ]; then
+    echo "rebase-stack: origin/$branch does not exist, nothing to force-push over. Use --relay (bundle) or push the branch first." >&2
+    exit 1
+  fi
   git merge-base --is-ancestor "$old_base" "$branch" || { echo "rebase-stack: $old_base is not an ancestor of $branch, wrong old base sha" >&2; exit 2; }
   echo "rebase-stack: replaying these commits onto origin/develop:"
   git log --oneline "$old_base..$branch"
@@ -65,6 +83,23 @@ if [ "$post_only" = 0 ]; then
     echo "Resolve them, git add, git rebase --continue, then re-run with --post-only." >&2
     exit 5
   fi
+else
+  # --post-only is only valid once the rebase really finished.
+  if [ -d "$git_dir/rebase-merge" ] || [ -d "$git_dir/rebase-apply" ]; then
+    echo "rebase-stack: a rebase is still in progress; finish it (git rebase --continue) before --post-only" >&2
+    exit 1
+  fi
+  current="$(git symbolic-ref --quiet --short HEAD || true)"
+  if [ "$current" != "$branch" ]; then
+    echo "rebase-stack: HEAD is on '${current:-a detached commit}', not $branch; switch to the branch before --post-only" >&2
+    exit 1
+  fi
+  git fetch --quiet origin develop 2>/dev/null || true
+  if ! git merge-base --is-ancestor origin/develop "$branch"; then
+    echo "rebase-stack: $branch does not contain origin/develop, the rebase onto it did not complete" >&2
+    exit 1
+  fi
+  remote_tip="$(git rev-parse --verify --quiet "origin/$branch^{commit}" || true)"
 fi
 
 echo "rebase-stack: verifying: $verify_cmd"
@@ -73,7 +108,8 @@ bash -c "$verify_cmd"
 if [ "$relay" = 1 ]; then
   bundle="$("$here/../../ship-pr/scripts/bundle.sh" "$branch")"
   echo "rebase-stack: relay mode, rebased bundle: $bundle"
-  echo "Copy it to the owner's machine, fetch it there and force-push with lease (see the ship-pr skill)."
+  echo "Copy it to the owner's machine, fetch it there and push with the lease on ${remote_tip:-<none>} (see the ship-pr skill)."
 else
-  "$here/../../ship-pr/scripts/push.sh" "$branch" --force-with-lease
+  [ -n "${remote_tip:-}" ] || { echo "rebase-stack: no origin/$branch to take a lease from; use --relay" >&2; exit 1; }
+  "$here/../../ship-pr/scripts/push.sh" "$branch" --lease-sha "$remote_tip"
 fi

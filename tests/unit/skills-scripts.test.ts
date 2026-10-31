@@ -66,6 +66,11 @@ function makeRepo(name: string) {
   git(work, 'push -q origin develop');
   return { origin, work };
 }
+const hook = (origin: string, text: string) => {
+  mkdirSync(join(origin, 'hooks'), { recursive: true });
+  writeFileSync(join(origin, 'hooks', 'pre-receive'), `#!/bin/sh\necho "${text}" >&2\nexit 1\n`);
+  chmodSync(join(origin, 'hooks', 'pre-receive'), 0o755);
+};
 const commit = (work: string, file: string, text: string, msg: string) => {
   writeFileSync(join(work, file), text);
   git(work, 'add -A');
@@ -82,11 +87,14 @@ beforeAll(() => {
 echo "gh $*" >> "$FAKE/log"
 case "$1 $2" in
   "pr list") f="$FAKE/pr_list.json" ;;
-  "pr view") f="$FAKE/view.json" ;;
+  "pr view") f="$FAKE/view.json"
+    # FAKE/head_seq: one sha per line, consumed by successive pr view headRefOid calls (a moving head).
+    if [ -s "$FAKE/head_seq" ] && [[ "$*" == *headRefOid* ]]; then sha="$(head -n 1 "$FAKE/head_seq")"; sed -i 1d "$FAKE/head_seq"; echo "$sha"; exit 0; fi ;;
   "pr checks") f="$FAKE/checks.json"; case "$*" in *--watch*) exit "\${FAKE_WATCH_RC:-0}" ;; esac ;;
   "pr create") echo "https://github.com/o/r/pull/7"; exit 0 ;;
   "pr comment") for a in "$@"; do last="$a"; done; cat "$last" > "$FAKE/comment.txt"; exit 0 ;;
-  "pr merge" | "pr update-branch" | "pr edit") exit 0 ;;
+  "pr update-branch") [ -f "$FAKE/view_after.json" ] && cp "$FAKE/view_after.json" "$FAKE/view.json"; exit 0 ;;
+  "pr merge" | "pr edit") exit 0 ;;
   api*) echo "error src/a.ts:3 Boom something broke"; exit 0 ;;
   *) f="" ;;
 esac
@@ -142,11 +150,9 @@ describe('ship-pr: push.sh', () => {
     expect(r.status).toBe(0);
     expect(git(origin, 'rev-parse refs/heads/feature/ok').status).toBe(0);
   });
-  it('falls back to a bundle and relay instructions (exit 3) when the push is rejected', () => {
+  it('classifies an auth/proxy rejection (403, authorized repository set) as a relay case (exit 3)', () => {
     const { work, origin } = makeRepo('push-rejected');
-    mkdirSync(join(origin, 'hooks'), { recursive: true });
-    writeFileSync(join(origin, 'hooks', 'pre-receive'), '#!/bin/sh\necho "auth denied" >&2\nexit 1\n');
-    chmodSync(join(origin, 'hooks', 'pre-receive'), 0o755);
+    hook(origin, "HTTP 403: repository not in this session's authorized repository set");
     git(work, 'switch -q -c feature/no');
     commit(work, 'x.txt', 'x', 'feat: no');
     const r = run(script('ship-pr', 'push.sh'), ['feature/no'], work, { BUNDLE_DIR: join(root, 'bundles2') });
@@ -154,6 +160,67 @@ describe('ship-pr: push.sh', () => {
     expect(r.err).toContain('Relay path');
     expect(r.err).toMatch(/feature-no-.*\.bundle/);
     expect(r.err).toContain('outside this repo');
+  });
+  it('treats a stale lease or non-fast-forward as an error (exit 1): no bundle, fetch-and-inspect advice', () => {
+    const { work, origin } = makeRepo('push-stale');
+    git(work, 'switch -q -c feature/st');
+    commit(work, 'x.txt', 'x', 'feat: st');
+    git(work, 'push -q origin feature/st');
+    // a teammate pushes to the same branch from another clone
+    const other = join(root, 'push-stale-other');
+    sh(`git clone -q ${origin} ${other}`, root);
+    git(other, 'switch -q feature/st');
+    commit(other, 'y.txt', 'y', 'feat: teammate');
+    git(other, 'push -q origin feature/st');
+    // non-fast-forward: local amends and pushes plainly
+    git(work, 'commit -q --amend -m "feat: st rewritten"');
+    const plain = run(script('ship-pr', 'push.sh'), ['feature/st'], work, {
+      BUNDLE_DIR: join(root, 'bundles-stale'),
+    });
+    expect(plain.status).toBe(1);
+    expect(plain.err).toContain('git fetch origin && git log --oneline');
+    expect(plain.err).not.toContain('Relay path');
+    // lease on an outdated sha: the remote tip is the teammate's commit, not the one we claim
+    const old = git(work, 'rev-parse HEAD~0').out;
+    const lease = run(script('ship-pr', 'push.sh'), ['feature/st', '--lease-sha', old], work, {
+      BUNDLE_DIR: join(root, 'bundles-stale'),
+    });
+    expect(lease.status).toBe(1);
+    expect(lease.err).not.toContain('Relay path');
+    expect(git(origin, 'log --format=%s -1 feature/st').out).toBe('feat: teammate');
+    expect(existsSync(join(root, 'bundles-stale'))).toBe(false);
+  });
+  it('does not relay or hide an unclassified failure, and redacts URL credentials in what it prints', () => {
+    const { work, origin } = makeRepo('push-unknown');
+    hook(origin, 'declined by https://user:s3cretToken@example.com/hook for policy');
+    git(work, 'switch -q -c feature/un');
+    commit(work, 'x.txt', 'x', 'feat: un');
+    const r = run(script('ship-pr', 'push.sh'), ['feature/un'], work, {
+      BUNDLE_DIR: join(root, 'bundles-un'),
+    });
+    expect(r.status).toBe(1);
+    expect(r.err).not.toContain('s3cretToken');
+    expect(r.err).toContain('https://***@example.com');
+    expect(r.err).not.toContain('Relay path');
+  });
+  it('redacts credentials in the relay case too', () => {
+    const { work, origin } = makeRepo('push-redact');
+    hook(origin, 'HTTP 403 for https://user:t0ken123@github.com/o/r.git');
+    git(work, 'switch -q -c feature/rd');
+    commit(work, 'x.txt', 'x', 'feat: rd');
+    const r = run(script('ship-pr', 'push.sh'), ['feature/rd'], work, {
+      BUNDLE_DIR: join(root, 'bundles-rd'),
+    });
+    expect(r.status).toBe(3);
+    expect(r.err).not.toContain('t0ken123');
+  });
+  it('fails when origin/develop is missing instead of skipping the trailer check', () => {
+    const work = join(root, 'push-nodev');
+    sh(`git init -q -b develop ${work}`, root);
+    commit(work, 'a.txt', 'a', 'chore: init');
+    git(work, 'switch -q -c feature/nd');
+    commit(work, 'x.txt', 'x', 'feat: nd');
+    expect(run(script('ship-pr', 'push.sh'), ['feature/nd'], work).status).toBe(2);
   });
   it('refuses a branch whose commit carries a Claude trailer', () => {
     const { work } = makeRepo('push-trailer');
@@ -216,8 +283,7 @@ describe('ship-pr: open-pr.sh and comment.sh', () => {
   });
   it('ship.sh stops with exit 3 when the push needs a relay and never opens a PR', () => {
     const { work, origin } = makeRepo('ship');
-    writeFileSync(join(origin, 'hooks', 'pre-receive'), '#!/bin/sh\nexit 1\n');
-    chmodSync(join(origin, 'hooks', 'pre-receive'), 0o755);
+    hook(origin, 'HTTP 403 forbidden');
     git(work, 'switch -q -c feature/s');
     commit(work, 'x.txt', 'x', 'feat: s');
     writeFileSync(join(work, 'body.md'), 'body\n');
@@ -245,12 +311,19 @@ describe('watch-ci', () => {
       })),
     );
   const ALL = ['branch-policy', 'quality', 'e2e', 'pr-title'];
-  it('passes when the four required checks pass (other failures only listed)', () => {
+  const allPass = checks(ALL.map((n): [string, string] => [n, 'pass']));
+  const head = JSON.stringify({ headRefOid: 'abc123' });
+  const watch = (f: ReturnType<typeof fake>, args: string[] = ['--once'], env: Record<string, string> = {}) =>
+    run(script('watch-ci', 'watch-ci.sh'), ['9', ...args], root, { ...f.env, ...env });
+
+  it('passes when the four required checks pass (other failures only listed) and names the verified head', () => {
     const f = fake('w1', {
       'checks.json': checks([...ALL.map((n): [string, string] => [n, 'pass']), ['lighthouse', 'fail']]),
+      'view.json': head,
     });
-    const r = run(script('watch-ci', 'watch-ci.sh'), ['9', '--once'], root, f.env);
+    const r = watch(f);
     expect(r.status).toBe(0);
+    expect(r.out).toContain('VERIFIED_HEAD=abc123');
     expect(r.out).toContain('RESULT: PASS');
   });
   it('fails and prints annotations of the failing job', () => {
@@ -261,30 +334,78 @@ describe('watch-ci', () => {
         ['e2e', 'fail'],
         ['pr-title', 'pass'],
       ]),
+      'view.json': head,
     });
-    const r = run(script('watch-ci', 'watch-ci.sh'), ['9', '--once'], root, f.env);
+    const r = watch(f);
     expect(r.status).toBe(1);
     expect(r.out).toContain("annotations for failing job 'e2e' (check-run 33)");
     expect(r.out).toContain('error src/a.ts:3 Boom something broke');
     expect(f.log()).toContain('api repos/{owner}/{repo}/check-runs/33/annotations');
     expect(r.out).toContain('RESULT: FAIL');
   });
-  it('treats a missing required check as a failure and a pending one as exit 4', () => {
-    const missing = fake('w3', { 'checks.json': checks([['quality', 'pass']]) });
-    expect(run(script('watch-ci', 'watch-ci.sh'), ['9', '--once'], root, missing.env).status).toBe(1);
-    const pending = fake('w4', {
-      'checks.json': checks(ALL.map((n): [string, string] => [n, n === 'e2e' ? 'pending' : 'pass'])),
-    });
-    const r = run(script('watch-ci', 'watch-ci.sh'), ['9', '--once'], root, pending.env);
+  it('treats a missing or skipped required check as a failure and a pending one as exit 4', () => {
+    expect(
+      watch(fake('w3', { 'checks.json': checks([['quality', 'pass']]), 'view.json': head })).status,
+    ).toBe(1);
+    expect(
+      watch(
+        fake('w3b', {
+          'checks.json': checks(ALL.map((n): [string, string] => [n, n === 'e2e' ? 'skipping' : 'pass'])),
+          'view.json': head,
+        }),
+      ).status,
+    ).toBe(1);
+    const r = watch(
+      fake('w4', {
+        'checks.json': checks(ALL.map((n): [string, string] => [n, n === 'e2e' ? 'pending' : 'pass'])),
+        'view.json': head,
+      }),
+    );
     expect(r.status).toBe(4);
     expect(r.out).toContain('RESULT: PENDING');
   });
-  it('waits with gh pr checks --watch unless --once', () => {
-    const f = fake('w5', { 'checks.json': checks(ALL.map((n): [string, string] => [n, 'pass'])) });
-    expect(
-      run(script('watch-ci', 'watch-ci.sh'), ['9', '--interval', '5', '--timeout', '30'], root, f.env).status,
-    ).toBe(0);
+  it('fails when no checks are reported at all', () => {
+    const r = watch(fake('w-empty', { 'checks.json': '[]', 'view.json': head }));
+    expect(r.status).toBe(1);
+    expect(r.err).toContain('NO checks reported');
+    expect(r.out).not.toContain('RESULT: PASS');
+  });
+  it('an empty or narrowing REQUIRED_CHECKS never drops the four defaults', () => {
+    const red = checks([
+      ['branch-policy', 'pass'],
+      ['quality', 'fail'],
+      ['e2e', 'fail'],
+      ['pr-title', 'pass'],
+      ['extra', 'pass'],
+    ]);
+    for (const override of [' ', 'extra', 'pr-title']) {
+      const r = watch(
+        fake(`w-ovr-${override.trim() || 'blank'}`, { 'checks.json': red, 'view.json': head }),
+        ['--once'],
+        { REQUIRED_CHECKS: override },
+      );
+      expect(r.status, `override "${override}"`).toBe(1);
+      expect(r.out).toContain('RESULT: FAIL');
+    }
+  });
+  it('an override can add a required check', () => {
+    const f = fake('w-add', {
+      'checks.json': checks([...ALL.map((n): [string, string] => [n, 'pass']), ['lighthouse', 'fail']]),
+      'view.json': head,
+    });
+    expect(watch(f, ['--once'], { REQUIRED_CHECKS: 'lighthouse' }).status).toBe(1);
+  });
+  it('fails when the PR head moves while it checks', () => {
+    const f = fake('w-move', { 'checks.json': allPass, 'view.json': head, head_seq: 'abc123\ndef456\n' });
+    const r = watch(f);
+    expect(r.status).toBe(1);
+    expect(r.err).toContain('head moved');
+  });
+  it('waits with gh pr checks --watch unless --once, and needs no jq binary', () => {
+    const f = fake('w5', { 'checks.json': allPass, 'view.json': head });
+    expect(watch(f, ['--interval', '5', '--timeout', '30']).status).toBe(0);
     expect(f.log()).toContain('pr checks 9 --watch --interval 5');
+    expect(readFileSync(script('watch-ci', 'watch-ci.sh'), 'utf8')).not.toMatch(/^[^#\n]*(\| jq |\$\(jq )/m);
   });
 });
 
@@ -307,22 +428,25 @@ describe('merge-pr', () => {
       link: '',
     })),
   );
+  const merge = (f: ReturnType<typeof fake>, cwd = root, env: Record<string, string> = {}) =>
+    run(script('merge-pr', 'merge-pr.sh'), ['3', '--review-approved'], cwd, { ...f.env, ...env });
+
   it('refuses without the lead confirming the review verdict', () => {
     const f = fake('m0', { 'view.json': view({}), 'checks.json': green });
     const r = run(script('merge-pr', 'merge-pr.sh'), ['3'], root, f.env);
     expect(r.status).toBe(2);
     expect(f.log()).not.toContain('pr merge');
   });
-  it('squash-merges with branch deletion when everything is green', () => {
+  it('squash-merges with branch deletion, pinned to the verified head', () => {
     const { work } = makeRepo('m1');
     const f = fake('m1', {
       'view.json': view({}),
       'checks.json': green,
       'pr_list.json': '[{"number":4,"headRefName":"feature/n","baseRefName":"feature/m"}]',
     });
-    const r = run(script('merge-pr', 'merge-pr.sh'), ['3', '--review-approved'], work, f.env);
+    const r = merge(f, work);
     expect(r.status).toBe(0);
-    expect(f.log()).toContain('pr merge 3 --squash --delete-branch');
+    expect(f.log()).toContain('pr merge 3 --squash --delete-branch --match-head-commit abc123');
     expect(r.out).toContain('#4 feature/n');
     expect(r.out).toContain('rebase-stack.sh <branch> abc123');
   });
@@ -335,20 +459,52 @@ describe('merge-pr', () => {
       ['red', view({}), red],
     ] as const) {
       const f = fake(`m-${name}`, { 'view.json': v, 'checks.json': c });
-      const r = run(script('merge-pr', 'merge-pr.sh'), ['3', '--review-approved'], root, f.env);
+      const r = merge(f);
       expect(r.status, name).toBe(1);
       expect(f.log(), name).not.toContain('pr merge');
     }
   });
-  it('updates a BEHIND branch with a rebase, waits for CI, then merges', () => {
+  it('cannot be bypassed with REQUIRED_CHECKS, and an empty check list never merges', () => {
+    const red = JSON.stringify([
+      { name: 'branch-policy', bucket: 'pass', state: 'SUCCESS', link: '' },
+      { name: 'quality', bucket: 'fail', state: 'FAILURE', link: '' },
+      { name: 'e2e', bucket: 'fail', state: 'FAILURE', link: '' },
+      { name: 'pr-title', bucket: 'pass', state: 'SUCCESS', link: '' },
+    ]);
+    for (const override of [' ', '', 'pr-title']) {
+      const f = fake(`m-bypass-${override.trim() || 'blank'}`, { 'view.json': view({}), 'checks.json': red });
+      expect(merge(f, root, { REQUIRED_CHECKS: override }).status, `override "${override}"`).toBe(1);
+      expect(f.log()).not.toContain('pr merge');
+    }
+    const empty = fake('m-empty', { 'view.json': view({}), 'checks.json': '[]' });
+    expect(merge(empty).status).toBe(1);
+    expect(empty.log()).not.toContain('pr merge');
+  });
+  it('unsets REQUIRED_CHECKS before it calls watch-ci (belt and braces on top of watch-ci enforcing the defaults)', () => {
+    const body = readFileSync(script('merge-pr', 'merge-pr.sh'), 'utf8');
+    expect(body.indexOf('unset REQUIRED_CHECKS')).toBeGreaterThan(-1);
+    expect(body.indexOf('unset REQUIRED_CHECKS')).toBeLessThan(body.indexOf('check --once'));
+  });
+  it('a head that moves while the checks are read is not merged', () => {
+    const f = fake('m-move', { 'view.json': view({}), 'checks.json': green, head_seq: 'abc123\ndef456\n' });
+    expect(merge(f).status).toBe(1);
+    expect(f.log()).not.toContain('pr merge');
+  });
+  it('updates a BEHIND branch, re-reads the new head, waits for CI, and merges exactly that head', () => {
     const { work } = makeRepo('m2');
-    const f = fake('m2', { 'view.json': view({ mergeStateStatus: 'BEHIND' }), 'checks.json': green });
-    const r = run(script('merge-pr', 'merge-pr.sh'), ['3', '--review-approved'], work, f.env);
+    const f = fake('m2', {
+      'view.json': view({ mergeStateStatus: 'BEHIND' }),
+      'view_after.json': view({ headRefOid: 'def456' }),
+      'checks.json': green,
+    });
+    const r = merge(f, work);
     expect(r.status).toBe(0);
     const log = f.log();
     expect(log.indexOf('pr update-branch 3 --rebase')).toBeGreaterThan(-1);
     expect(log.indexOf('pr checks 3 --watch')).toBeGreaterThan(log.indexOf('update-branch'));
-    expect(log.indexOf('pr merge 3')).toBeGreaterThan(log.indexOf('--watch'));
+    expect(log).toContain('pr merge 3 --squash --delete-branch --match-head-commit def456');
+    // stacked branches were built on the head from before the update
+    expect(r.out).toContain('rebase-stack.sh <branch> abc123');
   });
 });
 
@@ -453,7 +609,7 @@ describe('rebase-stack', () => {
     git(other, 'add -A');
     git(other, 'commit -q -m "feat: develop c"');
     git(other, 'push -q origin develop');
-    const r = run(script('rebase-stack', 'rebase-stack.sh'), ['feature/stack', oldBase], work, {
+    const r = run(script('rebase-stack', 'rebase-stack.sh'), ['feature/stack', oldBase, '--relay'], work, {
       VERIFY_CMD: 'true',
     });
     expect(r.status).toBe(5);
@@ -468,6 +624,93 @@ describe('rebase-stack', () => {
       { VERIFY_CMD: 'true', BUNDLE_DIR: join(root, 'bundles7') },
     );
     expect(post.status, post.err).toBe(0);
+  });
+  it('refuses when the local branch differs from origin/<branch> (a teammate pushed), and pushes nothing', () => {
+    const { work, origin, oldBase } = stack('rb9');
+    const other = join(root, 'rb9-other');
+    sh(`git clone -q ${origin} ${other}`, root);
+    git(other, 'switch -q feature/stack');
+    commit(other, 'mate.txt', 'm', 'feat: teammate fix');
+    git(other, 'push -q origin feature/stack');
+    const before = git(origin, 'rev-parse feature/stack').out;
+    const r = run(script('rebase-stack', 'rebase-stack.sh'), ['feature/stack', oldBase], work, {
+      VERIFY_CMD: 'true',
+    });
+    expect(r.status).toBe(1);
+    expect(r.err).toContain('differs from origin/feature/stack');
+    expect(git(origin, 'rev-parse feature/stack').out).toBe(before);
+    expect(git(work, 'log --format=%s -1 feature/stack').out).toBe('feat: s'); // not rewritten
+  });
+  it('refuses to push without a remote branch unless --relay', () => {
+    const { work, oldBase } = stack('rb10');
+    git(work, 'push -q origin --delete feature/stack');
+    const r = run(script('rebase-stack', 'rebase-stack.sh'), ['feature/stack', oldBase], work, {
+      VERIFY_CMD: 'true',
+    });
+    expect(r.status).toBe(1);
+    expect(r.err).toContain('does not exist');
+  });
+  it('the final push is lease-pinned to the recorded remote tip and protected by --force-if-includes', () => {
+    const { work, origin, oldBase } = stack('rb11');
+    const tip = git(origin, 'rev-parse feature/stack').out;
+    // a wrapper git records the push arguments
+    const bin = join(root, 'bin-rb11');
+    mkdirSync(bin, { recursive: true });
+    const realGit = sh('command -v git', root).out;
+    writeFileSync(
+      join(bin, 'git'),
+      `#!/bin/sh\n[ "$1" = push ] && echo "$*" >> "${root}/rb11.log"\nexec ${realGit} "$@"\n`,
+    );
+    chmodSync(join(bin, 'git'), 0o755);
+    const r = run(script('rebase-stack', 'rebase-stack.sh'), ['feature/stack', oldBase], work, {
+      VERIFY_CMD: 'true',
+      PATH: `${bin}:${process.env.PATH}`,
+    });
+    expect(r.status, r.err).toBe(0);
+    const pushLine = readFileSync(join(root, 'rb11.log'), 'utf8');
+    expect(pushLine).toContain(`--force-with-lease=feature/stack:${tip}`);
+    expect(pushLine).toContain('--force-if-includes');
+  });
+  it('--post-only refuses while a rebase is in progress, off the branch, or before the rebase onto develop', () => {
+    const { work, origin } = makeRepo('rb12');
+    git(work, 'switch -q -c feature/base');
+    commit(work, 'c.txt', 'base\n', 'feat: base');
+    const oldBase = git(work, 'rev-parse HEAD').out;
+    git(work, 'switch -q -c feature/stack');
+    commit(work, 'c.txt', 'stack\n', 'feat: stack edits c');
+    const other = join(root, 'rb12-other');
+    sh(`git clone -q ${origin} ${other}`, root);
+    git(other, 'switch -q develop');
+    commit(other, 'c.txt', 'develop\n', 'feat: develop c');
+    git(other, 'push -q origin develop');
+    const env = { VERIFY_CMD: 'true', BUNDLE_DIR: join(root, 'bundles12') };
+    const post = () =>
+      run(
+        script('rebase-stack', 'rebase-stack.sh'),
+        ['feature/stack', oldBase, '--post-only', '--relay'],
+        work,
+        env,
+      );
+    // not rebased yet: branch lacks origin/develop
+    git(work, 'fetch -q origin');
+    expect(post().err).toContain('does not contain origin/develop');
+    // rebase stopped on a conflict: still in progress
+    expect(
+      run(script('rebase-stack', 'rebase-stack.sh'), ['feature/stack', oldBase, '--relay'], work, env).status,
+    ).toBe(5);
+    const inProgress = post();
+    expect(inProgress.status).toBe(1);
+    expect(inProgress.err).toContain('rebase is still in progress');
+    // finish the rebase, but be on another branch
+    writeFileSync(join(work, 'c.txt'), 'resolved\n');
+    git(work, 'add c.txt');
+    expect(git(work, 'rebase --continue', { GIT_EDITOR: 'true' }).status).toBe(0);
+    git(work, 'switch -q develop');
+    const off = post();
+    expect(off.status).toBe(1);
+    expect(off.err).toContain('not feature/stack');
+    git(work, 'switch -q feature/stack');
+    expect(post().status).toBe(0);
   });
   it('stops on a leftover lock file and removes it only with --clean-locks', () => {
     const { work, oldBase } = stack('rb8');

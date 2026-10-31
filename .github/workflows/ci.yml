@@ -25,10 +25,19 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with: { node-version-file: .nvmrc, cache: pnpm }
-      # The one "ready for PR" command (scripts/verify.mjs): frozen-lockfile install, lint, typecheck, unit
-      # tests, then build (content check, dist check, link check) with the CI build env. The e2e job below
-      # runs the e2e passes from scripts/e2e-passes.mjs; locally `pnpm verify` runs both parts.
-      - run: pnpm verify --skip-e2e
+      # These steps are the single source of truth for "what CI checks": `pnpm verify` (scripts/verify.mjs)
+      # reads this job's `run:` steps and build env from this file, so dropping or changing a gate here is
+      # a visible diff, and local and CI cannot drift apart.
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm build
+        env:
+          PUBLIC_SITE_URL: 'https://shadman-portfolio.web.app'
+          PUBLIC_INDEXABLE: 'false'
+          PUBLIC_INCLUDE_DRAFTS: 'false'
+          PUBLIC_CONTENT_FIXTURES: 'false'
 
   e2e:
     runs-on: ubuntu-latest

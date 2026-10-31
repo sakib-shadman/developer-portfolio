@@ -1,6 +1,7 @@
 ---
 name: merge-pr
 description: Use to merge a reviewed PR. Verifies the merge gate (reviewer's latest verdict APPROVE with no open findings, confirmed by the lead; required checks branch-policy, quality, e2e, pr-title green; branch up to date with develop), squash-merges, deletes the branch and lists the open branches that now need rebase-stack.
+disable-model-invocation: true
 argument-hint: '<pr-number> --review-approved [--dry-run]'
 ---
 
@@ -15,9 +16,9 @@ The lead decides the review gate from the posted review, fix and verify notes (t
 What it checks and does:
 
 1. PR is open, not a draft, **base is develop** (a stacked PR is merged only after its base: merge the base first, then `rebase-stack`), not conflicting.
-2. Branch up to date with develop: if the merge state is `BEHIND` it runs `gh pr update-branch <pr> --rebase` and then **waits for CI again** with the watch-ci skill; otherwise it judges the current checks (`watch-ci.sh --once`). Any red or missing required check stops it (exit 1).
-3. `gh pr merge <pr> --squash --delete-branch` (the PR title becomes the squash commit; no trailers are added).
-4. Prints the PR's old head sha and the work that now needs a rebase: open PRs whose base is the merged branch, and remote branches that contain the old head. For each run the rebase-stack skill: `.claude/skills/rebase-stack/scripts/rebase-stack.sh <branch> <old-head-sha>`.
+2. **The gate is fixed.** `watch-ci` always requires `branch-policy quality e2e pr-title`; a `REQUIRED_CHECKS` override can only add checks (merge-pr ignores it entirely), and an empty check list is a failure. Branch up to date with develop: if the merge state is `BEHIND` it runs `gh pr update-branch <pr> --rebase` and then **waits for CI again** with the watch-ci skill; otherwise it judges the current checks (`watch-ci.sh --once`). Any red or missing required check stops it (exit 1).
+3. `gh pr merge <pr> --squash --delete-branch --match-head-commit <sha>`, where `<sha>` is the head `watch-ci` verified (its `VERIFIED_HEAD=` line, re-read after any `update-branch`). A push after the check makes the merge fail instead of merging unchecked code. The PR title becomes the squash commit; no trailers are added.
+4. Prints the PR's head sha as it was before any update-branch (the one stacked branches were built on) and the work that now needs a rebase: open PRs whose base is the merged branch, and remote branches that contain the old head. For each run the rebase-stack skill: `.claude/skills/rebase-stack/scripts/rebase-stack.sh <branch> <old-head-sha>`.
 
 Never merge around a failing required check or an unresolved finding; fix and re-run.
 

@@ -11,8 +11,9 @@ argument-hint: '<pr-number> [--timeout seconds] [--interval seconds] [--once]'
 ```
 
 - Waits with `gh pr checks <pr> --watch --interval 30` under `timeout` (default 1800 s). `--once` skips the wait and judges the current state (merge-pr uses it).
-- Required checks (override with `REQUIRED_CHECKS`): `branch-policy quality e2e pr-title`. A required check that failed, was cancelled or never appeared is a failure. Other failing checks (for example Lighthouse) are listed but do not fail the result.
+- Required checks: always at least `branch-policy quality e2e pr-title` (`REQUIRED_CHECKS` can only add names; a list that drops a default is ignored with a warning). A required check that failed, was cancelled, was skipped or never appeared is a failure, and **no checks reported at all is a failure**. Other failing checks (for example Lighthouse) are listed but do not fail the result.
 - For every failing job it prints the annotations from `gh api repos/{owner}/{repo}/check-runs/<job-id>/annotations` (path, line, message). The job id is taken from the check's link (`.../job/<id>`). Playwright's GitHub reporter and ESLint write their errors there, so this is usually enough to find the failing test without logs.
+- It prints `VERIFIED_HEAD=<sha>`, the PR head the verdict is about (merge-pr merges exactly that commit); if the head moves while it checks, it fails. It needs only `gh` (it uses `gh --jq`, no `jq` binary).
 - Exit codes: **0** pass (`RESULT: PASS`), **1** fail (`RESULT: FAIL`), **4** still pending after the timeout (`RESULT: PENDING`: run it again, do not merge).
 
 If annotations are empty, open the check's link or run `gh run view <run-id> --log-failed` where logs are available.
