@@ -1,9 +1,12 @@
-import { readFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { chmodSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { parse } from 'yaml';
 import { dockerArgs, INNER_SCRIPT, playwrightImage, volumeName } from '../../scripts/e2e-docker.mjs';
 import { PASS_NAMES, PASSES, passCommand, selectPasses } from '../../scripts/e2e-passes.mjs';
-import { qualitySteps } from '../../scripts/verify.mjs';
+import { nonInteractive, qualitySteps, stepsToRun } from '../../scripts/verify.mjs';
 
 const read = (p: string) => readFileSync(p, 'utf8');
 const ciText = read('.github/workflows/ci.yml');
@@ -217,5 +220,89 @@ describe('e2e:docker command', () => {
     expect(INNER_SCRIPT).toContain('packageManager');
     expect(INNER_SCRIPT).toContain('pnpm install --frozen-lockfile');
     expect(INNER_SCRIPT).toContain('node scripts/e2e-passes.mjs "$PASS"');
+  });
+});
+
+describe('verify runs its install step non-interactively', () => {
+  const install = qualitySteps(ciText).find((s) => /^pnpm install/.test(s.command));
+
+  it('ci.yml keeps the plain frozen-lockfile install (the flag is a verify-only tweak)', () => {
+    expect(install?.command).toBe('pnpm install --frozen-lockfile');
+  });
+  it('adds confirmModulesPurge=false to pnpm install only', () => {
+    expect(nonInteractive('pnpm install --frozen-lockfile')).toBe(
+      'pnpm install --frozen-lockfile --config.confirmModulesPurge=false',
+    );
+    expect(nonInteractive('pnpm install')).toContain('--config.confirmModulesPurge=false');
+    expect(nonInteractive('pnpm lint')).toBe('pnpm lint');
+    expect(nonInteractive('pnpm run install-hooks')).toBe('pnpm run install-hooks');
+    expect(nonInteractive('pnpm install --config.confirmModulesPurge=true')).toBe(
+      'pnpm install --config.confirmModulesPurge=true',
+    );
+  });
+  it('the real install step, run with no TTY and a node_modules that needs purging, does not prompt', () => {
+    // A fake pnpm that behaves like the real one: with no TTY it aborts unless the purge prompt is disabled.
+    const dir = mkdtempSync(join(tmpdir(), 'fake-pnpm-'));
+    const fake = join(dir, 'pnpm');
+    writeFileSync(
+      fake,
+      '#!/bin/sh\ncase "$*" in *--config.confirmModulesPurge=false*) exit 0;; esac\n' +
+        'echo "ERR_PNPM_ABORTED_REMOVE_MODULES_DIR_NO_TTY" >&2; exit 1\n',
+    );
+    chmodSync(fake, 0o755);
+    const run = (command: string) =>
+      spawnSync(command, {
+        shell: true,
+        stdio: ['ignore', 'pipe', 'pipe'],
+        env: { ...process.env, CI: '', PATH: `${dir}:${process.env.PATH}` },
+      });
+    expect(run(install!.command).status).toBe(1); // what the unpatched step did
+    expect(run(nonInteractive(install!.command)).status).toBe(0);
+  });
+
+  it('stepsToRun gives the flag to the install step only, leaving every other step and env as in ci.yml', () => {
+    const plain = qualitySteps(ciText);
+    const run = stepsToRun(ciText);
+    expect(run).toHaveLength(plain.length);
+    run.forEach((step, i) => {
+      const original = plain[i]!;
+      if (/^pnpm install/.test(original.command)) {
+        expect(step.command).toBe(`${original.command} --config.confirmModulesPurge=false`);
+      } else {
+        expect(step.command).toBe(original.command);
+      }
+      expect(step.env).toEqual(original.env);
+    });
+    expect(run.filter((s) => s.command.includes('confirmModulesPurge'))).toHaveLength(1);
+  });
+
+  it('main() uses it: `node scripts/verify.mjs --skip-e2e` gets past an install that aborts without a TTY', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'verify-main-'));
+    mkdirSync(join(dir, '.github/workflows'), { recursive: true });
+    writeFileSync(
+      join(dir, '.github/workflows/ci.yml'),
+      'jobs:\n  quality:\n    steps:\n      - run: pnpm install --frozen-lockfile\n      - run: pnpm lint\n',
+    );
+    const bin = join(dir, 'bin');
+    mkdirSync(bin);
+    const log = join(dir, 'calls.log');
+    writeFileSync(
+      join(bin, 'pnpm'),
+      `#!/bin/sh\necho "$*" >> "${log}"\n` +
+        'case "$1 $*" in "install "*--config.confirmModulesPurge=false*) exit 0;; "install "*) ' +
+        'echo ERR_PNPM_ABORTED_REMOVE_MODULES_DIR_NO_TTY >&2; exit 1;; esac\nexit 0\n',
+    );
+    chmodSync(join(bin, 'pnpm'), 0o755);
+    const r = spawnSync(process.execPath, [resolve('scripts/verify.mjs'), '--skip-e2e'], {
+      cwd: dir,
+      stdio: ['ignore', 'pipe', 'pipe'],
+      env: { ...process.env, CI: '', PATH: `${bin}:${process.env.PATH}` },
+      encoding: 'utf8',
+    });
+    expect(r.status, r.stdout + r.stderr).toBe(0);
+    expect(readFileSync(log, 'utf8').trim().split('\n')).toEqual([
+      'install --frozen-lockfile --config.confirmModulesPurge=false',
+      'lint',
+    ]);
   });
 });
