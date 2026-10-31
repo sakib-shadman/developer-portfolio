@@ -14,18 +14,35 @@ function formatYearMonth(value: string): string | undefined {
   return m ? formatMonthYear(new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, 1))) : undefined;
 }
 
+/** One piece of a rendered range; `datetime` (YYYY-MM) is set only for real months, never for "Present". */
+export interface RangePart {
+  text: string;
+  datetime?: string;
+}
+
 /**
- * Project timeline (month precision), same style as the experience range:
- * "Mar 2023 — Jun 2024", "Mar 2023 — Present" (end "present"), a single "Mar 2023" when start equals end.
+ * Project timeline (month precision) as renderable parts, so the page can wrap each month in
+ * `<time datetime="YYYY-MM">` and leave "Present" and the em dash as plain text.
  * Anything that is not YYYY-MM (or "present" for the end) gives undefined, so callers render nothing.
  */
-export function formatMonthRange(start: string, end: string): string | undefined {
+export function monthRangeParts(start: string, end: string): RangePart[] | undefined {
   const from = formatYearMonth(start);
   if (!from) return undefined;
-  if (end === 'present') return `${from} — Present`;
+  const first: RangePart = { text: from, datetime: start };
+  if (end === 'present') return [first, { text: ' — ' }, { text: 'Present' }];
   const to = formatYearMonth(end);
   if (!to) return undefined;
-  return end === start ? from : `${from} — ${to}`;
+  return end === start ? [first] : [first, { text: ' — ' }, { text: to, datetime: end }];
+}
+
+/**
+ * Plain-text form of the project timeline, same style as the experience range:
+ * "Mar 2023 — Jun 2024", "Mar 2023 — Present" (end "present"), a single "Mar 2023" when start equals end.
+ */
+export function formatMonthRange(start: string, end: string): string | undefined {
+  return monthRangeParts(start, end)
+    ?.map((p) => p.text)
+    .join('');
 }
 
 export interface DateRangeInput {

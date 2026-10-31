@@ -183,6 +183,10 @@ test.describe('project Timeline fact', () => {
     await page.goto('/projects/sample-sdk');
     await expect(timeline(page)).toHaveCount(1);
     await expect(timeline(page).locator('dd')).toHaveText('Mar 2022 — Nov 2023');
+    const times = timeline(page).locator('dd time');
+    await expect(times).toHaveText(['Mar 2022', 'Nov 2023']);
+    await expect(times.nth(0)).toHaveAttribute('datetime', '2022-03');
+    await expect(times.nth(1)).toHaveAttribute('datetime', '2023-11');
     const labels = await page.locator('dl.facts dt').allTextContents();
     expect(labels).toEqual(['Role', 'Timeline', 'Platforms', 'Stack']);
   });
@@ -190,6 +194,12 @@ test.describe('project Timeline fact', () => {
   test('@fixtures an ongoing project shows "Jun 2023 — Present"', async ({ page }) => {
     await page.goto('/projects/sample-app');
     await expect(timeline(page).locator('dd')).toHaveText('Jun 2023 — Present');
+    const times = timeline(page).locator('dd time');
+    await expect(times).toHaveCount(1);
+    await expect(times).toHaveText('Jun 2023');
+    await expect(times).toHaveAttribute('datetime', '2023-06');
+    await expect(timeline(page).locator('dd')).not.toHaveText(/^$/);
+    expect(await timeline(page).locator('dd').innerHTML()).toMatch(/<\/time> — Present$/);
     expect(await page.locator('dl.facts dt').allTextContents()).toEqual([
       'Role',
       'Timeline',
@@ -206,6 +216,7 @@ test.describe('project Timeline fact', () => {
     await expect(timeline(page)).toHaveCount(0);
     expect(await page.locator('dl.facts dt').allTextContents()).toEqual(['Role', 'Stack']);
     await expect(page.locator('dl.facts dd:empty')).toHaveCount(0);
+    await expect(page.locator('dl.facts time')).toHaveCount(0);
     await expect(page.locator('main')).not.toContainText(/Timeline|\[(Start|End)\]/);
   });
 

@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { formatDateRange, formatMonthRange, formatMonthYear } from '../../src/lib/date-range';
+import {
+  formatDateRange,
+  formatMonthRange,
+  monthRangeParts,
+  formatMonthYear,
+} from '../../src/lib/date-range';
 import { composeHomeSections, numberSections, splitHeadline } from '../../src/lib/home';
 
 const d = (s: string) => new Date(s);
@@ -193,5 +198,27 @@ describe('composeHomeSections with home articles', () => {
   it('closes the gap when only writing renders', () => {
     const r = composeHomeSections({ skillGroups: [], experience: [], homeArticles: [art] });
     expect(r.eyebrows.writing).toBe('01 — Writing');
+  });
+});
+
+describe('monthRangeParts (the <time> segments)', () => {
+  it('months carry a YYYY-MM datetime; the dash and "Present" are plain text', () => {
+    expect(monthRangeParts('2023-03', '2024-06')).toEqual([
+      { text: 'Mar 2023', datetime: '2023-03' },
+      { text: ' — ' },
+      { text: 'Jun 2024', datetime: '2024-06' },
+    ]);
+    expect(monthRangeParts('2023-03', 'present')).toEqual([
+      { text: 'Mar 2023', datetime: '2023-03' },
+      { text: ' — ' },
+      { text: 'Present' },
+    ]);
+  });
+  it('start equal to end is one <time>', () => {
+    expect(monthRangeParts('2023-03', '2023-03')).toEqual([{ text: 'Mar 2023', datetime: '2023-03' }]);
+  });
+  it('malformed input gives undefined', () => {
+    expect(monthRangeParts('2023-13', 'present')).toBeUndefined();
+    expect(monthRangeParts('2023-03', 'Present')).toBeUndefined();
   });
 });

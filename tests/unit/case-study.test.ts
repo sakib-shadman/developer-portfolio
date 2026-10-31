@@ -169,19 +169,24 @@ describe('/projects/[slug] page', () => {
       caseStudy: study(),
     });
     expect(html).toMatch(
-      /Role<\/dt>\s*<dd[^>]*>Lead developer[\s\S]*Timeline<\/dt>\s*<dd[^>]*>Mar 2023 — Present[\s\S]*Platforms<\/dt>/,
+      /Role<\/dt>\s*<dd[^>]*>Lead developer[\s\S]*Timeline<\/dt>\s*<dd[^>]*><time datetime="2023-03"[^>]*>Mar 2023<\/time> — Present<\/dd>[\s\S]*Platforms<\/dt>/,
     );
+    expect(html.match(/<time /g)).toHaveLength(1);
+    expect(html).not.toMatch(/<time[^>]*>Present/);
     const done = await renderPage({
       project: { ...base, timeline: { start: '2023-03', end: '2024-06' } },
       caseStudy: study(),
     });
-    expect(done).toMatch(/Timeline<\/dt>\s*<dd[^>]*>Mar 2023 — Jun 2024/);
+    expect(done).toMatch(
+      /Timeline<\/dt>\s*<dd[^>]*><time datetime="2023-03"[^>]*>Mar 2023<\/time> — <time datetime="2024-06"[^>]*>Jun 2024<\/time><\/dd>/,
+    );
   });
 
   it('renders no Timeline at all without dates: no dt, no placeholder', async () => {
     const html = await renderPage({ project: base, caseStudy: study() });
     expect(html).toContain('Role</dt>');
     expect(html).not.toContain('Timeline');
+    expect(html).not.toContain('<time');
     expect(html).not.toMatch(/<dt[^>]*>\s*<\/dt>/);
     expect(html).not.toMatch(/\[(Start|End)\]/);
   });
