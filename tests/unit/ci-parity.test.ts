@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { parse } from 'yaml';
-import { dockerArgs, INNER_SCRIPT, playwrightImage, VOLUME } from '../../scripts/e2e-docker.mjs';
+import { dockerArgs, INNER_SCRIPT, playwrightImage, volumeName } from '../../scripts/e2e-docker.mjs';
 import { PASS_NAMES, PASSES, passCommand, selectPasses } from '../../scripts/e2e-passes.mjs';
 import { BUILD_ENV, QUALITY_STEPS } from '../../scripts/verify.mjs';
 
@@ -47,6 +47,9 @@ describe('the e2e job runs every pass from scripts/e2e-passes.mjs', () => {
   it('marks the container for the font test', () => {
     expect(ci.jobs.e2e).toMatchObject({ env: { E2E_CONTAINER: 'true' } });
   });
+  it('runs the container as the runner user so Firefox starts', () => {
+    expect(ci.jobs.e2e?.container?.options).toMatch(/--user 1001\b/);
+  });
 });
 
 describe('e2e passes', () => {
@@ -55,6 +58,30 @@ describe('e2e passes', () => {
     expect(PASSES['shipped']!.env).toMatchObject({ E2E_PORT: '5050', PUBLIC_INCLUDE_DRAFTS: 'false' });
     expect(PASSES['fixtures']!.env).toMatchObject({ E2E_FIXTURES_PORT: '5390' });
     expect(PASSES['real']!.env).toMatchObject({ PUBLIC_INCLUDE_DRAFTS: 'true', CI: 'true' });
+  });
+  it('pins the arguments of every pass exactly (narrowing a pass must fail here)', () => {
+    expect(PASSES['real']!.args).toEqual(['exec', 'playwright', 'test']);
+    expect(PASSES['shipped']!.args).toEqual([
+      'exec',
+      'playwright',
+      'test',
+      '--project=chromium',
+      '--grep',
+      '@smoke|axe',
+    ]);
+    expect(PASSES['fixtures']!.args).toEqual(['run', 'e2e:fixtures']);
+    expect(PASSES['real']!.env).toEqual({
+      CI: 'true',
+      PUBLIC_INCLUDE_DRAFTS: 'true',
+      PUBLIC_CONTENT_FIXTURES: 'false',
+    });
+    expect(PASSES['shipped']!.env).toEqual({
+      CI: 'true',
+      PUBLIC_INCLUDE_DRAFTS: 'false',
+      PUBLIC_CONTENT_FIXTURES: 'false',
+      E2E_PORT: '5050',
+    });
+    expect(PASSES['fixtures']!.env).toEqual({ CI: 'true', E2E_FIXTURES_PORT: '5390' });
   });
   it('E2E_PROJECTS narrows real and fixtures but never the chromium-only shipped pass', () => {
     expect(passCommand('real', 'chromium, mobile').args).toEqual([
@@ -99,7 +126,7 @@ describe('e2e:docker command', () => {
   it('mounts the repo, a separate node_modules volume and a read-only .git', () => {
     const a = dockerArgs(base);
     expect(a).toContain('/repo:/work');
-    expect(a).toContain(`${VOLUME}:/work/node_modules`);
+    expect(a).toContain(`${volumeName('/repo')}:/work/node_modules`);
     expect(a).toContain('/repo/.git:/work/.git:ro');
     expect(a).toEqual(expect.arrayContaining(['--ipc=host', '--init', '--rm']));
     expect(a.slice(-4, -1)).toEqual(['img:v1-noble', 'bash', '-c']);
@@ -125,6 +152,19 @@ describe('e2e:docker command', () => {
   });
   it('forwards E2E_PROJECTS when set', () => {
     expect(dockerArgs({ ...base, projects: 'chromium' })).toContain('E2E_PROJECTS=chromium');
+  });
+  it('uses a volume per checkout path', () => {
+    expect(volumeName('/a/repo')).toMatch(/^dev-portfolio-e2e-node-modules-[0-9a-f]{8}$/);
+    expect(volumeName('/a/repo')).toBe(volumeName('/a/repo'));
+    expect(volumeName('/a/repo')).not.toBe(volumeName('/b/repo'));
+  });
+  it('chowns everything root-owned outside node_modules and .git on Linux', () => {
+    expect(INNER_SCRIPT).toContain('-path ./node_modules -o -path ./.git');
+    expect(INNER_SCRIPT).toContain('-user 0');
+  });
+  it('fails clearly on a Node mismatch instead of installing Node', () => {
+    expect(INNER_SCRIPT).not.toMatch(/npm install -g/);
+    expect(INNER_SCRIPT).toContain('Bump the Playwright image or .nvmrc');
   });
   it('the inner script reads Node from .nvmrc, pnpm from packageManager, and runs the chosen pass', () => {
     expect(INNER_SCRIPT).toContain('.nvmrc');

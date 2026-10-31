@@ -43,10 +43,13 @@ jobs:
     # The official Playwright image: the browsers (chromium, firefox, webkit) and the system fonts are baked
     # in, so CI and `pnpm e2e:docker` run on the same OS, fonts and browser builds. The tag MUST equal the
     # @playwright/test version in pnpm-lock.yaml (tests/unit/ci-parity.test.ts enforces it). The hosting
-    # emulator serves static files in-process and needs no Java.
+    # emulator serves static files in-process and needs no Java. GitHub runs containers as root with
+    # HOME=/github/home owned by the runner (uid 1001); Firefox refuses to start as root in a home that
+    # belongs to someone else, so the job runs as that user (Playwright's GitHub container guidance).
+    # Workspace, tool cache and HOME are all owned by 1001, so checkout, setup-node, pnpm and the cache work.
     container:
       image: mcr.microsoft.com/playwright:v1.64.1-noble
-      options: --ipc=host
+      options: --user 1001 --ipc=host
     env:
       E2E_CONTAINER: 'true'
     steps:
