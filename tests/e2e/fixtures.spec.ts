@@ -3,7 +3,7 @@ import { test, expect, type Page } from '@playwright/test';
 
 // @fixtures: run against a build of tests/fixtures/content (`pnpm e2e:fixtures`), whose profile has a
 // photo, email, resume, all profile links, bio, principles, expertise, community, objective and
-// interests, plus 4 projects (2 with case studies) and 9 articles. Everything there is fictional.
+// interests, plus 5 projects (3 with case studies) and 9 articles. Everything there is fictional.
 const axe = (page: Page) =>
   new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa']).analyze();
 
@@ -145,16 +145,20 @@ test.describe('/contact with an email', () => {
 });
 
 test.describe('projects and case studies', () => {
-  test('@fixtures /projects lists 4 projects; only the 2 with case studies link to detail pages', async ({
+  test('@fixtures /projects lists 5 projects; only the 3 with case studies link to detail pages', async ({
     page,
     request,
   }) => {
     await page.goto('/projects');
-    await expect(page.locator('[data-grid] > li')).toHaveCount(4);
+    await expect(page.locator('[data-grid] > li')).toHaveCount(5);
     const hrefs = await page
       .locator('main a[href^="/projects/"]')
       .evaluateAll((as) => [...new Set(as.map((a) => a.getAttribute('href')))]);
-    expect(hrefs.sort()).toEqual(['/projects/sample-app', '/projects/sample-sdk']);
+    expect(hrefs.sort()).toEqual([
+      '/projects/sample-app',
+      '/projects/sample-sdk',
+      '/projects/sample-toolkit',
+    ]);
     for (const h of hrefs) expect((await request.get(h as string)).status()).toBe(200);
     expect((await axe(page)).violations).toEqual([]);
   });
@@ -166,6 +170,61 @@ test.describe('projects and case studies', () => {
     await expect(page.getByRole('heading', { level: 2, name: 'Why this sample exists' })).toBeVisible();
     await expect(page.getByRole('img', { name: 'Sample screenshot of Sample SDK' })).toBeVisible();
     await expect(page.getByRole('navigation', { name: 'More projects' }).getByRole('link')).toHaveCount(1);
+  });
+});
+
+test.describe('project Timeline fact', () => {
+  const timeline = (page: Page) =>
+    page.locator('dl.facts div', { has: page.locator('dt', { hasText: /^Timeline$/ }) });
+
+  test('@fixtures a finished project shows "Mar 2022 — Nov 2023" between Role and Platforms', async ({
+    page,
+  }) => {
+    await page.goto('/projects/sample-sdk');
+    await expect(timeline(page)).toHaveCount(1);
+    await expect(timeline(page).locator('dd')).toHaveText('Mar 2022 — Nov 2023');
+    const times = timeline(page).locator('dd time');
+    await expect(times).toHaveText(['Mar 2022', 'Nov 2023']);
+    await expect(times.nth(0)).toHaveAttribute('datetime', '2022-03');
+    await expect(times.nth(1)).toHaveAttribute('datetime', '2023-11');
+    const labels = await page.locator('dl.facts dt').allTextContents();
+    expect(labels).toEqual(['Role', 'Timeline', 'Platforms', 'Stack']);
+  });
+
+  test('@fixtures an ongoing project shows "Jun 2023 — Present"', async ({ page }) => {
+    await page.goto('/projects/sample-app');
+    await expect(timeline(page).locator('dd')).toHaveText('Jun 2023 — Present');
+    const times = timeline(page).locator('dd time');
+    await expect(times).toHaveCount(1);
+    await expect(times).toHaveText('Jun 2023');
+    await expect(times).toHaveAttribute('datetime', '2023-06');
+    await expect(timeline(page).locator('dd')).not.toHaveText(/^$/);
+    expect(await timeline(page).locator('dd').innerHTML()).toMatch(/<\/time> — Present$/);
+    expect(await page.locator('dl.facts dt').allTextContents()).toEqual([
+      'Role',
+      'Timeline',
+      'Platforms',
+      'Stack',
+    ]);
+  });
+
+  test('@fixtures a project without dates renders no Timeline: no dt, no placeholder, no empty dd', async ({
+    page,
+  }) => {
+    await page.goto('/projects/sample-toolkit');
+    await expect(page.locator('dl.facts')).toHaveCount(1);
+    await expect(timeline(page)).toHaveCount(0);
+    expect(await page.locator('dl.facts dt').allTextContents()).toEqual(['Role', 'Stack']);
+    await expect(page.locator('dl.facts dd:empty')).toHaveCount(0);
+    await expect(page.locator('dl.facts time')).toHaveCount(0);
+    await expect(page.locator('main')).not.toContainText(/Timeline|\[(Start|End)\]/);
+  });
+
+  test('@fixtures the Timeline fact is accessible and the project list shows no dates', async ({ page }) => {
+    await page.goto('/projects/sample-sdk');
+    expect((await axe(page)).violations).toEqual([]);
+    await page.goto('/projects');
+    await expect(page.getByRole('main')).not.toContainText(/Timeline|Mar 2022|Present/);
   });
 });
 

@@ -94,7 +94,11 @@ const crumbs = [
         {facts.map((f) => (
           <div>
             <dt>{f.label}</dt>
-            <dd>{f.value}</dd>
+            <dd>
+              {f.parts
+                ? f.parts.map((x) => (x.datetime ? <time datetime={x.datetime}>{x.text}</time> : x.text))
+                : f.value}
+            </dd>
           </div>
         ))}
       </dl>

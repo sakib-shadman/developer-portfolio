@@ -68,6 +68,7 @@ export const toProjectCard = ({ id, data }: CollectionEntry<'projects'>, names: 
   description: data.description,
   technologies: toTech(data.technologies, names),
   role: data.role,
+  timeline: data.start && data.end ? { start: data.start, end: data.end } : undefined,
   contributions: data.contributions,
   links: data.links,
   media: data.media.map((m) => toImg(m.src, m.alt)),

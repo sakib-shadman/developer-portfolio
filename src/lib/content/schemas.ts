@@ -118,6 +118,13 @@ export const makeExperienceSchema = <R extends z.ZodType>(skillRef: R) =>
     });
 
 // ---------- Projects (§6.4) ----------
+/** "YYYY-MM" with a real month (01-12). Compared as strings it sorts chronologically. */
+const yearMonth = z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, 'must be YYYY-MM with a month from 01 to 12');
+/** A project's end: a month, or "present" while it is still ongoing. */
+const yearMonthOrPresent = z
+  .string()
+  .regex(/^(\d{4}-(0[1-9]|1[0-2])|present)$/, 'must be YYYY-MM (month 01-12) or "present"');
+
 export const projectCategory = z.enum(['mobile-app', 'sdk', 'library', 'open-source', 'web-app', 'backend']);
 
 export const makeProjectSchema = <I extends z.ZodType, S extends z.ZodType, C extends z.ZodType>(h: {
@@ -138,6 +145,9 @@ export const makeProjectSchema = <I extends z.ZodType, S extends z.ZodType, C ex
       contributions: z.array(z.string().min(1)).default([]),
       links: z.object({ repo: httpUrl, demo: httpUrl, store: httpUrl, docs: httpUrl }).partial().default({}),
       media: z.array(z.object({ src: h.image, alt: z.string().min(1) })).default([]),
+      /** Timeline fact on the case-study page (both or neither): "YYYY-MM", end may be "present". */
+      start: yearMonth.optional(),
+      end: yearMonthOrPresent.optional(),
       progress: z.enum(['in-progress', 'shipped']).optional(),
       featured: z.boolean().default(false),
       featuredOrder: z.number().int().optional(),
@@ -145,6 +155,23 @@ export const makeProjectSchema = <I extends z.ZodType, S extends z.ZodType, C ex
       caseStudy: h.caseStudyRef.optional(),
     })
     .superRefine((p, ctx) => {
+      if (p.start !== undefined && p.end === undefined) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['end'],
+          message: 'end is required when start is set (YYYY-MM, or "present" for an ongoing project)',
+        });
+      }
+      if (p.end !== undefined && p.start === undefined) {
+        ctx.addIssue({ code: 'custom', path: ['end'], message: 'end is not allowed without start' });
+      }
+      if (p.start !== undefined && p.end !== undefined && p.end !== 'present' && p.end < p.start) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['end'],
+          message: `end (${p.end}) is before start (${p.start})`,
+        });
+      }
       if (p.status === 'published') {
         need(ctx, p.summary, 'summary');
         need(ctx, p.description, 'description');

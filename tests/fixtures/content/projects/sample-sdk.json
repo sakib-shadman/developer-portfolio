@@ -6,6 +6,8 @@
   "description": "This sample project has a case study so the detail page, previous/next links and media can be tested (fixture).",
   "technologies": ["swift", "ios"],
   "role": "Lead engineer (sample)",
+  "start": "2022-03",
+  "end": "2023-11",
   "contributions": ["Sample contribution one", "Sample contribution two"],
   "links": {
     "repo": "https://example.com/code/sample-sdk",

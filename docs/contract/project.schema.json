@@ -79,6 +79,14 @@
         "required": ["src", "alt"]
       }
     },
+    "start": {
+      "type": "string",
+      "pattern": "^\\d{4}-(0[1-9]|1[0-2])$"
+    },
+    "end": {
+      "type": "string",
+      "pattern": "^(\\d{4}-(0[1-9]|1[0-2])|present)$"
+    },
     "progress": {
       "type": "string",
       "enum": ["in-progress", "shipped"]

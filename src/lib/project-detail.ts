@@ -1,5 +1,6 @@
 /** /projects/[slug] logic (FR-05.11, FR-06, FR-14.7): which projects get a page, facts, links, SEO text. */
 import { linkAttrs } from './link';
+import { monthRangeParts, type RangePart } from './date-range';
 import type { ProjectCard, SkillGroup, Tech } from './content/types';
 
 /** FR-05.11/06.8: a dedicated page exists only for projects that have a case study. */
@@ -34,9 +35,11 @@ export function splitTech(technologies: readonly Tech[], platforms: ReadonlySet<
 export interface Fact {
   label: string;
   value: string;
+  /** When set, the page renders these (months as `<time>`) instead of the plain `value`. */
+  parts?: RangePart[];
 }
 
-/** Hero facts; an item with no data is omitted (there is no timeline field in the content model). */
+/** Hero facts in design order (Role, Timeline, Platforms, Stack); an item with no data is omitted, never a placeholder. */
 export function detailFacts(
   project: ProjectCard,
   platforms: readonly Tech[],
@@ -44,6 +47,8 @@ export function detailFacts(
 ): Fact[] {
   const facts: Fact[] = [];
   if (project.role) facts.push({ label: 'Role', value: project.role });
+  const parts = project.timeline && monthRangeParts(project.timeline.start, project.timeline.end);
+  if (parts) facts.push({ label: 'Timeline', value: parts.map((x) => x.text).join(''), parts });
   if (platforms.length) facts.push({ label: 'Platforms', value: platforms.map((t) => t.name).join(' · ') });
   if (stack.length) facts.push({ label: 'Stack', value: stack.map((t) => t.name).join(' · ') });
   return facts;

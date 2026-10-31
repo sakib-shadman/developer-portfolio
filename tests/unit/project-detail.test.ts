@@ -58,6 +58,36 @@ describe('platforms / stack / facts', () => {
     expect(platformIds([]).size).toBe(0);
   });
 
+  it('Timeline sits between Role and Platforms, only when the project has dates', () => {
+    const dated = project('a', { role: 'Lead', timeline: { start: '2023-03', end: 'present' } });
+    expect(detailFacts(dated, [tech('ios')], [tech('dart')])).toEqual([
+      { label: 'Role', value: 'Lead' },
+      {
+        label: 'Timeline',
+        value: 'Mar 2023 — Present',
+        parts: [{ text: 'Mar 2023', datetime: '2023-03' }, { text: ' — ' }, { text: 'Present' }],
+      },
+      { label: 'Platforms', value: 'IOS' },
+      { label: 'Stack', value: 'DART' },
+    ]);
+    expect(detailFacts(project('a', { timeline: { start: '2023-03', end: '2024-06' } }), [], [])).toEqual([
+      {
+        label: 'Timeline',
+        value: 'Mar 2023 — Jun 2024',
+        parts: [
+          { text: 'Mar 2023', datetime: '2023-03' },
+          { text: ' — ' },
+          { text: 'Jun 2024', datetime: '2024-06' },
+        ],
+      },
+    ]);
+    expect(detailFacts(project('a', { role: 'Lead' }), [], []).map((f) => f.label)).toEqual(['Role']);
+  });
+
+  it('a timeline that cannot be formatted adds no fact (never an empty dd)', () => {
+    expect(detailFacts(project('a', { timeline: { start: 'bad', end: 'present' } }), [], [])).toEqual([]);
+  });
+
   it('facts include only what exists, in Role / Platforms / Stack order', () => {
     expect(detailFacts(project('a'), [], [])).toEqual([]);
     expect(
