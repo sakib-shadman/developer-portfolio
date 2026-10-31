@@ -36,7 +36,7 @@ My real content isn't finished: no articles or case studies yet. To test those f
 
 | Layer         | Tool                                                             | What it catches                                                                                |
 | ------------- | ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| Unit          | Vitest, plus the Astro container API to render components        | Logic bugs, schema rules, component output (375 tests)                                         |
+| Unit          | Vitest, plus the Astro container API to render components        | Logic bugs, schema rules, component output (489 tests)                                         |
 | End to end    | Playwright on Chromium, WebKit, Firefox and a Pixel 7 profile    | Broken pages, navigation, headers, keyboard flows, layout shift                                |
 | Accessibility | axe-core inside the e2e run, plus a manual WCAG 2.2 AA checklist | Missing names, contrast, focus problems                                                        |
 | Performance   | Lighthouse CI on every route                                     | Performance under 0.95, accessibility or SEO under 1, more than 25 KB of JS or 500 KB per page |
@@ -71,11 +71,11 @@ Around them:
 - **deploy:** publishes a preview URL per PR, staging from `develop` and live from `main` with a smoke test. It skips cleanly until Firebase is configured.
 - **links:** a weekly job checks that external links still resolve.
 
-Locally, git hooks run Prettier, ESLint and commitlint before a commit even exists.
+The e2e job runs inside Playwright's official Docker image, and `pnpm e2e:docker` runs the same image locally, so browsers and fonts match. One command, `pnpm verify`, is the local "ready for PR" gate; it reads its steps from `ci.yml`, so local and CI can't drift. Before that, git hooks run Prettier, ESLint and commitlint before a commit even exists.
 
 ## The CI failure that taught me the most
 
-To stop text jumping when web fonts load, the engineer generated fallback fonts sized to match the real ones. A unit test pins the generated numbers exactly, and a browser test checks that rendered widths match within 1% and that headings wrap onto the same number of lines. The browser test passed on every laptop and failed on GitHub's Ubuntu runners, where the system's stand-in for Arial put Inter 1.66% off. Skipping the test where Arial isn't metric-compatible didn't help, because the runner's font passed that check. The fix that stuck loosened the Inter width bound to 2% and kept the wrap check strict. That was safe only because the exact guarantee already lived in the unit test: each guarantee belongs to the layer that can check it reliably.
+To stop text jumping when web fonts load, the engineer generated fallback fonts sized to match the real ones. A unit test pins the generated numbers exactly, and a browser test checks that rendered widths match within 1% and that headings wrap onto the same number of lines. The browser test passed on every laptop and failed on GitHub's Ubuntu runners, where the system's stand-in for Arial put Inter 1.66% off. Skipping the test where Arial isn't metric-compatible didn't help, because the runner's font passed that check. The fix that stuck loosened the Inter width bound to 2% and kept the wrap check strict. That was safe only because the exact guarantee already lived in the unit test: each guarantee belongs to the layer that can check it reliably. Running e2e in the same container locally and in CI has since removed this class of surprise.
 
 ## Takeaway
 

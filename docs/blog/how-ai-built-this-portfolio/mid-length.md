@@ -6,11 +6,12 @@ My short answer: yes, if you build the gates first.
 
 ## The team
 
-There are three roles, each a Claude agent defined in a Markdown file inside the repo (`.claude/agents/`), so anyone who clones it gets the same team:
+There are four roles, each a Claude agent defined in a Markdown file inside the repo (`.claude/agents/`), so anyone who clones it gets the same team:
 
 - **Team lead (Claude Opus):** plans tasks, routes every PR through review, and merges only when everything is green.
 - **Senior engineer (Claude Sonnet):** builds one task end to end on its own branch, then fixes every review finding.
 - **PR reviewer (Claude Opus):** reviews each PR with fresh context. It can read and run code but has no write access, so it can't quietly fix what it finds; it has to report it.
+- **PR verifier (Claude Sonnet):** checks that each fix answers its finding. Large or design-changing fixes go back to the Opus reviewer.
 
 I'm the product owner. I wrote the requirements, approved the plan and made the decisions. A `CLAUDE.md` file holds the rules every agent follows. The most important one: never invent content. Missing data hides a section; it is never filled with plausible text.
 
@@ -31,7 +32,7 @@ The key design rule is enforced by a lint rule: pages never touch the content AP
 That gives three properties I care about:
 
 - **Maintainable.** Adding an article or project means adding one file, and the build rejects bad records with a clear error. Placeholder text fails the build.
-- **Testable.** Every rule lives in a pure function with unit tests (375 of them, 90% or more coverage on `src/lib`). My real content isn't finished, so the agents built a fixtures mode: fictional content in a separate build that exercises the blog, slider and case studies.
+- **Testable.** Every rule lives in a pure function with unit tests (489 of them, 90% or more coverage on `src/lib`). My real content isn't finished, so the agents built a fixtures mode: fictional content in a separate build that exercises the blog, slider and case studies.
 - **Scalable.** Static files on a CDN; a page-weight budget that keeps the free plan's daily transfer cap far away; a contact form already planned behind a feature flag; and a clear path to an API.
 
 ## The CI pipeline
@@ -43,7 +44,7 @@ Every PR runs four required GitHub Actions jobs:
 - **branch-policy** enforces the git flow into `develop` and `main`.
 - **pr-title** checks the Conventional Commit title.
 - **quality** runs lint, type checks, unit tests and the production build, which includes a link checker.
-- **e2e** runs Playwright on Chromium, WebKit, Firefox and a mobile profile against the Firebase emulator. It runs three passes: the full suite, smoke and accessibility tests on Chromium against the exact build that ships, and the fixtures suite.
+- **e2e** runs Playwright on Chromium, WebKit, Firefox and a mobile profile against the Firebase emulator, inside Playwright's official Docker image so a local `pnpm e2e:docker` run sees the same browsers and fonts. It runs three passes: the full suite, smoke and accessibility tests on Chromium against the exact build that ships, and the fixtures suite.
 
 PRs into `main` also run Lighthouse CI on every route, with budgets of 0.95 for performance, a perfect accessibility score, and at most 25 KB of JavaScript and 500 KB per page.
 
@@ -53,6 +54,13 @@ PRs into `main` also run Lighthouse CI on every route, with budgets of 0.95 for 
 - **The cloud agents couldn't push to GitHub.** They packed branches into git bundles, and a script on my Mac pushed them. It worked, but my sleeping laptop became a bottleneck.
 - **Three parallel engineers caused merge conflicts** and used up my weekly usage limit. One engineer working sequentially was calmer and barely slower.
 - **Agents write from memory.** The reviewer caught a browser-support table that was wrong about Safari.
+
+## What I changed afterwards
+
+- **One gate:** `pnpm verify` runs exactly what CI runs, read from the CI workflow.
+- **Skills:** the lead's per-PR routine is now four repo skills (`ship-pr`, `watch-ci`, `merge-pr`, `rebase-stack`) backed by tested scripts.
+- **Cheaper verification:** Opus does the first review; a Sonnet verifier checks the fixes.
+- **Mandatory habits:** the reviewer must put the bug back to prove a test bites, and cite a primary source for any browser or platform claim.
 
 ## Was it worth it?
 
