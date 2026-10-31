@@ -4,7 +4,10 @@ import { test, expect } from '@playwright/test';
 // re-flows the page (CLS) on slow connections, which Lighthouse on localhost cannot see.
 // The authoritative, deterministic guard is tests/unit/font-fallbacks.test.ts (recomputes the faces with
 // Capsize). This is a sanity check in a real browser: it only means something where `local('Arial')`
-// really is metric-compatible with Arial, so it skips elsewhere (e.g. CI runners without Arial/Liberation).
+// really is metric-compatible with Arial, so it skips on machines without Arial/Liberation Sans.
+// In the Playwright container (CI, `pnpm e2e:docker`; E2E_CONTAINER=true) Liberation Sans is installed by the
+// image, so there the probe must pass: a failed probe means the image changed, and fails the test instead of
+// silently skipping the only real-browser font check.
 const PARAGRAPH =
   "I'm Shadman, a Software Engineer building production mobile apps with Flutter and Dart, backed by native iOS and Android experience. Currently building an iOS SDK for an adtech company. Technical articles I've published on Medium. Each card opens the original post.";
 const HEADING = 'Sample apps and SDKs, built for tests.';
@@ -59,7 +62,11 @@ test('@any-content fallback fonts match the web fonts (widths within 2.5%, headi
     { paragraph: PARAGRAPH, heading: HEADING },
   );
   expect(r.loaded).toEqual([true, true]);
-  test.skip(!r.arialOk, "this system's Arial is not metric-compatible (no Arial/Liberation Sans)");
+  if (process.env.E2E_CONTAINER === 'true') {
+    expect(r.arialOk, 'the Playwright image should resolve Arial to Liberation Sans').toBe(true);
+  } else {
+    test.skip(!r.arialOk, "this system's Arial is not metric-compatible (no Arial/Liberation Sans)");
+  }
   // Width bounds are deliberately loose (2%): on Linux CI `local('Arial')` resolves through fontconfig
   // (Liberation Sans or similar), which passes the Arial probe above yet differs by up to ~1.7% for
   // Inter. The exact metrics are guarded deterministically by tests/unit/font-fallbacks.test.ts; here

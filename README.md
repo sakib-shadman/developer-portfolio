@@ -17,23 +17,25 @@ pnpm build && pnpm serve:firebase # http://localhost:5000, with firebase.json he
 
 ## Scripts
 
-| Script                                       | What                                                                                                                                          |
-| -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| `pnpm dev` / `pnpm dev:lan`                  | Dev server (the second one listens on the LAN, for phones)                                                                                    |
-| `pnpm build`                                 | `content:check`, `astro build`, then two post-build guards: no fixture content in `dist/`, and the link check (see below)                     |
-| `pnpm preview`                               | Serves `dist/` with Astro                                                                                                                     |
-| `pnpm serve:firebase`                        | Serves `dist/` through the Firebase Hosting emulator (`E2E_PORT`, `E2E_DIST` pick the port and folder)                                        |
-| `pnpm lint` / `pnpm format`                  | ESLint and Prettier (check / write)                                                                                                           |
-| `pnpm typecheck`                             | `astro check` (`.astro` and `.ts`)                                                                                                            |
-| `pnpm test` / `pnpm test:watch`              | Vitest unit tests with coverage (>= 90 % on `src/lib`)                                                                                        |
-| `pnpm e2e`                                   | Playwright + axe against the emulator, real content (builds first; port 5000 or `E2E_PORT`)                                                   |
-| `pnpm build:fixtures`                        | Builds `tests/fixtures/content` into `dist-fixtures/` and link-checks it                                                                      |
-| `pnpm e2e:fixtures`                          | The `@fixtures` Playwright suite against that build (port 5390 or `E2E_FIXTURES_PORT`)                                                        |
-| `pnpm lhci` / `pnpm lhci:indexable`          | Lighthouse CI budgets (ADR-0006) over every fixtures route / SEO on the real indexable build; run `pnpm build:fixtures` or `pnpm build` first |
-| `pnpm lhci:local`                            | Fixtures build, Lighthouse CI and a per-route table                                                                                           |
-| `pnpm content:check`                         | Placeholder guard and reference integrity (runs before every build)                                                                           |
-| `pnpm schemas:export`                        | Writes the content contract as JSON Schema to `docs/contract/`                                                                                |
-| `pnpm exec tsx scripts/check-links.ts [dir]` | The link check on its own (default `dist`; pass `dist-fixtures` for the fixtures build)                                                       |
+| Script                                           | What                                                                                                                                                                           |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `pnpm dev` / `pnpm dev:lan`                      | Dev server (the second one listens on the LAN, for phones)                                                                                                                     |
+| `pnpm build`                                     | `content:check`, `astro build`, then two post-build guards: no fixture content in `dist/`, and the link check (see below)                                                      |
+| `pnpm preview`                                   | Serves `dist/` with Astro                                                                                                                                                      |
+| `pnpm serve:firebase`                            | Serves `dist/` through the Firebase Hosting emulator (`E2E_PORT`, `E2E_DIST` pick the port and folder)                                                                         |
+| `pnpm lint` / `pnpm format`                      | ESLint and Prettier (check / write)                                                                                                                                            |
+| `pnpm typecheck`                                 | `astro check` (`.astro` and `.ts`)                                                                                                                                             |
+| `pnpm test` / `pnpm test:watch`                  | Vitest unit tests with coverage (>= 90 % on `src/lib`)                                                                                                                         |
+| `pnpm e2e`                                       | Playwright + axe against the emulator, real content (builds first; port 5000 or `E2E_PORT`)                                                                                    |
+| `pnpm e2e:docker [real\|shipped\|fixtures\|all]` | The same e2e passes inside the Playwright container CI uses (needs Docker; `node_modules` lives in a volume; first run pulls the image)                                        |
+| `pnpm verify`                                    | The "ready for PR" gate: frozen install, lint, typecheck, unit tests, build (as CI's quality job), then all e2e passes, in Docker when available (`--skip-e2e`, `--no-docker`) |
+| `pnpm build:fixtures`                            | Builds `tests/fixtures/content` into `dist-fixtures/` and link-checks it                                                                                                       |
+| `pnpm e2e:fixtures`                              | The `@fixtures` Playwright suite against that build (port 5390 or `E2E_FIXTURES_PORT`)                                                                                         |
+| `pnpm lhci` / `pnpm lhci:indexable`              | Lighthouse CI budgets (ADR-0006) over every fixtures route / SEO on the real indexable build; run `pnpm build:fixtures` or `pnpm build` first                                  |
+| `pnpm lhci:local`                                | Fixtures build, Lighthouse CI and a per-route table                                                                                                                            |
+| `pnpm content:check`                             | Placeholder guard and reference integrity (runs before every build)                                                                                                            |
+| `pnpm schemas:export`                            | Writes the content contract as JSON Schema to `docs/contract/`                                                                                                                 |
+| `pnpm exec tsx scripts/check-links.ts [dir]`     | The link check on its own (default `dist`; pass `dist-fixtures` for the fixtures build)                                                                                        |
 
 Environment variables (read at build time; none is a secret):
 

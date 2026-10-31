@@ -21,10 +21,12 @@ describe('browser support matrix (NFR-06)', () => {
     expect(cfg).toContain("devices['Pixel 7']");
   });
 
-  it('CI installs all three engines', () => {
-    expect(read('.github/workflows/ci.yml')).toMatch(
-      /playwright install[^\n]*chromium[^\n]*webkit[^\n]*firefox/,
-    );
+  // The official Playwright image bakes in chromium, firefox and webkit; tests/unit/ci-parity.test.ts pins
+  // its tag to the @playwright/test version. The real pass must not be narrowed to some projects.
+  it('CI runs e2e in the Playwright image, which carries all three engines', () => {
+    const ci = read('.github/workflows/ci.yml');
+    expect(ci).toMatch(/image: mcr\.microsoft\.com\/playwright:v\d+\.\d+\.\d+-noble/);
+    expect(ci).not.toContain('E2E_PROJECTS');
   });
 
   it('every feature on the guard list that src/ uses is in docs/browser-support.md with its floor', () => {

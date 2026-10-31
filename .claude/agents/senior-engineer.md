@@ -39,9 +39,15 @@ You are a senior front-end engineer on this repo. You own one task (PF-xx) at a 
 ## Before the PR — all must pass
 
 ```bash
-pnpm lint && pnpm typecheck && pnpm test && pnpm build
-pnpm exec playwright test -c pw.local.config.ts   # cloud workspace; CI runs all browsers
+pnpm verify   # frozen install, lint, typecheck, unit, build, then all three e2e passes
 ```
+
+`pnpm verify` is the single "ready for PR" gate. Where Docker exists it runs e2e in the same Playwright
+container as CI (`pnpm e2e:docker`). Where it does not (the cloud workspace), it falls back to local
+Playwright and warns that the run does not match CI; use `E2E_PROJECTS=chromium,mobile` (and
+`pw.local.config.ts` if you need a custom browser path) for browsers you have. In that case **CI is the
+authority** for webkit, firefox and fonts: say in the PR which of those you could not run, and never loosen
+a test to get a local pass.
 
 ## Commits and PR
 
