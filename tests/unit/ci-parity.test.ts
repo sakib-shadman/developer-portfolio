@@ -1,9 +1,12 @@
-import { readFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { chmodSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { parse } from 'yaml';
 import { dockerArgs, INNER_SCRIPT, playwrightImage, volumeName } from '../../scripts/e2e-docker.mjs';
 import { PASS_NAMES, PASSES, passCommand, selectPasses } from '../../scripts/e2e-passes.mjs';
-import { qualitySteps } from '../../scripts/verify.mjs';
+import { nonInteractive, qualitySteps } from '../../scripts/verify.mjs';
 
 const read = (p: string) => readFileSync(p, 'utf8');
 const ciText = read('.github/workflows/ci.yml');
@@ -217,5 +220,43 @@ describe('e2e:docker command', () => {
     expect(INNER_SCRIPT).toContain('packageManager');
     expect(INNER_SCRIPT).toContain('pnpm install --frozen-lockfile');
     expect(INNER_SCRIPT).toContain('node scripts/e2e-passes.mjs "$PASS"');
+  });
+});
+
+describe('verify runs its install step non-interactively', () => {
+  const install = qualitySteps(ciText).find((s) => /^pnpm install/.test(s.command));
+
+  it('ci.yml keeps the plain frozen-lockfile install (the flag is a verify-only tweak)', () => {
+    expect(install?.command).toBe('pnpm install --frozen-lockfile');
+  });
+  it('adds confirmModulesPurge=false to pnpm install only', () => {
+    expect(nonInteractive('pnpm install --frozen-lockfile')).toBe(
+      'pnpm install --frozen-lockfile --config.confirmModulesPurge=false',
+    );
+    expect(nonInteractive('pnpm install')).toContain('--config.confirmModulesPurge=false');
+    expect(nonInteractive('pnpm lint')).toBe('pnpm lint');
+    expect(nonInteractive('pnpm run install-hooks')).toBe('pnpm run install-hooks');
+    expect(nonInteractive('pnpm install --config.confirmModulesPurge=true')).toBe(
+      'pnpm install --config.confirmModulesPurge=true',
+    );
+  });
+  it('the real install step, run with no TTY and a node_modules that needs purging, does not prompt', () => {
+    // A fake pnpm that behaves like the real one: with no TTY it aborts unless the purge prompt is disabled.
+    const dir = mkdtempSync(join(tmpdir(), 'fake-pnpm-'));
+    const fake = join(dir, 'pnpm');
+    writeFileSync(
+      fake,
+      '#!/bin/sh\ncase "$*" in *--config.confirmModulesPurge=false*) exit 0;; esac\n' +
+        'echo "ERR_PNPM_ABORTED_REMOVE_MODULES_DIR_NO_TTY" >&2; exit 1\n',
+    );
+    chmodSync(fake, 0o755);
+    const run = (command: string) =>
+      spawnSync(command, {
+        shell: true,
+        stdio: ['ignore', 'pipe', 'pipe'],
+        env: { ...process.env, CI: '', PATH: `${dir}:${process.env.PATH}` },
+      });
+    expect(run(install!.command).status).toBe(1); // what the unpatched step did
+    expect(run(nonInteractive(install!.command)).status).toBe(0);
   });
 });
