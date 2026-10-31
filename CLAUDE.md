@@ -50,6 +50,16 @@ Node ≥ 22.23 (CI: `.nvmrc`), pnpm 10.
   icons `aria-hidden`, styled lists keep `role="list"`.
 - **Definition of Done:** `.github/pull_request_template.md`.
 
+## Skills
+
+Repo-scoped Claude Code skills in `.claude/skills/<name>/SKILL.md` (scripts in each `scripts/` folder; they
+never add trailers, never print tokens). Used by the `team-lead` for each PR:
+
+- `ship-pr`: push the branch (or bundle it for the owner's relay), open/reuse the PR, post notes.
+- `watch-ci`: wait for CI and print failing jobs' annotations.
+- `merge-pr`: verify the gate, squash-merge, list branches needing a rebase.
+- `rebase-stack`: `git rebase --onto origin/develop <old-base-sha> <branch>` after a squash merge.
+
 ## Workflow (agreed with the owner)
 
 1. **Develop** — by a `senior-engineer` agent (Sonnet, `.claude/agents/senior-engineer.md`) or the

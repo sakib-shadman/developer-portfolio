@@ -68,6 +68,15 @@ Development is done with Claude Code agents defined in `.claude/agents/` (repo-s
 | `senior-engineer` | Implements one PF task end to end on its own branch and checkout, then fixes review findings.                                                                  |
 | `pr-reviewer`     | Independent review with fresh context; reports findings, verifies fixes.                                                                                       |
 
+Repo-scoped skills in `.claude/skills/` carry the lead's repeated PR routines (each has a SKILL.md and bundled bash scripts):
+
+| Skill          | What                                                                                                               |
+| -------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `ship-pr`      | Pushes a branch (or builds a uniquely named git bundle for the owner's relay), opens or reuses the PR, posts notes |
+| `watch-ci`     | Waits for CI and prints the annotations of failing jobs                                                            |
+| `merge-pr`     | Checks the merge gate, squash-merges, lists branches that need a rebase                                            |
+| `rebase-stack` | Moves stacked branches onto `develop` after a squash merge, then verifies and pushes                               |
+
 The working agreement (commit rules, no AI trailers, link and content rules, definition of done) is `CLAUDE.md`; the PR checklist is `.github/pull_request_template.md`.
 
 ## Workflow
