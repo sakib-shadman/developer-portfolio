@@ -2,7 +2,7 @@
 
 Step by step for PF-51 (release candidate, issue #39) and PF-52 (launch, issue #40). Branching rules are in `docs/IMPLEMENTATION_PLAN.md` section 3.1; rollback detail is in `docs/MAINTENANCE.md`.
 
-**Do not start until both are true:** the owner's content is complete and `pnpm build` passes with it (#37), and Firebase Hosting is set up so `deploy.yml` deploys instead of skipping (#38; secret `FIREBASE_SERVICE_ACCOUNT_SHADMAN_PORTFOLIO`). Nothing here is done by the tooling alone: the version bump, the tag and the merges are manual steps.
+**Do not start until both are true:** the owner's content is complete and `pnpm build` passes with it (#37), and Firebase Hosting is set up so `deploy.yml` deploys instead of skipping (#38; secret `FIREBASE_SERVICE_ACCOUNT_SHADMAN_PORTFOLIO_96097`). Nothing here is done by the tooling alone: the version bump, the tag and the merges are manual steps.
 
 Tooling that exists for this runbook:
 
@@ -73,7 +73,7 @@ Tooling that exists for this runbook:
 
 Immediately before merging (not earlier: any re-run of `deploy` on `main`, such as a hotfix, would publish an indexable 0.x), set the repository variable `PUBLIC_INDEXABLE` to `true` (GitHub, Settings, Secrets and variables, Actions, Variables). It only affects the live build (ADR-0007). Optionally set the variables `PUBLIC_GOOGLE_SITE_VERIFICATION` and `PUBLIC_BING_SITE_VERIFICATION` now (see step 5); live builds pass them as the verification meta tags.
 
-1. **Merge `release/1.0.0` into `main`** with a merge commit (not a squash, so the release commit and history stay intact). The push to `main` runs `deploy.yml`: build with `PUBLIC_INDEXABLE=true`, deploy to the `live` channel, then smoke-test `https://shadman-portfolio.web.app`.
+1. **Merge `release/1.0.0` into `main`** with a merge commit (not a squash, so the release commit and history stay intact). The push to `main` runs `deploy.yml`: build with `PUBLIC_INDEXABLE=true`, deploy to the `live` channel, then smoke-test `https://shadman-portfolio-96097.web.app`.
 2. **Tag the release** on the merge commit and push the tag:
 
    ```bash
@@ -87,26 +87,26 @@ Immediately before merging (not earlier: any re-run of `deploy` on `main`, such 
 
    ```bash
    pnpm exec playwright install --with-deps chromium webkit
-   SMOKE_BASE_URL=https://shadman-portfolio.web.app pnpm smoke:live
-   SMOKE_BASE_URL=https://shadman-portfolio.web.app SMOKE_PROJECT=webkit pnpm smoke:live
+   SMOKE_BASE_URL=https://shadman-portfolio-96097.web.app pnpm smoke:live
+   SMOKE_BASE_URL=https://shadman-portfolio-96097.web.app SMOKE_PROJECT=webkit pnpm smoke:live
    ```
 
-   Also load the home page and confirm: no `noindex` robots meta, a canonical on `shadman-portfolio.web.app`, `https://shadman-portfolio.web.app/robots.txt` allows crawling and lists the sitemap.
+   Also load the home page and confirm: no `noindex` robots meta, a canonical on `shadman-portfolio-96097.web.app`, `https://shadman-portfolio-96097.web.app/robots.txt` allows crawling and lists the sitemap.
 
 5. **Search Console** (URL-prefix property, HTML-tag verification):
-   1. In Google Search Console choose Add property, URL prefix, enter `https://shadman-portfolio.web.app`.
+   1. In Google Search Console choose Add property, URL prefix, enter `https://shadman-portfolio-96097.web.app`.
    2. Choose the HTML tag method. It shows `<meta name="google-site-verification" content="TOKEN">`; copy only `TOKEN`.
    3. In GitHub set the repository variable `PUBLIC_GOOGLE_SITE_VERIFICATION` to `TOKEN`, then re-run the `deploy` workflow on `main` (Actions, deploy, Run workflow). The build renders the tag on every indexable page.
-   4. Check the live source contains the tag (`curl -s https://shadman-portfolio.web.app | grep google-site-verification`), then press Verify in Search Console.
-   5. Under Sitemaps submit `sitemap-index.xml` (the URL `robots.txt` names: `https://shadman-portfolio.web.app/sitemap-index.xml`).
-6. **Bing Webmaster Tools.** Add the site; the quickest route is Import from Google Search Console. Or choose the meta-tag method, set the repository variable `PUBLIC_BING_SITE_VERIFICATION` to the `msvalidate.01` content value and re-run `deploy` as above. Submit `https://shadman-portfolio.web.app/sitemap-index.xml` there too.
-7. **Feed validation.** Paste `https://shadman-portfolio.web.app/rss.xml` into the W3C Feed Validation Service (validator.w3.org/feed). It must report a valid RSS feed. Warnings about the feed's content type or self link: fix in a follow-up PR; errors block the launch.
+   4. Check the live source contains the tag (`curl -s https://shadman-portfolio-96097.web.app | grep google-site-verification`), then press Verify in Search Console.
+   5. Under Sitemaps submit `sitemap-index.xml` (the URL `robots.txt` names: `https://shadman-portfolio-96097.web.app/sitemap-index.xml`).
+6. **Bing Webmaster Tools.** Add the site; the quickest route is Import from Google Search Console. Or choose the meta-tag method, set the repository variable `PUBLIC_BING_SITE_VERIFICATION` to the `msvalidate.01` content value and re-run `deploy` as above. Submit `https://shadman-portfolio-96097.web.app/sitemap-index.xml` there too.
+7. **Feed validation.** Paste `https://shadman-portfolio-96097.web.app/rss.xml` into the W3C Feed Validation Service (validator.w3.org/feed). It must report a valid RSS feed. Warnings about the feed's content type or self link: fix in a follow-up PR; errors block the launch.
 8. **Social preview checks.** Run the home page and one project page through the LinkedIn Post Inspector, and through the card validator or a post preview on the platforms you use. Share images live at `/og/*.png` and are not hashed, so platforms cache them: after any later change to a card, re-scrape it with the same tools.
 9. **Announce** only when steps 4 to 8 pass.
 
 ## Roll back
 
-- **Live is broken:** Firebase console, Hosting, Release history, Rollback to the last good version; or `pnpm exec firebase hosting:clone shadman-portfolio:@<version-id> shadman-portfolio:live` (the `@` marks a version id; the id is in Release history). Do this first, investigate second.
+- **Live is broken:** Firebase console, Hosting, Release history, Rollback to the last good version; or `pnpm exec firebase hosting:clone shadman-portfolio-96097:@<version-id> shadman-portfolio-96097:live` (the `@` marks a version id; the id is in Release history). Do this first, investigate second.
 - **Then fix the source:** revert on `develop` with `git revert <sha>` through a PR and release again as `v1.0.1` (same steps, branch `release/1.0.1`) so `main` stops containing the bad change. Never delete or move a published tag; add a new one.
 - **Indexing must be switched off again** (for example the wrong content shipped): set the repository variable `PUBLIC_INDEXABLE` to `false` and re-run `deploy` on `main`. The site goes back to `noindex` and `robots.txt` disallows crawling.
 - Hosting keeps only the last 10 versions, so decide quickly (`docs/MAINTENANCE.md`, "Roll back").

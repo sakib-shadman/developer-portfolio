@@ -6,6 +6,8 @@ import { spawn } from 'node:child_process';
 
 const port = Number(process.env.E2E_PORT ?? 5000);
 const config = JSON.parse(readFileSync('firebase.json', 'utf8'));
+// The emulator needs some project id; use the real one from .firebaserc so it never drifts from the deploy target.
+const projectId = JSON.parse(readFileSync('.firebaserc', 'utf8')).projects.default;
 // E2E_DIST lets the fixtures suite serve dist-fixtures/ next to the real dist/.
 if (process.env.E2E_DIST) config.hosting.public = process.env.E2E_DIST;
 config.emulators = {
@@ -25,7 +27,7 @@ const child = spawn(
     '--only',
     'hosting',
     '--project',
-    'shadman-portfolio',
+    projectId,
     '--config',
     `.firebase-e2e.${port}.json`,
   ],

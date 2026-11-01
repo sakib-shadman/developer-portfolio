@@ -45,7 +45,7 @@ export interface OgCard {
   subtitle?: string | undefined;
   /** Name shown bottom-left next to the logo chip. */
   name: string;
-  /** Host shown bottom-right, e.g. "shadman-portfolio.web.app". */
+  /** Host shown bottom-right, e.g. "shadman-portfolio-96097.web.app". */
   host: string;
 }
 

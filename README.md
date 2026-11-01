@@ -1,6 +1,6 @@
 # developer-portfolio
 
-Personal developer portfolio of Shadman Sakib. Astro 7 (static output), TypeScript strict, plain CSS with design tokens, vanilla TypeScript for the little interactivity there is, Zod content collections, hosted on Firebase Hosting (Spark plan) at `https://shadman-portfolio.web.app`.
+Personal developer portfolio of Shadman Sakib. Astro 7 (static output), TypeScript strict, plain CSS with design tokens, vanilla TypeScript for the little interactivity there is, Zod content collections, hosted on Firebase Hosting (Spark plan) at `https://shadman-portfolio-96097.web.app`.
 
 ## Setup
 
@@ -93,7 +93,7 @@ The working agreement (commit rules, no AI trailers, link and content rules, def
 
 - **Articles are manual.** There is no Medium integration (ADR-0003): a new article appears on `/blog` and the home page only after its file is added and the site is redeployed.
 - **No contact form yet.** v1 offers `mailto:`, a copy-address button and profile links (ADR-0004). The form needs the Blaze plan and is a later milestone.
-- **web.app domain.** The site is served from `shadman-portfolio.web.app` and stays `noindex` until v1.0 (ADR-0007). A custom domain is deferred; `firebase.json` cannot redirect the `web.app` host to one, so `rel=canonical` would do the consolidation.
+- **web.app domain.** The site is served from `shadman-portfolio-96097.web.app` and stays `noindex` until v1.0 (ADR-0007). A custom domain is deferred; `firebase.json` cannot redirect the `web.app` host to one, so `rel=canonical` would do the consolidation.
 - **Content is incomplete.** Real records without every required fact stay `"status": "draft"` and are hidden from shipped builds; the owner supplies the rest.
 - **Analytics are not wired.** ADR-0005 allows the Cloudflare Web Analytics beacon (the CSP already permits its hosts), but no snippet is added yet.
 - **No `tel:` or `data:` links.** The link check fails the build on them (only site paths, `#anchors`, `mailto:` and https URLs are accepted).

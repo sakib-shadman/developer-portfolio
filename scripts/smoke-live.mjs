@@ -1,5 +1,5 @@
 // Live smoke runner: runs only the @smoke Playwright tests against an already-deployed site.
-// Usage: SMOKE_BASE_URL=https://shadman-portfolio.web.app pnpm smoke:live
+// Usage: SMOKE_BASE_URL=https://shadman-portfolio-96097.web.app pnpm smoke:live
 // With SMOKE_BASE_URL unset it prints a notice and exits 0, so it is safe in any pipeline by default.
 import { spawnSync } from 'node:child_process';
 
