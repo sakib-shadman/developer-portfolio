@@ -896,7 +896,7 @@ Notes:
 
 - Preview channels expire after **at most 30 days**; each staging deploy resets the clock. If `develop` is idle for 30+ days the staging URL disappears and the next push recreates it.
 - Preview/staging URLs are public (no access control on Spark), so they rely on `noindex` and contain nothing private.
-- `<project-id>` must be globally unique (e.g. `shadman-portfolio`); it becomes the public URL, so pick it deliberately.
+- `<project-id>` must be globally unique (e.g. `shadman-portfolio-96097`); it becomes the public URL, so pick it deliberately.
 
 ### 4.2 `firebase.json`
 
@@ -954,18 +954,18 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
         env:
-          PUBLIC_SITE_URL: https://shadman-portfolio.web.app
+          PUBLIC_SITE_URL: https://shadman-portfolio-96097.web.app
           PUBLIC_INDEXABLE: ${{ env.IS_LIVE == 'true' && vars.PUBLIC_INDEXABLE || 'false' }}
           PUBLIC_CONTACT_FORM: 'false'
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-          projectId: shadman-portfolio
-          channelId: ${{ github.event_name == 'pull_request' && '' || (env.IS_LIVE == 'true' && 'live' || 'staging') }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_SHADMAN_PORTFOLIO_96097 }}
+          projectId: shadman-portfolio-96097
+          channelId: ${{ github.event_name != 'pull_request' && (env.IS_LIVE == 'true' && 'live' || 'staging') || '' }}
           expires: ${{ github.event_name == 'pull_request' && '7d' || '30d' }}
       - if: env.IS_LIVE == 'true'
-        run: pnpm exec playwright install --with-deps chromium && BASE_URL=https://shadman-portfolio.web.app pnpm e2e --grep @smoke
+        run: pnpm exec playwright install --with-deps chromium && BASE_URL=https://shadman-portfolio-96097.web.app pnpm e2e --grep @smoke
 ```
 
 - Empty `channelId` on a PR → auto-named preview channel + PR comment. `expires` is ignored for `live`.
@@ -974,11 +974,11 @@ jobs:
 
 ### 4.4 One-time setup
 
-1. Firebase console → create project `shadman-portfolio` (Spark). No billing account.
-2. `firebase init hosting:github` in the repo → creates the deploy service account and the `FIREBASE_SERVICE_ACCOUNT_SHADMAN_PORTFOLIO` GitHub secret.
+1. Firebase console → create project `shadman-portfolio-96097` (Spark). No billing account.
+2. `pnpm exec firebase init hosting:github --project shadman-portfolio-96097` in the repo (keep `firebase.json`; answer No to the build-script and deploy-on-merge prompts; delete the generated `firebase-hosting-*.yml` workflows, `deploy.yml` replaces them; see `docs/MAINTENANCE.md`) → creates the deploy service account and the `FIREBASE_SERVICE_ACCOUNT_SHADMAN_PORTFOLIO_96097` GitHub secret.
 3. Hosting settings → **release retention: 10 versions**.
 4. GitHub repo variable `PUBLIC_INDEXABLE=false`.
-5. (Optional) Cloudflare Web Analytics → add `shadman-portfolio.web.app` → paste the snippet token.
+5. (Optional) Cloudflare Web Analytics → add `shadman-portfolio-96097.web.app` → paste the snippet token.
 6. Uptime check (UptimeRobot free) on `/` and `/blog`.
 
 ### 4.5 Spark limits & operations
@@ -989,7 +989,7 @@ jobs:
 | Hosting storage  | 10 GB including old releases                                                          | retention = 10 versions                                                       |
 | Cloud Functions  | not available                                                                         | contact form deferred to M5                                                   |
 
-- **Rollback:** Hosting console → Release history → Rollback, or `firebase hosting:clone shadman-portfolio:<version-id> shadman-portfolio:live`.
+- **Rollback:** Hosting console → Release history → Rollback, or `firebase hosting:clone shadman-portfolio-96097:<version-id> shadman-portfolio-96097:live`.
 - **Dependencies:** Renovate, grouped weekly, targeting `develop`.
 
 ### 4.6 Custom domain (deferred)

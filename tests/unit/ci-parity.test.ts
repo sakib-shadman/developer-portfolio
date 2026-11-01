@@ -119,7 +119,7 @@ describe('CI quality job: ci.yml is the visible source of truth, verify reads it
   });
   it('ci.yml gives the build the shipped-build env', () => {
     expect(steps.find((s) => s.run === 'pnpm build')?.env).toEqual({
-      PUBLIC_SITE_URL: 'https://shadman-portfolio.web.app',
+      PUBLIC_SITE_URL: 'https://shadman-portfolio-96097.web.app',
       PUBLIC_INDEXABLE: 'false',
       PUBLIC_INCLUDE_DRAFTS: 'false',
       PUBLIC_CONTENT_FIXTURES: 'false',

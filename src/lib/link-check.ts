@@ -21,7 +21,7 @@ export interface Site {
   html: ReadonlyMap<string, string>;
   /** XML sitemap files by relative path. */
   xml?: ReadonlyMap<string, string>;
-  /** Public origin, e.g. https://shadman-portfolio.web.app: absolute URLs on it must resolve in the build. */
+  /** Public origin, e.g. https://shadman-portfolio-96097.web.app: absolute URLs on it must resolve in the build. */
   origin: string;
 }
 

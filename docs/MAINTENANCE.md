@@ -147,9 +147,22 @@ The routine is packaged as skills in `.claude/skills/` (see `CLAUDE.md`): `ship-
 
 ## Roll back
 
-- **Bad deploy on production:** Firebase console, Hosting, Release history, Rollback to the previous version. Or from a terminal logged in with `pnpm exec firebase login`: `pnpm exec firebase hosting:clone shadman-portfolio:@<version-id> shadman-portfolio:live`. The `@` matters: without it the CLI reads the source as a channel name and fails. The version id is in the console's Release history (each release row), or in the `deploy` workflow log of the release you want back.
+- **Bad deploy on production:** Firebase console, Hosting, Release history, Rollback to the previous version. Or from a terminal logged in with `pnpm exec firebase login`: `pnpm exec firebase hosting:clone shadman-portfolio-96097:@<version-id> shadman-portfolio-96097:live`. The `@` matters: without it the CLI reads the source as a channel name and fails. The version id is in the console's Release history (each release row), or in the `deploy` workflow log of the release you want back.
 - **Then fix the source:** revert the offending squash commit on `develop` with `git revert <sha>` through a PR, and release again, so `main` stops containing it.
 - Set release retention to 10 when setting up Hosting (#38, plan PF-04); Hosting then keeps only the last 10 versions, so only recent releases can be rolled back.
+
+## First-time Firebase setup (owner, once)
+
+Run it as `pnpm exec firebase init hosting:github --project shadman-portfolio-96097` (log in first with `pnpm exec firebase login`). Answer the prompts like this, because `deploy.yml` already does the building and deploying with the right gates and env:
+
+- Keep the existing `firebase.json` (do not overwrite it) and do not set up a different public directory.
+- Decline "Set up the workflow to run a build script before every deploy" (its default `npm ci && npm run build` is not this repo's build).
+- Decline "Set up automatic deployment to your site's live channel when a PR is merged".
+- Afterwards delete the generated firebase-hosting-pull-request and firebase-hosting-merge workflow files under .github/workflows if they exist, and do not commit them: they would deploy a second time without the gates, the `noindex` env or the staging/live split.
+
+The command creates the deploy service account and the GitHub secret `FIREBASE_SERVICE_ACCOUNT_SHADMAN_PORTFOLIO_96097` (firebase-tools builds the name from the project id, upper case with dashes turned into underscores, so the project you pick must be `shadman-portfolio-96097`). Source: https://github.com/firebase/firebase-tools/blob/main/src/init/features/hosting/github.ts.
+
+See the secrets table below for rotating the key.
 
 ## Spark plan limits
 
@@ -169,7 +182,7 @@ Nothing secret is in the repo or shipped to the browser. These live in GitHub (S
 
 | Name                                                                | Used by                               | Rotate by                                                                                                                                                                                                                                        |
 | ------------------------------------------------------------------- | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `FIREBASE_SERVICE_ACCOUNT_SHADMAN_PORTFOLIO` (secret)               | `deploy.yml` (preview, staging, live) | Google Cloud console, IAM and Admin, Service accounts, the account `firebase init hosting:github` created, Keys, Add key (JSON); paste it into the GitHub secret; then delete the old key. Deploys skip with a notice while the secret is unset. |
+| `FIREBASE_SERVICE_ACCOUNT_SHADMAN_PORTFOLIO_96097` (secret)         | `deploy.yml` (preview, staging, live) | Google Cloud console, IAM and Admin, Service accounts, the account `firebase init hosting:github` created, Keys, Add key (JSON); paste it into the GitHub secret; then delete the old key. Deploys skip with a notice while the secret is unset. |
 | `CLAUDE_CODE_OAUTH_TOKEN` or `ANTHROPIC_API_KEY` (optional secrets) | `claude-review.yml`                   | Create a new credential at its provider, update the secret, revoke the old one. The review job does nothing when neither is set.                                                                                                                 |
 | `PUBLIC_INDEXABLE` (repository variable, not a secret)              | `deploy.yml` (production build only)  | Set to `true` at launch (v1.0); `false` before.                                                                                                                                                                                                  |
 

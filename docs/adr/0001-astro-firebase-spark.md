@@ -17,3 +17,5 @@ The site is ~95% static content with four small interactive pieces (slider, proj
 - Zero JS by default; HTML contains all metadata; Firebase serves `404.html` with HTTP 404.
 - Spark has a hard daily transfer cap (~360 MB/day) — enforced via page-weight budgets (ADR-0006). No Cloud Functions on Spark (see ADR-0004).
 - Rejected: React SPA (200 for unknown routes, metadata only after JS), Next.js static export (full-page hydration cost), a Node server (needs paid hosting).
+
+> **Update 2026-11-01:** the Firebase project ID is `shadman-portfolio-96097` (the plain `shadman-portfolio` was taken), so the default Hosting site, and the URL above, is `https://shadman-portfolio-96097.web.app`. The decision itself is unchanged.

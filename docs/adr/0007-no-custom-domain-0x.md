@@ -9,3 +9,5 @@ Serve from `shadman-portfolio.web.app`. `PUBLIC_INDEXABLE` controls `<meta name=
 ## Consequences
 
 - Firebase config cannot 301 the default `*.web.app` host to a custom domain later; when a domain is added, `PUBLIC_SITE_URL` moves canonical URLs, sitemap and OG tags, and `rel=canonical` consolidates indexing.
+
+> **Update 2026-11-01:** the default Hosting site is `shadman-portfolio-96097` (the Firebase project ID `shadman-portfolio` was taken), served at `https://shadman-portfolio-96097.web.app`. The decision is unchanged.
