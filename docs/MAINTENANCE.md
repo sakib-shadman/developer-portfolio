@@ -151,6 +151,19 @@ The routine is packaged as skills in `.claude/skills/` (see `CLAUDE.md`): `ship-
 - **Then fix the source:** revert the offending squash commit on `develop` with `git revert <sha>` through a PR, and release again, so `main` stops containing it.
 - Set release retention to 10 when setting up Hosting (#38, plan PF-04); Hosting then keeps only the last 10 versions, so only recent releases can be rolled back.
 
+## First-time Firebase setup (owner, once)
+
+Run it as `pnpm exec firebase init hosting:github --project shadman-portfolio-96097` (log in first with `pnpm exec firebase login`). Answer the prompts like this, because `deploy.yml` already does the building and deploying with the right gates and env:
+
+- Keep the existing `firebase.json` (do not overwrite it) and do not set up a different public directory.
+- Decline "Set up the workflow to run a build script before every deploy" (its default `npm ci && npm run build` is not this repo's build).
+- Decline "Set up automatic deployment to your site's live channel when a PR is merged".
+- Afterwards delete the generated firebase-hosting-pull-request and firebase-hosting-merge workflow files under .github/workflows if they exist, and do not commit them: they would deploy a second time without the gates, the `noindex` env or the staging/live split.
+
+The command creates the deploy service account and the GitHub secret `FIREBASE_SERVICE_ACCOUNT_SHADMAN_PORTFOLIO_96097` (firebase-tools builds the name from the project id, upper case with dashes turned into underscores, so the project you pick must be `shadman-portfolio-96097`). Source: https://github.com/firebase/firebase-tools/blob/main/src/init/features/hosting/github.ts.
+
+See the secrets table below for rotating the key.
+
 ## Spark plan limits
 
 The site runs on Firebase's free Spark plan (verify the numbers on the Firebase pricing page):

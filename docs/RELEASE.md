@@ -2,7 +2,7 @@
 
 Step by step for PF-51 (release candidate, issue #39) and PF-52 (launch, issue #40). Branching rules are in `docs/IMPLEMENTATION_PLAN.md` section 3.1; rollback detail is in `docs/MAINTENANCE.md`.
 
-**Do not start until both are true:** the owner's content is complete and `pnpm build` passes with it (#37), and Firebase Hosting is set up so `deploy.yml` deploys instead of skipping (#38; secret `FIREBASE_SERVICE_ACCOUNT_SHADMAN_PORTFOLIO_96097`). Nothing here is done by the tooling alone: the version bump, the tag and the merges are manual steps.
+**Do not start until both are true:** the owner's content is complete and `pnpm build` passes with it (#37), and Firebase Hosting is set up so `deploy.yml` deploys instead of skipping (#38; secret `FIREBASE_SERVICE_ACCOUNT_SHADMAN_PORTFOLIO_96097`). Setup (#38, once): `pnpm exec firebase init hosting:github --project shadman-portfolio-96097`; keep `firebase.json`, answer No to the build-script and deploy-on-merge prompts, and delete the generated `firebase-hosting-*.yml` workflows because `deploy.yml` replaces them (details: `docs/MAINTENANCE.md`, "First-time Firebase setup"). Nothing here is done by the tooling alone: the version bump, the tag and the merges are manual steps.
 
 Tooling that exists for this runbook:
 
