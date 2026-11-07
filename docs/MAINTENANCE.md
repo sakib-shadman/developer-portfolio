@@ -127,7 +127,7 @@ pnpm e2e:docker fixtures
 
 ## Run the fixtures suite
 
-Real content has no articles, case studies, photo, email or resume yet, so tests that need them run against fictional content in `tests/fixtures/content` (tagged `@fixtures`):
+Real content has no articles, case studies, email or resume yet, so tests that need them run against fictional content in `tests/fixtures/content` (tagged `@fixtures`):
 
 ```bash
 pnpm exec playwright install --with-deps chromium webkit firefox   # once (not needed with pnpm e2e:docker)
