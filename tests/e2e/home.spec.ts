@@ -2,7 +2,7 @@ import AxeBuilder from '@axe-core/playwright';
 import { test, expect } from '@playwright/test';
 
 test.describe('home', () => {
-  test('hero: one h1, focus pill, CTA to /projects, no empty photo frame', async ({ page }) => {
+  test('hero: one h1, focus pill, CTA to /projects, photo with alt and intrinsic size', async ({ page }) => {
     await page.goto('/');
     await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1);
     await expect(page.getByRole('heading', { level: 1 })).toContainText('engineered');
@@ -10,8 +10,15 @@ test.describe('home', () => {
     await expect(page.getByText('Dhaka, Bangladesh · GMT+6')).toBeVisible();
     const cta = page.getByRole('link', { name: /View projects/ });
     await expect(cta).toHaveAttribute('href', (await page.locator('#work').count()) ? '#work' : '/projects');
+    // The photo is configured: one figure with one img that has alt text and width/height (no layout shift).
+    const photo = page.locator('#hero figure img');
+    await expect(page.locator('#hero figure')).toHaveCount(1);
+    await expect(photo).toHaveCount(1);
+    await expect(photo).toHaveAttribute('alt', 'Shadman Sakib');
+    await expect(photo).toHaveAttribute('width', '800');
+    await expect(photo).toHaveAttribute('height', '1000');
+    expect(await photo.evaluate((el: HTMLImageElement) => el.complete && el.naturalWidth > 0)).toBe(true);
     // Unconfigured data is hidden, not placeholdered (resume links are asserted in resume.spec.ts).
-    await expect(page.locator('#hero figure')).toHaveCount(0);
     await expect(page.locator('body')).not.toContainText(/\[[^\]]+\]/);
   });
 
