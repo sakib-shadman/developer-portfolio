@@ -12,6 +12,7 @@
     "links": {
       "github": "https://github.com/sakib-shadman"
     },
+    "resume": "/resume/shadman-sakib-resume.pdf",
     "photo": { "src": "./images/shadman.jpg", "alt": "Shadman Sakib" },
     "stats": [{ "label": "Platforms · iOS, Android", "value": "2" }],
     "availability": "Open to engineering roles, freelance work and collaboration."
