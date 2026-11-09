@@ -4,6 +4,6 @@
   "summary": "Large-scale live scoring and statistics app for cricket.",
   "technologies": ["flutter", "dart"],
   "featured": true,
-  "featuredOrder": 2,
+  "featuredOrder": 5,
   "status": "draft"
 }

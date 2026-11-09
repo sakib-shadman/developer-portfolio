@@ -1,0 +1,16 @@
+{
+  "name": "Inspector Android",
+  "label": "Android app",
+  "category": "mobile-app",
+  "summary": "Gas line and pressure station inspection app for Wigersma & Sikkema that talks to measurement devices over Bluetooth.",
+  "description": "Gas line and pressure station inspection app for Wigersma & Sikkema, developed at Vivasoft in 2024 and 2025. It exchanges Bluetooth commands and data with measurement devices and shows inspection instructions and pressure and leakage graphs.",
+  "role": "Android developer",
+  "contributions": [
+    "Bluetooth commands and data exchange with measurement devices, inspection instructions, pressure and leakage graphs.",
+    "Revamped the UI, reworked core logic for stability and upgraded the app to the latest Android version."
+  ],
+  "technologies": ["android", "kotlin", "bluetooth", "ble", "mvvm", "retrofit"],
+  "featured": true,
+  "featuredOrder": 3,
+  "status": "published"
+}

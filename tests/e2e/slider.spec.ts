@@ -1,7 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { test, expect, type Page } from '@playwright/test';
 
-// The featured-projects slider needs draft content (3 featured projects); the shipped build may
+// The featured-projects slider needs the e2e build's featured projects (5 with the LMS Cricket draft); the shipped build may
 // have none, in which case the section must be absent and these tests skip themselves.
 const root = (page: Page) => page.locator('#projects-slider');
 const track = (page: Page) => root(page).getByRole('region', { name: /Featured projects/ });
@@ -160,12 +160,16 @@ test.describe('featured projects slider', () => {
 
   test('autoplay wraps back to the first card after the end', async ({ page, isMobile }) => {
     test.skip(isMobile, 'timing test runs on desktop only');
-    test.setTimeout(30_000);
     await open(page);
+    // One card per 5 s tick, 2 cards per view at 900px: the end is reached after n - 2 ticks and the
+    // next tick wraps to the first card. Budget n + 1 ticks.
+    const n = await dots(page).count();
+    test.setTimeout((n + 2) * 6000 + 15_000);
     await page.mouse.move(1, 1);
     await expectAutoplayMoves(page);
     await expect(counter(page)).toHaveText(/^02 \//);
-    await expect.poll(() => scrollLeft(page), { timeout: 9000 }).toBe(0);
+    await expect.poll(() => scrollLeft(page), { timeout: (n + 1) * 6000 }).toBeGreaterThan(100);
+    await expect.poll(() => scrollLeft(page), { timeout: (n + 1) * 6000 }).toBe(0);
     await expect(counter(page)).toHaveText(/^01 \//);
   });
 
@@ -194,13 +198,25 @@ test.describe('featured projects slider', () => {
     await expect.poll(() => scrollLeft(page)).toBeGreaterThan(100);
   });
 
-  test('the track is a tab stop only when it can scroll', async ({ page }) => {
+  test('the track is a tab stop while the cards overflow (5 cards never fit 3 per view)', async ({
+    page,
+  }) => {
     await open(page); // 900px: overflows
     await expect(track(page)).toHaveAttribute('tabindex', '0');
-    await page.setViewportSize({ width: 1440, height: 900 }); // 3 cards fit
-    await expect(track(page)).toHaveAttribute('tabindex', '-1');
+    await page.setViewportSize({ width: 1440, height: 900 }); // 3 per view, 5 cards: still scrolls
+    await expect(track(page)).toHaveAttribute('tabindex', '0');
     await page.setViewportSize({ width: 900, height: 900 });
     await expect(track(page)).toHaveAttribute('tabindex', '0');
+  });
+
+  // The fixtures build has 2 featured projects, so they fit at 1440px and the track is not a tab stop.
+  test('@fixtures the track is a tab stop only when it can scroll', async ({ page }) => {
+    await open(page); // 900px: 2 per view, 2 cards fit
+    await expect(track(page)).toHaveAttribute('tabindex', '-1');
+    await page.setViewportSize({ width: 500, height: 900 }); // 1 per view: overflows
+    await expect(track(page)).toHaveAttribute('tabindex', '0');
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await expect(track(page)).toHaveAttribute('tabindex', '-1');
   });
 
   test('hero "View projects" jumps to the slider section', async ({ page }) => {

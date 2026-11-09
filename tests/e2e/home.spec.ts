@@ -29,7 +29,9 @@ test.describe('home', () => {
     await expect(tiles.getByRole('link', { name: /GitHub/ })).toHaveAttribute('rel', /noopener/);
     await expect(tiles.getByRole('link', { name: /LinkedIn/ })).toHaveCount(0);
     await expect(tiles.getByRole('link', { name: /Medium/ })).toHaveCount(0);
-    await expect(tiles.getByRole('link', { name: /Email/ })).toHaveCount(0);
+    // The email is configured: the tile jumps to the contact block, which holds the mailto link.
+    await expect(tiles.getByRole('link', { name: /Email/ })).toHaveCount(1);
+    await expect(tiles.getByRole('link', { name: /Email/ })).toHaveAttribute('href', '#contact');
   });
 
   test('stats band is a definition list', async ({ page }) => {
@@ -76,30 +78,45 @@ test.describe('home', () => {
     await expect(cards.first().getByRole('list')).toBeVisible();
   });
 
-  test('experience: current role with badge, unknown fields hidden', async ({ page }) => {
+  test('experience: five published roles, newest first, only the current one badged', async ({ page }) => {
     await page.goto('/');
     const rows = page.locator('#experience ol > li');
-    await expect(rows.first()).toContainText('Software Engineer, L-I');
-    await expect(rows.first()).toContainText('Vivasoft');
+    await expect(rows).toHaveCount(5);
+    const roles = [
+      ['Senior Software Engineer, L-III', 'Vivasoft Limited', 'Jan 2026 — Present'],
+      ['Senior Software Engineer, L-II', 'Vivasoft Limited', 'Jan 2024 — Dec 2025'],
+      ['Senior Software Engineer, L-I', 'Vivasoft Limited', 'Sep 2023 — Dec 2023'],
+      ['Mobile Application Developer (Flutter)', 'bKash Limited (partner team)', 'Jun 2021 — Sep 2023'],
+      ['Software Engineer', 'Vivasoft Limited', 'Dec 2017 — Jun 2021'],
+    ] as const;
+    for (const [i, [title, company, dates]] of roles.entries()) {
+      const row = rows.nth(i);
+      await expect(row.getByRole('heading', { level: 3 })).toHaveText(`${title} · ${company}`);
+      await expect(row).toContainText(dates);
+      // Every role has responsibilities and technology chips; none is a bare company name.
+      expect(await row.locator('ul').count()).toBeGreaterThanOrEqual(2);
+      await expect(
+        row.getByRole('list', { name: new RegExp(`Technologies at ${company.replace(/[()]/g, '\\$&')}`) }),
+      ).toBeVisible();
+    }
+    await expect(page.getByText('Current', { exact: true })).toHaveCount(1);
     await expect(rows.first().getByText('Current', { exact: true })).toBeVisible();
-    await expect(rows.first().getByRole('list', { name: /Technologies at Vivasoft/ })).toContainText(
-      'Flutter',
-    );
-    // Draft record with only a company: just the company name, no dates/description/chips.
-    const sheba = rows.nth(1);
-    await expect(sheba.getByRole('heading', { level: 3 })).toHaveText('Sheba Platform');
-    await expect(sheba.getByText('Current', { exact: true })).toHaveCount(0);
-    await expect(sheba.locator('p, ul')).toHaveCount(0);
+    await expect(rows.first().getByRole('list', { name: /Technologies at Vivasoft/ })).toContainText('Swift');
+    await expect(rows.nth(3).getByRole('list', { name: /Technologies at bKash/ })).toContainText('BLoC');
+    await expect(page.locator('#experience')).not.toContainText(/Sheba|UITS/);
   });
 
-  test('contact CTA: availability shown, email and unconfigured pills hidden', async ({ page }) => {
+  test('contact CTA: availability and the email shown, unconfigured pills hidden', async ({ page }) => {
     await page.goto('/');
     const cta = page.locator('#contact');
     await expect(cta.getByRole('heading', { level: 2 })).toHaveText("Let's build something together.");
     await expect(cta).toContainText('Open to engineering roles');
     await expect(cta.getByRole('link', { name: /GitHub/ })).toBeVisible();
     await expect(cta.getByRole('link', { name: /LinkedIn/ })).toHaveCount(0);
-    await expect(cta.locator('a[href^="mailto:"]')).toHaveCount(0);
+    const mail = cta.locator('a[href^="mailto:"]');
+    await expect(mail).toHaveCount(1);
+    await expect(mail).toHaveAttribute('href', 'mailto:sakib.shadman@outlook.com');
+    await expect(mail).toContainText('sakib.shadman@outlook.com');
   });
 
   // Passes with and without draft content: experience exists only in drafts builds.

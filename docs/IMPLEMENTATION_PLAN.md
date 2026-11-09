@@ -859,7 +859,7 @@ gh pr create --base main --head develop --title "release: v1.0.1"   # ships to l
 
 ### 3.9 Test content fixtures (`@fixtures`)
 
-Real content has no articles, case studies or email yet, so those paths would have no
+Real content has no articles or case studies yet, so those paths would have no
 browser coverage. `PUBLIC_CONTENT_FIXTURES=true` makes `src/content.config.ts` load
 `tests/fixtures/content` (same layout as `src/content`; fictional "Alex Example" data, 5 projects of which
 3 have case studies, 9 articles with tags, thumbnails and varied dates, a fully populated profile) instead.

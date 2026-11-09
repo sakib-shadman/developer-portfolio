@@ -3,7 +3,7 @@ import { test, expect, type Page } from '@playwright/test';
 
 // Tests tagged @smoke / named "axe" run against the shipped build (no drafts, possibly zero
 // projects) and the live site, so they must not assume any content. The rest need the draft
-// content that e2e builds include (3 projects: 2 mobile apps, 1 SDK) and skip themselves otherwise.
+// content that e2e builds include (the 4 published projects plus the LMS Cricket draft: 4 mobile apps, 1 SDK) and skip themselves otherwise.
 const counter = (page: Page) => page.locator('[data-counter]');
 const items = (page: Page) => page.locator('[data-grid] > li');
 const cards = (page: Page) => page.locator('[data-grid] > li:not([hidden])');
@@ -65,49 +65,61 @@ test.describe('with draft content', () => {
   });
 
   test('all projects listed, counter and heading levels', async ({ page }) => {
-    await expect(cards(page)).toHaveCount(3);
-    await expect(counter(page)).toHaveText('3 of 3 projects');
+    await expect(cards(page)).toHaveCount(5);
+    await expect(counter(page)).toHaveText('5 of 5 projects');
     await expect(page.getByRole('heading', { level: 2 })).toHaveText([
-      'Adtech iOS SDK',
-      'LMS Cricket',
+      'BlueStack iOS SDK',
+      'bKash DSO App',
+      'Inspector Android',
       'Financfy',
+      'LMS Cricket',
     ]);
     await expect(page.getByRole('heading', { name: 'Project list' })).toHaveCount(0);
   });
 
-  test('cards hide missing data: no placeholder text, role, links or case study', async ({ page }) => {
+  test('cards hide missing data: no placeholder text, links or case study; role only where set', async ({
+    page,
+  }) => {
     const body = page.locator('main');
     await expect(body).not.toContainText(/\[[^\]]+\]/);
-    await expect(body).not.toContainText('Role:');
     await expect(body.getByRole('link', { name: /Case study/ })).toHaveCount(0);
+    // Four published projects carry a role; the LMS Cricket draft has none and so shows no "Role:" line.
+    const card = (name: string) => items(page).filter({ has: page.getByRole('heading', { name }) });
+    await expect(card('BlueStack iOS SDK')).toContainText('Role: Senior Software Engineer');
+    await expect(card('bKash DSO App')).toContainText('Role: Flutter developer; led a five-person team');
+    await expect(card('Inspector Android')).toContainText('Role: Android developer');
+    await expect(card('Financfy')).toContainText('Role: Flutter developer');
+    await expect(card('LMS Cricket')).not.toContainText('Role:');
     await expect(page.getByText('In progress')).toHaveCount(1);
-    await expect(page.getByText('Featured')).toHaveCount(2);
-    await expect(page.locator('[aria-hidden="true"]', { hasText: '★' })).toHaveCount(2);
+    await expect(card('BlueStack iOS SDK')).toContainText('In progress');
+    // Featured badge: the four featured projects that are not marked in progress.
+    await expect(page.getByText('Featured')).toHaveCount(4);
+    await expect(page.locator('[aria-hidden="true"]', { hasText: '★' })).toHaveCount(4);
   });
 
   test('filter pills toggle cards, counter and the ?category= URL param', async ({ page }) => {
     const all = pill(page, /^All/);
     await expect(page.getByRole('group', { name: 'Filter by category' }).getByRole('button')).toHaveText([
-      /All\s*3/,
-      /Mobile apps\s*2/,
+      /All\s*5/,
+      /Mobile apps\s*4/,
       /SDKs\s*1/,
     ]);
     await expect(all).toHaveAttribute('aria-pressed', 'true');
 
     await pill(page, /^SDKs/).click();
     await expect(cards(page)).toHaveCount(1);
-    await expect(counter(page)).toHaveText('1 of 3 projects');
+    await expect(counter(page)).toHaveText('1 of 5 projects');
     await expect(pill(page, /^SDKs/)).toHaveAttribute('aria-pressed', 'true');
     await expect(all).toHaveAttribute('aria-pressed', 'false');
     await expect(page).toHaveURL(/\/projects\?category=sdk$/);
 
     await pill(page, /^Mobile apps/).click();
-    await expect(cards(page)).toHaveCount(2);
-    await expect(counter(page)).toHaveText('2 of 3 projects');
+    await expect(cards(page)).toHaveCount(4);
+    await expect(counter(page)).toHaveText('4 of 5 projects');
     await expect(page).toHaveURL(/\?category=mobile-app$/);
 
     await all.click();
-    await expect(cards(page)).toHaveCount(3);
+    await expect(cards(page)).toHaveCount(5);
     await expect(page).toHaveURL(/\/projects$/);
   });
 
@@ -122,8 +134,8 @@ test.describe('with draft content', () => {
   }) => {
     for (const bad of ['nonsense', 'library', 'backend']) {
       await page.goto(`/projects?category=${bad}`);
-      await expect(cards(page)).toHaveCount(3);
-      await expect(counter(page)).toHaveText('3 of 3 projects');
+      await expect(cards(page)).toHaveCount(5);
+      await expect(counter(page)).toHaveText('5 of 5 projects');
       await expect(pill(page, /^All/)).toHaveAttribute('aria-pressed', 'true');
       await expect(page).toHaveURL(/\/projects$/);
     }
@@ -136,7 +148,7 @@ test.describe('with draft content', () => {
     await expect(cards(page)).toHaveCount(1);
     await pill(page, /^Mobile apps/).focus();
     await page.keyboard.press('Space');
-    await expect(cards(page)).toHaveCount(2);
+    await expect(cards(page)).toHaveCount(4);
   });
 
   test('filtering uses replaceState: Back leaves the page, not the previous filter', async ({ page }) => {

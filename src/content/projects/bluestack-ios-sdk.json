@@ -1,0 +1,17 @@
+{
+  "name": "BlueStack iOS SDK",
+  "label": "iOS SDK · Adtech",
+  "category": "sdk",
+  "summary": "Advertising SDK for publishers (Vivasoft for Azerion).",
+  "description": "Advertising SDK for publishers (Vivasoft for Azerion). My work covers SDK components: ad network adapters for BidMachine and AppLovin, Google AdMob mediation, Prebid bidding, CMP consent management and OMID viewability, plus the release pipeline, public documentation and demo apps for publishers and partners.",
+  "role": "Senior Software Engineer",
+  "contributions": [
+    "Ad network adapters for BidMachine and AppLovin; Google AdMob mediation, Prebid bidding, CMP consent and OMID viewability.",
+    "Release pipeline, public documentation and demo apps for publishers and partners."
+  ],
+  "technologies": ["objective-c", "swift", "cocoapods", "swift-package-manager", "xcframework", "teamcity"],
+  "progress": "in-progress",
+  "featured": true,
+  "featuredOrder": 1,
+  "status": "published"
+}

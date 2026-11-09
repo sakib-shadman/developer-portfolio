@@ -1,10 +1,15 @@
 {
   "name": "Financfy",
-  "label": "Fintech app",
+  "label": "Accounting app",
   "category": "mobile-app",
-  "summary": "Fintech wallet app for managing money on mobile.",
-  "technologies": ["flutter", "dart"],
+  "summary": "Accounting app for businesses, built in Flutter with BLoC and Clean Architecture.",
+  "description": "Accounting app for businesses, built at Vivasoft in 2024 and 2025 with Flutter, BLoC and Clean Architecture on a feature-first architecture with internal packages for the network client, logger, error reporting to a service and a UI library.",
+  "role": "Flutter developer",
+  "contributions": [
+    "Feature-first architecture with internal packages for the network client, logger, error reporting to a service and a UI library."
+  ],
+  "technologies": ["flutter", "dart", "bloc", "clean-architecture"],
   "featured": true,
-  "featuredOrder": 3,
-  "status": "draft"
+  "featuredOrder": 4,
+  "status": "published"
 }
