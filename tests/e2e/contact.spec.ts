@@ -22,9 +22,27 @@ test('contact route is links-based, with no form and no placeholders', async ({ 
   await expect(main.locator('form')).toHaveCount(0);
   await expect(main).not.toContainText(/\[[^\]]+\]/);
   await expect(main.getByRole('link', { name: /GitHub/ })).toHaveAttribute('rel', 'noopener noreferrer');
-  // Without profile.email in content there is no email block or copy button.
-  const hasEmail = (await main.locator('a[href^="mailto:"]').count()) > 0;
-  expect(await main.getByRole('button', { name: 'Copy address' }).count()).toBe(hasEmail ? 1 : 0);
+  // profile.email is set: the email block, one mailto link and one copy button.
+  await expect(main.locator('a[href^="mailto:"]')).toHaveCount(1);
+  await expect(main.getByRole('button', { name: 'Copy address' })).toHaveCount(1);
+});
+
+test('the email block shows the address, a mailto link and a working copy button', async ({
+  page,
+  context,
+}) => {
+  const main = page.getByRole('main');
+  await expect(main).toContainText('sakib.shadman@outlook.com');
+  await expect(main.getByRole('link', { name: 'Email me' })).toHaveAttribute(
+    'href',
+    /^mailto:sakib\.shadman@outlook\.com(\?.*)?$/,
+  );
+  await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+  const btn = main.getByRole('button', { name: 'Copy address' });
+  await expect(btn).toBeVisible();
+  await btn.click();
+  await expect(page.getByRole('status').first()).toHaveText('Email address copied');
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe('sakib.shadman@outlook.com');
 });
 
 test('has no axe violations', async ({ page }) => {
@@ -41,4 +59,4 @@ test('no horizontal overflow at 320px', async ({ page }) => {
   expect(overflow).toBeLessThanOrEqual(0);
 });
 
-// The email block and copy flow need an email, which real content lacks: see fixtures.spec.ts (@fixtures).
+// The copy flow's failure paths are covered with fictional content: see fixtures.spec.ts (@fixtures).

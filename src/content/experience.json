@@ -1,15 +1,85 @@
 [
   {
-    "id": "vivasoft",
-    "company": "Vivasoft",
-    "title": "Software Engineer, L-I",
+    "id": "vivasoft-senior-l3",
+    "company": "Vivasoft Limited",
+    "title": "Senior Software Engineer, L-III",
+    "startDate": "2026-01-01",
     "endDate": null,
-    "technologies": ["flutter", "dart", "swift"],
-    "status": "draft"
+    "responsibilities": [
+      "Develop and maintain iOS advertising SDK components for Azerion’s BlueStack SDK, focusing on architecture, compatibility, reliability and maintainability.",
+      "Build ad network adapters (BidMachine, AppLovin) and integrate Google AdMob mediation, Prebid bidding, CMP consent management and OMID viewability.",
+      "Manage SDK releases through CocoaPods, Swift Package Manager and XCFramework, with testing and CI/CD on TeamCity. Maintain public SDK documentation and demo apps."
+    ],
+    "technologies": [
+      "ios",
+      "swift",
+      "objective-c",
+      "cocoapods",
+      "swift-package-manager",
+      "xcframework",
+      "teamcity"
+    ],
+    "status": "published"
   },
   {
-    "id": "sheba-platform",
-    "company": "Sheba Platform",
-    "status": "draft"
+    "id": "vivasoft-senior-l2",
+    "company": "Vivasoft Limited",
+    "title": "Senior Software Engineer, L-II",
+    "startDate": "2024-01-01",
+    "endDate": "2025-12-01",
+    "responsibilities": [
+      "Led a mobile team of 4–5 engineers: technical direction, code review, mentoring and delivery across Flutter, native Android and iOS projects.",
+      "Developed Inspector Android, a native Android app that talks to gas inspection devices over Bluetooth. Revamped the UI and reworked core logic for stability.",
+      "Built Financfy, a Flutter accounting app for small businesses, with BLoC state management and Clean Architecture."
+    ],
+    "technologies": [
+      "flutter",
+      "dart",
+      "android",
+      "kotlin",
+      "ios",
+      "bluetooth",
+      "bloc",
+      "clean-architecture"
+    ],
+    "status": "published"
+  },
+  {
+    "id": "vivasoft-senior-l1",
+    "company": "Vivasoft Limited",
+    "title": "Senior Software Engineer, L-I",
+    "startDate": "2023-09-01",
+    "endDate": "2023-12-01",
+    "responsibilities": [
+      "Improved stability of the Autonemo real-time vehicle tracking app and started Inpixon’s Flutter app with a native Android (Kotlin) BLE plugin."
+    ],
+    "technologies": ["flutter", "dart", "kotlin", "ble"],
+    "status": "published"
+  },
+  {
+    "id": "bkash",
+    "company": "bKash Limited (partner team)",
+    "title": "Mobile Application Developer (Flutter)",
+    "startDate": "2021-06-01",
+    "endDate": "2023-09-01",
+    "responsibilities": [
+      "Built Bangla QR payments, Savings and the Pay Bill revamp in the bKash Customer App, Bangladesh’s largest mobile financial service, using Flutter, BLoC and Clean Architecture.",
+      "Built the bKash DSO app from scratch in Flutter for Distribution Sales Officers nationwide and led a five-person team through implementation and delivery."
+    ],
+    "technologies": ["flutter", "dart", "bloc", "clean-architecture"],
+    "status": "published"
+  },
+  {
+    "id": "vivasoft-software-engineer",
+    "company": "Vivasoft Limited",
+    "title": "Software Engineer",
+    "startDate": "2017-12-01",
+    "endDate": "2021-06-01",
+    "responsibilities": [
+      "Developed native Android (Java) and Flutter apps for fintech, HR and food-delivery clients, including MyCash, PiHR and klikit.",
+      "Built REST APIs and services with Java and Spring Boot for business logic and system integration."
+    ],
+    "technologies": ["android", "java", "flutter", "spring-boot"],
+    "status": "published"
   }
 ]

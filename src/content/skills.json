@@ -11,5 +11,17 @@
   { "id": "spring-boot", "name": "Spring Boot" },
   { "id": "docker", "name": "Docker" },
   { "id": "aws-ec2", "name": "AWS EC2" },
-  { "id": "aws-s3", "name": "AWS S3" }
+  { "id": "aws-s3", "name": "AWS S3" },
+  { "id": "objective-c", "name": "Objective-C" },
+  { "id": "kotlin", "name": "Kotlin" },
+  { "id": "cocoapods", "name": "CocoaPods" },
+  { "id": "swift-package-manager", "name": "Swift Package Manager" },
+  { "id": "xcframework", "name": "XCFramework" },
+  { "id": "teamcity", "name": "TeamCity" },
+  { "id": "bloc", "name": "BLoC" },
+  { "id": "clean-architecture", "name": "Clean Architecture" },
+  { "id": "bluetooth", "name": "Bluetooth" },
+  { "id": "ble", "name": "BLE" },
+  { "id": "mvvm", "name": "MVVM" },
+  { "id": "retrofit", "name": "Retrofit" }
 ]

@@ -1,0 +1,16 @@
+{
+  "name": "bKash DSO App",
+  "label": "Fintech app",
+  "category": "mobile-app",
+  "summary": "Transaction and monitoring app for bKash Distribution Sales Officers, built from scratch in Flutter.",
+  "description": "Transaction and monitoring app for Distribution Sales Officers, built from scratch in Flutter with BLoC and Clean Architecture for bKash (partner team), 2021 to 2023.",
+  "role": "Flutter developer; led a five-person team",
+  "contributions": [
+    "Built from scratch: B2B transfers to agents and distributors, balance checks, statements, push notifications and live location tracking.",
+    "Led a five-person team through implementation and delivery."
+  ],
+  "technologies": ["flutter", "dart", "bloc", "clean-architecture"],
+  "featured": true,
+  "featuredOrder": 2,
+  "status": "published"
+}
