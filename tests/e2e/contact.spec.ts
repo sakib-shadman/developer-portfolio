@@ -27,16 +27,19 @@ test('contact route is links-based, with no form and no placeholders', async ({ 
   await expect(main.getByRole('button', { name: 'Copy address' })).toHaveCount(1);
 });
 
-test('the email block shows the address, a mailto link and a working copy button', async ({
-  page,
-  context,
-}) => {
+test('the email block shows the address and a mailto link', async ({ page }) => {
   const main = page.getByRole('main');
   await expect(main).toContainText('sakib.shadman@outlook.com');
   await expect(main.getByRole('link', { name: 'Email me' })).toHaveAttribute(
     'href',
     /^mailto:sakib\.shadman@outlook\.com(\?.*)?$/,
   );
+});
+
+test('the copy button puts the address on the clipboard', async ({ page, context, browserName }) => {
+  // WebKit and Firefox reject the clipboard-read/clipboard-write permission names (same rule as fixtures.spec.ts).
+  test.skip(browserName !== 'chromium', 'clipboard permissions: chromium only');
+  const main = page.getByRole('main');
   await context.grantPermissions(['clipboard-read', 'clipboard-write']);
   const btn = main.getByRole('button', { name: 'Copy address' });
   await expect(btn).toBeVisible();
