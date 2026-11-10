@@ -65,14 +65,19 @@ test.describe('with draft content', () => {
   });
 
   test('all projects listed, counter and heading levels', async ({ page }) => {
-    await expect(cards(page)).toHaveCount(5);
-    await expect(counter(page)).toHaveText('5 of 5 projects');
+    await expect(cards(page)).toHaveCount(9);
+    await expect(counter(page)).toHaveText('9 of 9 projects');
+    // Featured first (by featuredOrder), then the rest by name.
     await expect(page.getByRole('heading', { level: 2 })).toHaveText([
       'BlueStack iOS SDK',
       'bKash DSO App',
       'Inspector Android',
       'Financfy',
       'LMS Cricket',
+      'Amtel MyCash',
+      'bKash Customer App',
+      'Inpixon',
+      'PiHR',
     ]);
     await expect(page.getByRole('heading', { name: 'Project list' })).toHaveCount(0);
   });
@@ -83,12 +88,16 @@ test.describe('with draft content', () => {
     const body = page.locator('main');
     await expect(body).not.toContainText(/\[[^\]]+\]/);
     await expect(body.getByRole('link', { name: /Case study/ })).toHaveCount(0);
-    // Four published projects carry a role; the LMS Cricket draft has none and so shows no "Role:" line.
+    // Every published project carries a role; the LMS Cricket draft has none and so shows no "Role:" line.
     const card = (name: string) => items(page).filter({ has: page.getByRole('heading', { name }) });
     await expect(card('BlueStack iOS SDK')).toContainText('Role: Senior Software Engineer');
     await expect(card('bKash DSO App')).toContainText('Role: Flutter developer; led a five-person team');
     await expect(card('Inspector Android')).toContainText('Role: Android developer');
     await expect(card('Financfy')).toContainText('Role: Flutter developer');
+    await expect(card('bKash Customer App')).toContainText('Role: Flutter developer (bKash partner team)');
+    await expect(card('Inpixon')).toContainText('Role: Flutter developer; started the app');
+    await expect(card('Amtel MyCash')).toContainText('Role: Android developer');
+    await expect(card('PiHR')).toContainText('Role: Android and Flutter developer');
     await expect(card('LMS Cricket')).not.toContainText('Role:');
     await expect(page.getByText('In progress')).toHaveCount(1);
     await expect(card('BlueStack iOS SDK')).toContainText('In progress');
@@ -100,26 +109,26 @@ test.describe('with draft content', () => {
   test('filter pills toggle cards, counter and the ?category= URL param', async ({ page }) => {
     const all = pill(page, /^All/);
     await expect(page.getByRole('group', { name: 'Filter by category' }).getByRole('button')).toHaveText([
-      /All\s*5/,
-      /Mobile apps\s*4/,
+      /All\s*9/,
+      /Mobile apps\s*8/,
       /SDKs\s*1/,
     ]);
     await expect(all).toHaveAttribute('aria-pressed', 'true');
 
     await pill(page, /^SDKs/).click();
     await expect(cards(page)).toHaveCount(1);
-    await expect(counter(page)).toHaveText('1 of 5 projects');
+    await expect(counter(page)).toHaveText('1 of 9 projects');
     await expect(pill(page, /^SDKs/)).toHaveAttribute('aria-pressed', 'true');
     await expect(all).toHaveAttribute('aria-pressed', 'false');
     await expect(page).toHaveURL(/\/projects\?category=sdk$/);
 
     await pill(page, /^Mobile apps/).click();
-    await expect(cards(page)).toHaveCount(4);
-    await expect(counter(page)).toHaveText('4 of 5 projects');
+    await expect(cards(page)).toHaveCount(8);
+    await expect(counter(page)).toHaveText('8 of 9 projects');
     await expect(page).toHaveURL(/\?category=mobile-app$/);
 
     await all.click();
-    await expect(cards(page)).toHaveCount(5);
+    await expect(cards(page)).toHaveCount(9);
     await expect(page).toHaveURL(/\/projects$/);
   });
 
@@ -134,8 +143,8 @@ test.describe('with draft content', () => {
   }) => {
     for (const bad of ['nonsense', 'library', 'backend']) {
       await page.goto(`/projects?category=${bad}`);
-      await expect(cards(page)).toHaveCount(5);
-      await expect(counter(page)).toHaveText('5 of 5 projects');
+      await expect(cards(page)).toHaveCount(9);
+      await expect(counter(page)).toHaveText('9 of 9 projects');
       await expect(pill(page, /^All/)).toHaveAttribute('aria-pressed', 'true');
       await expect(page).toHaveURL(/\/projects$/);
     }
@@ -148,7 +157,7 @@ test.describe('with draft content', () => {
     await expect(cards(page)).toHaveCount(1);
     await pill(page, /^Mobile apps/).focus();
     await page.keyboard.press('Space');
-    await expect(cards(page)).toHaveCount(4);
+    await expect(cards(page)).toHaveCount(8);
   });
 
   test('filtering uses replaceState: Back leaves the page, not the previous filter', async ({ page }) => {
