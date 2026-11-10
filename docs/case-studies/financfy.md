@@ -12,6 +12,8 @@ Status: draft, not published.
 
 ## Draft
 
+The project page already renders three sections from data: "The problem" (`problem` below), "What I did" (the project's `contributions`) and "Results" (`outcomes`). The MDX body is for what those don't cover (architecture, decisions, challenges, metrics), so it stays empty until the questions below are answered. Nothing in `outcomes` may repeat a contribution.
+
 ```mdx
 ---
 project: financfy
@@ -19,39 +21,23 @@ problem: Small businesses need to track sales, stock and receivables and keep ca
 outcomes: []
 ---
 
-<Section eyebrow="Context" title="Accounting for small businesses">
-
-Financfy is a Flutter accounting app that helps small businesses track sales, stock and receivables and maintain cashbooks. I built it at Vivasoft in 2024 and 2025.
-
-</Section>
-
-<Section eyebrow="What I built" title="A feature-first app on shared internal packages">
-
-The app follows a feature-first architecture with BLoC and Clean Architecture. Shared concerns live in internal packages:
-
-- a network client,
-- a logger,
-- error reporting to a service,
-- a UI library.
-
-</Section>
-
-<Section eyebrow="Architecture" title="Features on top of internal packages">
+<Section eyebrow="Architecture" title="Features on shared internal packages">
 
 <Diagram
   nodes={[
-    { label: 'Feature modules', highlight: true },
+    { label: 'Features', highlight: true },
     { label: 'UI library' },
     { label: 'Network client' },
-    { label: 'Logger and error reporting' },
+    { label: 'Logger' },
+    { label: 'Error reporting' },
   ]}
-  caption="Feature modules use shared internal packages."
+  caption="A feature-first app on four internal packages."
 />
 
 </Section>
 ```
 
-The `problem` line restates the sourced scope; sharpen it if there was a specific pain point. The diagram shows only the packages the CV names; check that the arrangement is right.
+The `problem` line restates the sourced scope; sharpen it if there was a specific pain point. The diagram shows only the packages the CV names, one box each; check the arrangement (question 1).
 
 ## Questions for the owner
 

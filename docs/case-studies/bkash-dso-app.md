@@ -12,30 +12,14 @@ Status: draft, not published.
 
 ## Draft
 
+The project page already renders three sections from data: "The problem" (`problem` below), "What I did" (the project's `contributions`) and "Results" (`outcomes`). The MDX body is for what those don't cover (architecture, decisions, challenges, metrics), so it stays empty until the questions below are answered. Nothing in `outcomes` may repeat a contribution.
+
 ```mdx
 ---
 project: bkash-dso-app
 problem: bKash's Distribution Sales Officers, working nationwide, needed a mobile app for B2B transfers to agents and distributors, balance checks and statements.
-outcomes:
-  - Built from scratch in Flutter and delivered with a five-person team I led.
+outcomes: []
 ---
-
-<Section eyebrow="Context" title="A field app for bKash's distribution network">
-
-bKash is Bangladesh's largest mobile financial service. Its Distribution Sales Officers (DSOs) work with agents and distributors across the country. As part of the bKash partner team (2021 to 2023) I built their app from scratch in Flutter and led a five-person team through implementation and delivery.
-
-</Section>
-
-<Section eyebrow="What I built" title="Transactions and monitoring">
-
-- B2B transfers to agents and distributors.
-- Balance checks and statements.
-- Push notifications.
-- Live location tracking.
-
-Built with Flutter, BLoC and Clean Architecture.
-
-</Section>
 ```
 
 The `problem` line restates the sourced scope; sharpen it with the real pain point if there was one.

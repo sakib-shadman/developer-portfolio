@@ -14,27 +14,14 @@ Status: draft, not published.
 
 ## Draft
 
+The project page already renders three sections from data: "The problem" (`problem` below), "What I did" (the project's `contributions`) and "Results" (`outcomes`). The MDX body is for what those don't cover (architecture, decisions, challenges, metrics), so it stays empty until the questions below are answered. Nothing in `outcomes` may repeat a contribution.
+
 ```mdx
 ---
 project: bluestack-ios-sdk
 problem: Publishers integrate BlueStack to serve ads in their iOS apps. The SDK has to bring in demand from several ad networks, bidding, consent and viewability, and ship through the package managers publishers already use.
 outcomes: []
 ---
-
-<Section eyebrow="Context" title="An advertising SDK that publishers embed">
-
-BlueStack is Azerion's advertising SDK. Since January 2026 I have worked on its iOS components at Vivasoft, with a focus on architecture, compatibility, reliability and maintainability.
-
-</Section>
-
-<Section eyebrow="What I built" title="Adapters, integrations and the release pipeline">
-
-- Ad network adapters for BidMachine and AppLovin.
-- Google AdMob mediation, Prebid bidding, CMP consent management and OMID viewability.
-- The release pipeline: CocoaPods, Swift Package Manager and XCFramework builds, with testing and CI/CD on TeamCity.
-- Public SDK documentation and demo apps for publishers and partners.
-
-</Section>
 ```
 
 The `problem` line is a framing of the sourced scope; confirm or rewrite it.

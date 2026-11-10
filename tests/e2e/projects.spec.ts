@@ -3,7 +3,7 @@ import { test, expect, type Page } from '@playwright/test';
 
 // Tests tagged @smoke / named "axe" run against the shipped build (no drafts, possibly zero
 // projects) and the live site, so they must not assume any content. The rest need the draft
-// content that e2e builds include (the 4 published projects plus the LMS Cricket draft: 4 mobile apps, 1 SDK) and skip themselves otherwise.
+// content that e2e builds include (the 8 published projects plus the LMS Cricket draft: 8 mobile apps, 1 SDK) and skip themselves otherwise.
 const counter = (page: Page) => page.locator('[data-counter]');
 const items = (page: Page) => page.locator('[data-grid] > li');
 const cards = (page: Page) => page.locator('[data-grid] > li:not([hidden])');

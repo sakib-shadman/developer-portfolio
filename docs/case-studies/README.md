@@ -5,7 +5,7 @@ Drafts for the four featured projects, written only from the owner's CV (`public
 Each draft has three parts:
 
 1. **Sourced facts**: the lines the draft is built from, with the source.
-2. **Draft**: the MDX that would go in `src/content/case-studies/<slug>.mdx`. It has only the sections the sources support: Context and What I built, plus, for Financfy, a diagram of the internal packages the CV names. Architecture, Decisions, Challenges and Metrics are left out until the owner supplies them.
+2. **Draft**: the frontmatter (and, where the sources allow, body) that would go in `src/content/case-studies/<slug>.mdx`. The project page already renders the problem, the project's contributions and the outcomes, so the body is reserved for architecture, decisions, challenges and metrics, which the sources don't cover. Only Financfy has a body so far: a diagram of the internal packages its CV line names.
 3. **Questions for the owner**: what is needed to make the case study worth reading. Answer in plain text; numbers only if they are real and shareable.
 
 To publish one: answer its questions, extend the draft, move it to `src/content/case-studies/<slug>.mdx`, and add `"caseStudy": "<slug>"` to the project JSON (see "Add a case study" in `docs/MAINTENANCE.md`).

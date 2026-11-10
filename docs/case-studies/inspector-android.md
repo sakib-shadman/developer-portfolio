@@ -14,34 +14,17 @@ Status: draft, not published.
 
 ## Draft
 
+The project page already renders three sections from data: "The problem" (`problem` below), "What I did" (the project's `contributions`) and "Results" (`outcomes`). The MDX body is for what those don't cover (architecture, decisions, challenges, metrics), so it stays empty until the questions below are answered. Nothing in `outcomes` may repeat a contribution.
+
 ```mdx
 ---
 project: inspector-android
-problem: Technicians inspecting gas lines and pressure stations drive measurement devices from the app over Bluetooth. The app had to run inspections reliably in the field, and its core logic was not stable enough.
-outcomes:
-  - Revamped the UI and reworked the core logic to make the app far more stable.
-  - Upgraded the app to the latest Android version.
+problem: Technicians inspecting gas lines and pressure stations use the app to talk to measurement devices over Bluetooth, run inspection instructions and read pressure and leakage graphs. The app needed to become far more stable.
+outcomes: []
 ---
-
-<Section eyebrow="Context" title="Inspections driven over Bluetooth">
-
-Wigersma & Sikkema technicians use Inspector Android to inspect gas lines and pressure stations. The app talks to their measurement devices over Bluetooth, walks the technician through inspection instructions and shows results such as pressure and leakage as graphs. I worked on it at Vivasoft in 2024 and 2025.
-
-</Section>
-
-<Section eyebrow="What I built" title="Stability, a new UI and new features">
-
-- Bluetooth commands and data exchange with the measurement devices.
-- Inspection instructions, and pressure and leakage graphs.
-- A revamped UI and new features.
-- Reworked core logic for stability, and an upgrade to the latest Android version.
-
-Built with Kotlin, Bluetooth and BLE, MVVM and Retrofit.
-
-</Section>
 ```
 
-The `problem` line is a framing of the sourced facts ("reworked core logic to make the app far more stable"); confirm or rewrite it.
+The `problem` line is a framing of the sourced facts (LinkedIn: "reworked core logic to make the app far more stable"); confirm or rewrite it. A real before/after (question 5) would go in `outcomes`.
 
 ## Questions for the owner
 
