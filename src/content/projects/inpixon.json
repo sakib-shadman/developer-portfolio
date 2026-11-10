@@ -1,0 +1,14 @@
+{
+  "name": "Inpixon",
+  "label": "Indoor positioning",
+  "category": "mobile-app",
+  "summary": "Indoor positioning app that measures the real-time distance between BLE devices, with a Flutter UI and a native Kotlin BLE plugin.",
+  "description": "Indoor positioning app for Inpixon. At Vivasoft in 2023 I started the Flutter app, delivering the core UI and a native Android (Kotlin) BLE communication layer, integrated as a Flutter plugin, for real-time device communication and distance measurement.",
+  "role": "Flutter developer; started the app",
+  "contributions": [
+    "Core Flutter UI.",
+    "Native Android (Kotlin) BLE communication layer integrated as a Flutter plugin."
+  ],
+  "technologies": ["flutter", "dart", "kotlin", "ble"],
+  "status": "published"
+}

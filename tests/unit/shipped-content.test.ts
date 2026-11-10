@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 // back to "draft" would drop the record from production while every build and e2e pass stays green).
 const json = (p: string) => JSON.parse(readFileSync(p, 'utf8')) as Record<string, unknown>;
 
-describe('shipped content: the CV roles and the four featured projects', () => {
+describe('shipped content: the CV roles, the published projects and the four featured ones', () => {
   it('publishes the five CV roles', () => {
     const experience = json('src/content/experience.json') as unknown as { id: string; status: string }[];
     expect(experience.filter((e) => e.status === 'published').map((e) => e.id)).toEqual([
@@ -18,7 +18,7 @@ describe('shipped content: the CV roles and the four featured projects', () => {
     expect(experience.filter((e) => e.status !== 'published')).toEqual([]);
   });
 
-  it('publishes and features BlueStack, bKash DSO, Inspector and Financfy, in that order', () => {
+  it('publishes the eight CV projects and features BlueStack, bKash DSO, Inspector and Financfy, in that order', () => {
     const projects = readdirSync('src/content/projects').map((f) => ({
       id: f.replace(/\.json$/, ''),
       ...(json(`src/content/projects/${f}`) as {
@@ -29,10 +29,14 @@ describe('shipped content: the CV roles and the four featured projects', () => {
     }));
     const published = projects.filter((p) => p.status === 'published');
     expect(published.map((p) => p.id).sort()).toEqual([
+      'amtel-mycash',
+      'bkash-customer-app',
       'bkash-dso-app',
       'bluestack-ios-sdk',
       'financfy',
+      'inpixon',
       'inspector-android',
+      'pihr',
     ]);
     expect(
       published

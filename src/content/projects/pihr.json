@@ -1,0 +1,11 @@
+{
+  "name": "PiHR",
+  "label": "HR app",
+  "category": "mobile-app",
+  "summary": "HR mobile apps covering employee management, attendance, live location tracking and leave management.",
+  "description": "Mobile apps for PiHR, developed and maintained at Vivasoft between 2017 and 2021 in native Android and Flutter, covering employee management, attendance, live location tracking and leave management.",
+  "role": "Android and Flutter developer",
+  "contributions": ["Employee management, attendance, live location tracking and leave management."],
+  "technologies": ["android", "flutter", "dart"],
+  "status": "published"
+}

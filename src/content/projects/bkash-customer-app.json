@@ -1,0 +1,14 @@
+{
+  "name": "bKash Customer App",
+  "label": "Fintech app",
+  "category": "mobile-app",
+  "summary": "Features for the customer app of bKash, Bangladesh's largest mobile financial service, built in Flutter.",
+  "description": "Mobile finance app of bKash, Bangladesh's largest mobile financial service. In the bKash partner team, 2021 to 2023, I built Bangla QR payments, Islamic Savings and the Pay Bill revamp with Flutter, BLoC and Clean Architecture.",
+  "role": "Flutter developer (bKash partner team)",
+  "contributions": [
+    "Pay Bill revamp, Islamic Savings and Bangla QR payments.",
+    "Followed OOP, SOLID and Flutter performance best practices."
+  ],
+  "technologies": ["flutter", "dart", "bloc", "clean-architecture"],
+  "status": "published"
+}

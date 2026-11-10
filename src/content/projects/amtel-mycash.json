@@ -1,0 +1,13 @@
+{
+  "name": "Amtel MyCash",
+  "label": "Fintech app",
+  "category": "mobile-app",
+  "summary": "Native Android app for MyCash, a mobile money and digital wallet platform.",
+  "description": "Native Android app for MyCash, a mobile money and digital wallet platform, developed and maintained at Vivasoft between 2017 and 2021 with Java, MVVM and Retrofit.",
+  "role": "Android developer",
+  "contributions": [
+    "Money transfer, top-up, bill payment and remittance features in the native Android app."
+  ],
+  "technologies": ["android", "java", "mvvm", "retrofit"],
+  "status": "published"
+}
