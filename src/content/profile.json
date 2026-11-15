@@ -4,7 +4,7 @@
     "title": "Senior Software Engineer",
     "headline": "Mobile apps and SDKs, engineered for production.",
     "headlineAccent": "engineered",
-    "intro": "I'm Shadman, a Senior Software Engineer building production mobile apps with Flutter and Dart, backed by native iOS and Android experience. Currently building an iOS SDK for an adtech company.",
+    "intro": "I'm Shadman, a Senior Software Engineer focused on iOS advertising SDKs, with nearly nine years of experience building production mobile apps in Flutter, native Android and iOS.",
     "location": "Dhaka, Bangladesh",
     "timezone": "GMT+6",
     "focus": ["Flutter", "iOS", "Android"],
@@ -24,6 +24,11 @@
       {
         "label": "Years of experience",
         "value": "9",
+        "suffix": "+"
+      },
+      {
+        "label": "Apps shipped",
+        "value": "10",
         "suffix": "+"
       },
       {

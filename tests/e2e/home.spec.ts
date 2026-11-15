@@ -43,8 +43,12 @@ test.describe('home', () => {
   test('stats band is a definition list', async ({ page }) => {
     await page.goto('/');
     const band = page.getByRole('region', { name: 'At a glance' });
-    await expect(band.locator('dl dt')).toHaveText(['Years of experience', 'Platforms · iOS, Android']);
-    await expect(band.locator('dl dd')).toHaveText(['9+', '2']);
+    await expect(band.locator('dl dt')).toHaveText([
+      'Years of experience',
+      'Apps shipped',
+      'Platforms · iOS, Android',
+    ]);
+    await expect(band.locator('dl dd')).toHaveText(['9+', '10+', '2']);
   });
 
   test('sections render in order with gap-free numbering and labelled landmarks', async ({ page }) => {
