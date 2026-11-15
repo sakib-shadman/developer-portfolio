@@ -36,5 +36,10 @@
   { "id": "mysql", "name": "MySQL" },
   { "id": "github-actions", "name": "GitHub Actions" },
   { "id": "gitlab", "name": "GitLab" },
-  { "id": "git", "name": "Git" }
+  { "id": "git", "name": "Git" },
+  { "id": "python", "name": "Python" },
+  { "id": "flow", "name": "Flow" },
+  { "id": "jetpack-compose", "name": "Compose" },
+  { "id": "kotlin-coroutines", "name": "Kotlin Coroutines" },
+  { "id": "react-native", "name": "React Native" }
 ]

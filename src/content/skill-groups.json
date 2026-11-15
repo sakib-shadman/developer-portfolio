@@ -3,48 +3,36 @@
     "id": "languages",
     "title": "Languages",
     "order": 1,
-    "items": ["swift", "objective-c", "kotlin", "java", "dart", "go"]
+    "items": ["swift", "objective-c", "kotlin", "java", "dart", "go", "python"]
   },
   {
-    "id": "frameworks",
-    "title": "Frameworks",
+    "id": "ios-development",
+    "title": "iOS Development",
     "order": 2,
-    "items": [
-      "flutter",
-      "bloc",
-      "riverpod",
-      "provider",
-      "swiftui",
-      "uikit",
-      "room",
-      "rxjava",
-      "retrofit",
-      "livedata",
-      "viewmodel"
-    ]
+    "items": ["swiftui", "uikit", "cocoapods", "swift-package-manager", "xcframework"]
   },
-  { "id": "platforms", "title": "Platforms", "order": 3, "items": ["ios", "android"] },
+  {
+    "id": "android-development",
+    "title": "Android Development",
+    "order": 3,
+    "items": ["mvvm", "retrofit", "flow", "jetpack-compose", "kotlin-coroutines"]
+  },
+  {
+    "id": "cross-platform",
+    "title": "Cross-platform",
+    "order": 4,
+    "items": ["flutter", "bloc", "riverpod", "clean-architecture", "react-native"]
+  },
   {
     "id": "backend",
     "title": "Backend",
-    "order": 4,
-    "items": ["spring-boot", "go", "rest-apis", "firebase", "sqlite", "mysql"]
+    "order": 5,
+    "items": ["spring-boot", "go"]
   },
   {
     "id": "devops-cloud",
     "title": "DevOps & Cloud",
-    "order": 5,
-    "items": [
-      "git",
-      "github-actions",
-      "gitlab",
-      "teamcity",
-      "cocoapods",
-      "swift-package-manager",
-      "xcframework",
-      "docker",
-      "aws-ec2",
-      "aws-s3"
-    ]
+    "order": 6,
+    "items": ["docker", "aws-ec2", "aws-s3", "teamcity"]
   }
 ]

@@ -1,7 +1,7 @@
 /** /projects/[slug] logic (FR-05.11, FR-06, FR-14.7): which projects get a page, facts, links, SEO text. */
 import { linkAttrs } from './link';
 import { monthRangeParts, type RangePart } from './date-range';
-import type { ProjectCard, SkillGroup, Tech } from './content/types';
+import type { ProjectCard, Tech } from './content/types';
 
 /** FR-05.11/06.8: a dedicated page exists only for projects that have a case study. */
 export const detailPageProjects = (sorted: readonly ProjectCard[]): ProjectCard[] =>
@@ -17,12 +17,11 @@ export function neighbours<T extends { slug: string }>(
   return { prev: list[i - 1], next: list[i + 1] };
 }
 
-/** Id of the skill group (src/content/skill-groups.json) whose items count as platforms. */
-export const PLATFORMS_GROUP_ID = 'platforms';
-
-/** Ids of the skills in the platforms group (iOS, Android, …). */
-export const platformIds = (groups: readonly SkillGroup[]): Set<string> =>
-  new Set(groups.find((g) => g.id === PLATFORMS_GROUP_ID)?.items.map((t) => t.id));
+/**
+ * Skill ids (src/content/skills.json) that count as platforms on a project page. Fixed here rather than read
+ * from a skill group: the Technology stack cards are grouped by ecosystem and have no Platforms card.
+ */
+export const PLATFORM_IDS: ReadonlySet<string> = new Set(['ios', 'android']);
 
 /** Splits a project's technologies into platforms and the rest of the stack. */
 export function splitTech(technologies: readonly Tech[], platforms: ReadonlySet<string>) {

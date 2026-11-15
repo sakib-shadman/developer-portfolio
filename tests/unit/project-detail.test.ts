@@ -6,12 +6,11 @@ import {
   detailLinks,
   detailPageProjects,
   neighbours,
-  PLATFORMS_GROUP_ID,
-  platformIds,
+  PLATFORM_IDS,
   slugify,
   splitTech,
 } from '../../src/lib/project-detail';
-import type { ProjectCard, SkillGroup } from '../../src/lib/content/types';
+import type { ProjectCard } from '../../src/lib/content/types';
 
 const project = (slug: string, extra: Partial<ProjectCard> = {}): ProjectCard => ({
   slug,
@@ -45,17 +44,14 @@ describe('detailPageProjects / neighbours', () => {
 });
 
 describe('platforms / stack / facts', () => {
-  const groups = [
-    { id: 'platforms', title: 'Platforms', items: [tech('ios'), tech('android')] },
-    { id: 'languages', title: 'Languages', items: [tech('dart')] },
-  ] as SkillGroup[];
-
-  it('splits technologies using the Platforms skill group', () => {
-    const ids = platformIds(groups);
-    const { platforms, stack } = splitTech([tech('flutter'), tech('ios'), tech('dart')], ids);
-    expect(platforms.map((t) => t.id)).toEqual(['ios']);
+  it('splits technologies into platforms (iOS, Android) and the rest of the stack', () => {
+    const { platforms, stack } = splitTech(
+      [tech('flutter'), tech('ios'), tech('dart'), tech('android')],
+      PLATFORM_IDS,
+    );
+    expect(platforms.map((t) => t.id)).toEqual(['ios', 'android']);
     expect(stack.map((t) => t.id)).toEqual(['flutter', 'dart']);
-    expect(platformIds([]).size).toBe(0);
+    expect(splitTech([tech('ios')], new Set()).platforms).toEqual([]);
   });
 
   it('Timeline sits between Role and Platforms, only when the project has dates', () => {
@@ -136,12 +132,11 @@ describe('detailDescription / slugify', () => {
   });
 });
 
-describe('PLATFORMS_GROUP_ID', () => {
-  it('names a group that exists in skill-groups.json and has items', () => {
-    const groups = JSON.parse(readFileSync('src/content/skill-groups.json', 'utf8')) as {
-      id: string;
-      items: string[];
-    }[];
-    expect(groups.find((g) => g.id === PLATFORMS_GROUP_ID)?.items.length).toBeGreaterThan(0);
+describe('PLATFORM_IDS', () => {
+  it('names skills that exist in the real and the fixture skills.json', () => {
+    for (const file of ['src/content/skills.json', 'tests/fixtures/content/skills.json']) {
+      const ids = new Set((JSON.parse(readFileSync(file, 'utf8')) as { id: string }[]).map((s) => s.id));
+      for (const id of PLATFORM_IDS) expect(ids.has(id), `${id} in ${file}`).toBe(true);
+    }
   });
 });
