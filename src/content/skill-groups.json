@@ -1,7 +1,38 @@
 [
-  { "id": "languages", "title": "Languages", "order": 1, "items": ["dart", "swift", "java", "go"] },
-  { "id": "frameworks", "title": "Frameworks", "order": 2, "items": ["flutter", "uikit", "swiftui"] },
-  { "id": "platforms", "title": "Platforms", "order": 3, "items": ["ios", "android"] },
-  { "id": "backend", "title": "Backend", "order": 4, "items": ["spring-boot", "go"] },
-  { "id": "devops-cloud", "title": "DevOps & Cloud", "order": 5, "items": ["docker", "aws-ec2", "aws-s3"] }
+  {
+    "id": "languages",
+    "title": "Languages",
+    "order": 1,
+    "items": ["swift", "objective-c", "kotlin", "java", "dart", "go", "python"]
+  },
+  {
+    "id": "ios-development",
+    "title": "iOS Development",
+    "order": 2,
+    "items": ["swiftui", "uikit", "cocoapods", "swift-package-manager", "xcframework"]
+  },
+  {
+    "id": "android-development",
+    "title": "Android Development",
+    "order": 3,
+    "items": ["mvvm", "retrofit", "flow", "jetpack-compose", "kotlin-coroutines"]
+  },
+  {
+    "id": "cross-platform",
+    "title": "Cross-platform",
+    "order": 4,
+    "items": ["flutter", "bloc", "riverpod", "clean-architecture", "react-native"]
+  },
+  {
+    "id": "backend",
+    "title": "Backend",
+    "order": 5,
+    "items": ["spring-boot", "go"]
+  },
+  {
+    "id": "devops-cloud",
+    "title": "DevOps & Cloud",
+    "order": 6,
+    "items": ["docker", "aws-ec2", "aws-s3", "teamcity"]
+  }
 ]

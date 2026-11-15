@@ -25,7 +25,6 @@ vi.mock('../../src/lib/content/queries', () => ({
     principles: [],
   }),
   getHomeSections: async () => ({ skills: true, experience: true }),
-  getSkillGroups: async () => [{ id: 'platforms', title: 'Platforms', items: [{ id: 'ios', name: 'iOS' }] }],
   getProjects: async () => state.projects,
   getCaseStudy: async () => state.study,
 }));

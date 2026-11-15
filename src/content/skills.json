@@ -23,5 +23,11 @@
   { "id": "bluetooth", "name": "Bluetooth" },
   { "id": "ble", "name": "BLE" },
   { "id": "mvvm", "name": "MVVM" },
-  { "id": "retrofit", "name": "Retrofit" }
+  { "id": "retrofit", "name": "Retrofit" },
+  { "id": "riverpod", "name": "Riverpod" },
+  { "id": "python", "name": "Python" },
+  { "id": "flow", "name": "Flow" },
+  { "id": "jetpack-compose", "name": "Compose" },
+  { "id": "kotlin-coroutines", "name": "Kotlin Coroutines" },
+  { "id": "react-native", "name": "React Native" }
 ]
