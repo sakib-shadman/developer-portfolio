@@ -23,5 +23,18 @@
   { "id": "bluetooth", "name": "Bluetooth" },
   { "id": "ble", "name": "BLE" },
   { "id": "mvvm", "name": "MVVM" },
-  { "id": "retrofit", "name": "Retrofit" }
+  { "id": "retrofit", "name": "Retrofit" },
+  { "id": "room", "name": "Room" },
+  { "id": "rxjava", "name": "RxJava" },
+  { "id": "livedata", "name": "LiveData" },
+  { "id": "viewmodel", "name": "ViewModel" },
+  { "id": "provider", "name": "Provider" },
+  { "id": "riverpod", "name": "Riverpod" },
+  { "id": "rest-apis", "name": "REST APIs" },
+  { "id": "firebase", "name": "Firebase" },
+  { "id": "sqlite", "name": "SQLite" },
+  { "id": "mysql", "name": "MySQL" },
+  { "id": "github-actions", "name": "GitHub Actions" },
+  { "id": "gitlab", "name": "GitLab" },
+  { "id": "git", "name": "Git" }
 ]
