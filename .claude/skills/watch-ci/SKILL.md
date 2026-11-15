@@ -1,16 +1,17 @@
 ---
 name: watch-ci
-description: Use after pushing a PR to wait for its CI checks and get a clear pass/fail summary. Waits with gh pr checks --watch (with a timeout), then checks the four required checks and, for any failing job, prints its annotations through the check-runs API because logs cannot always be downloaded.
-argument-hint: '<pr-number> [--timeout seconds] [--interval seconds] [--once]'
+description: Use after pushing a PR to wait for its CI checks and get a clear pass/fail summary. Waits for the first check to appear, then waits with gh pr checks --watch (with a timeout), then checks the four required checks and, for any failing job, prints its annotations through the check-runs API because logs cannot always be downloaded.
+argument-hint: '<pr-number> [--timeout seconds] [--interval seconds] [--grace seconds] [--once]'
 ---
 
 # watch-ci
 
 ```bash
-.claude/skills/watch-ci/scripts/watch-ci.sh <pr> [--timeout 1800] [--interval 30] [--once]
+.claude/skills/watch-ci/scripts/watch-ci.sh <pr> [--timeout 1800] [--interval 30] [--grace 300] [--once]
 ```
 
-- Waits with `gh pr checks <pr> --watch --interval 30` under `timeout` (default 1800 s). `--once` skips the wait and judges the current state (merge-pr uses it).
+- Right after a push or `gh pr update-branch` GitHub may not have created any check runs yet. It first polls every `--interval` seconds until at least one check exists, for up to `--grace` seconds (default 300; not counted in `--timeout`, so the worst case is grace + timeout); if none appears, the empty list is a failure as below. `--timeout`, `--interval` and `--grace` take whole seconds and `--interval` is at least 1 (else exit 2).
+- Then waits with `gh pr checks <pr> --watch --interval 30` under `timeout` (default 1800 s). `--once` skips both waits and judges the current state (merge-pr uses it).
 - Required checks: always at least `branch-policy quality e2e pr-title` (`REQUIRED_CHECKS` can only add names; a list that drops a default is ignored with a warning). A required check that failed, was cancelled, was skipped or never appeared is a failure, and **no checks reported at all is a failure**. Other failing checks (for example Lighthouse) are listed but do not fail the result.
 - For every failing job it prints the annotations from `gh api repos/{owner}/{repo}/check-runs/<job-id>/annotations` (path, line, message). The job id is taken from the check's link (`.../job/<id>`). Playwright's GitHub reporter and ESLint write their errors there, so this is usually enough to find the failing test without logs.
 - It prints `VERIFIED_HEAD=<sha>`, the PR head the verdict is about (merge-pr merges exactly that commit); if the head moves while it checks, it fails. It needs only `gh` (it uses `gh --jq`, no `jq` binary).

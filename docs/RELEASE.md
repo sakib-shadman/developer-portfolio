@@ -102,7 +102,8 @@ Immediately before merging (not earlier: any re-run of `deploy` on `main`, such 
 6. **Bing Webmaster Tools.** Add the site; the quickest route is Import from Google Search Console. Or choose the meta-tag method, set the repository variable `PUBLIC_BING_SITE_VERIFICATION` to the `msvalidate.01` content value and re-run `deploy` as above. Submit `https://shadman-portfolio-96097.web.app/sitemap-index.xml` there too.
 7. **Feed validation.** Paste `https://shadman-portfolio-96097.web.app/rss.xml` into the W3C Feed Validation Service (validator.w3.org/feed). It must report a valid RSS feed. Warnings about the feed's content type or self link: fix in a follow-up PR; errors block the launch.
 8. **Social preview checks.** Run the home page and one project page through the LinkedIn Post Inspector, and through the card validator or a post preview on the platforms you use. Share images live at `/og/*.png` and are not hashed, so platforms cache them: after any later change to a card, re-scrape it with the same tools.
-9. **Announce** only when steps 4 to 8 pass.
+9. **Profile links.** The weekly link check skips LinkedIn and Medium (both refuse bots), so open the LinkedIn, Medium and each article link from the live home page and /blog by hand and confirm they load.
+10. **Announce** only when steps 4 to 9 pass.
 
 ## Roll back
 

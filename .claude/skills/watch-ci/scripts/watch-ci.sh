@@ -1,7 +1,11 @@
 #!/usr/bin/env bash
 # Wait for a PR's checks, then print a pass/fail summary; on failure print every failing job's annotations.
-# Usage: watch-ci.sh <pr> [--timeout <seconds>] [--interval <seconds>] [--once]
-#   --once  do not wait, just evaluate the current state (used by merge-pr)
+# Usage: watch-ci.sh <pr> [--timeout <seconds>] [--interval <seconds>] [--grace <seconds>] [--once]
+#   --once   do not wait, just evaluate the current state (used by merge-pr)
+#   --grace  how long to wait for the FIRST check to appear (default 300). Right after a push or
+#            `gh pr update-branch` GitHub has not created any check runs yet, and `gh pr checks --watch`
+#            would return at once with "no checks reported". The grace wait comes before, and is not part of,
+#            --timeout, so the worst case is grace + timeout.
 # Required checks: ALWAYS at least "branch-policy quality e2e pr-title". REQUIRED_CHECKS may only ADD names;
 # an override that drops a default one is ignored (with a warning). No checks reported at all is a FAILURE.
 # On a verdict the last line before RESULT is "VERIFIED_HEAD=<sha>": the PR head the verdict is about
@@ -11,19 +15,25 @@
 set -euo pipefail
 
 gh_bin="${GH:-gh}"
-pr="${1:?usage: watch-ci.sh <pr> [--timeout <s>] [--interval <s>] [--once]}"
+pr="${1:?usage: watch-ci.sh <pr> [--timeout <s>] [--interval <s>] [--grace <s>] [--once]}"
 shift
 timeout_s=1800
 interval=30
+grace=300
 once=0
 while [ $# -gt 0 ]; do
   case "$1" in
     --timeout) timeout_s="${2:?}"; shift 2 ;;
     --interval) interval="${2:?}"; shift 2 ;;
+    --grace) grace="${2:?}"; shift 2 ;;
     --once) once=1; shift ;;
     *) echo "watch-ci: unknown option $1" >&2; exit 2 ;;
   esac
 done
+for v in "$timeout_s" "$interval" "$grace"; do
+  case "$v" in '' | *[!0-9]*) echo "watch-ci: --timeout, --interval and --grace take whole seconds (got '$v')" >&2; exit 2 ;; esac
+done
+if [ "$interval" -lt 1 ]; then echo "watch-ci: --interval must be at least 1" >&2; exit 2; fi
 # macOS has no timeout(1) by default: wait without a limit there.
 with_timeout() { if command -v timeout >/dev/null 2>&1; then timeout "$@"; else shift; "$@"; fi; }
 
@@ -39,7 +49,17 @@ for d in $defaults; do
   esac
 done
 
+check_names() { "$gh_bin" pr checks "$pr" --json name --jq '.[].name' 2>/dev/null || true; }
+
 if [ "$once" = 0 ]; then
+  # Wait for the first check run to exist before --watch (it returns immediately on an empty list).
+  # If none appears within --grace, fall through: an empty list is judged a failure below.
+  waited=0
+  while [ -z "$(check_names)" ] && [ "$waited" -lt "$grace" ]; do
+    [ "$waited" = 0 ] && echo "watch-ci: no checks reported yet for PR #$pr; waiting up to ${grace}s for them to start" >&2
+    sleep "$interval"
+    waited=$((waited + interval))
+  done
   # gh exits non-zero when a check failed; we evaluate the state ourselves below, so ignore its status.
   rc=0
   with_timeout "$timeout_s" "$gh_bin" pr checks "$pr" --watch --interval "$interval" || rc=$?

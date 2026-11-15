@@ -22,13 +22,19 @@ test.describe('home', () => {
     await expect(page.locator('body')).not.toContainText(/\[[^\]]+\]/);
   });
 
-  test('profile tiles only for configured links', async ({ page }) => {
+  test('profile tiles for the configured links', async ({ page }) => {
     await page.goto('/');
     const tiles = page.getByRole('navigation', { name: 'Profiles' });
-    await expect(tiles.getByRole('link', { name: /GitHub/ })).toHaveAttribute('target', '_blank');
-    await expect(tiles.getByRole('link', { name: /GitHub/ })).toHaveAttribute('rel', /noopener/);
-    await expect(tiles.getByRole('link', { name: /LinkedIn/ })).toHaveCount(0);
-    await expect(tiles.getByRole('link', { name: /Medium/ })).toHaveCount(0);
+    for (const [name, href] of [
+      [/GitHub/, 'https://github.com/sakib-shadman'],
+      [/LinkedIn/, 'https://www.linkedin.com/in/shadman-sakib-02482710a/'],
+      [/Medium/, 'https://medium.com/@sakib.shadman'],
+    ] as const) {
+      const link = tiles.getByRole('link', { name });
+      await expect(link).toHaveAttribute('href', href);
+      await expect(link).toHaveAttribute('target', '_blank');
+      await expect(link).toHaveAttribute('rel', /noopener/);
+    }
     // The email is configured: the tile jumps to the contact block, which holds the mailto link.
     await expect(tiles.getByRole('link', { name: /Email/ })).toHaveCount(1);
     await expect(tiles.getByRole('link', { name: /Email/ })).toHaveAttribute('href', '#contact');
@@ -37,8 +43,8 @@ test.describe('home', () => {
   test('stats band is a definition list', async ({ page }) => {
     await page.goto('/');
     const band = page.getByRole('region', { name: 'At a glance' });
-    await expect(band.locator('dl dt')).toHaveText(['Platforms · iOS, Android']);
-    await expect(band.locator('dl dd')).toHaveText(['2']);
+    await expect(band.locator('dl dt')).toHaveText(['Years of experience', 'Platforms · iOS, Android']);
+    await expect(band.locator('dl dd')).toHaveText(['9+', '2']);
   });
 
   test('sections render in order with gap-free numbering and labelled landmarks', async ({ page }) => {
@@ -50,13 +56,14 @@ test.describe('home', () => {
     const ids = await page
       .locator('main > section')
       .evaluateAll((els) => els.map((e) => e.id || e.getAttribute('aria-label')));
-    expect(ids).toEqual(['hero', 'At a glance', 'skills', 'experience', 'work', 'contact']);
+    expect(ids).toEqual(['hero', 'At a glance', 'skills', 'experience', 'work', 'writing', 'contact']);
 
     await expect(page.locator('#skills .eyebrow')).toHaveText('01 — Skills');
     await expect(page.locator('#experience .eyebrow')).toHaveText('02 — Experience');
     await expect(page.locator('#work .eyebrow')).toHaveText('03 — Projects');
-    // The writing slider is not built yet: no "04" eyebrow.
-    await expect(page.locator('main')).not.toContainText(/04 — /);
+    // Articles are published, so the writing section is 04 and nothing follows it.
+    await expect(page.locator('#writing .eyebrow')).toHaveText('04 — Writing');
+    await expect(page.locator('main')).not.toContainText(/05 — /);
   });
 
   test('heading order never skips a level', async ({ page }) => {
@@ -106,13 +113,16 @@ test.describe('home', () => {
     await expect(page.locator('#experience')).not.toContainText(/Sheba|UITS/);
   });
 
-  test('contact CTA: availability and the email shown, unconfigured pills hidden', async ({ page }) => {
+  test('contact CTA: availability, the email and the configured profile links', async ({ page }) => {
     await page.goto('/');
     const cta = page.locator('#contact');
     await expect(cta.getByRole('heading', { level: 2 })).toHaveText("Let's build something together.");
     await expect(cta).toContainText('Open to engineering roles');
     await expect(cta.getByRole('link', { name: /GitHub/ })).toBeVisible();
-    await expect(cta.getByRole('link', { name: /LinkedIn/ })).toHaveCount(0);
+    await expect(cta.getByRole('link', { name: /LinkedIn/ })).toHaveAttribute(
+      'href',
+      'https://www.linkedin.com/in/shadman-sakib-02482710a/',
+    );
     const mail = cta.locator('a[href^="mailto:"]');
     await expect(mail).toHaveCount(1);
     await expect(mail).toHaveAttribute('href', 'mailto:sakib.shadman@outlook.com');

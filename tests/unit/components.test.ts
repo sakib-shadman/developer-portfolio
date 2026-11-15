@@ -60,9 +60,23 @@ describe('Footer', () => {
     expect(html).toMatch(
       /<a[^>]*class="pill[^"]*"[^>]*href="\/resume\/cv\.pdf"|<a[^>]*href="\/resume\/cv\.pdf"[^>]*class="pill/,
     );
-    expect(html).toMatch(/href="\/resume\/cv\.pdf"[^>]*target="_blank"[^>]*rel="noopener noreferrer"/);
-    expect(html).toMatch(/Resume\s*<span class="sr-only"[^>]*> \(opens in a new tab\)<\/span>/);
+    // The site's own PDF downloads: no new tab and no "(opens in a new tab)" hint.
+    const pill = /<a[^>]*href="\/resume\/cv\.pdf"[^>]*>/.exec(html)?.[0] ?? '';
+    expect(pill).toMatch(/\sdownload(\s|>|=)/);
+    expect(pill).not.toContain('target=');
+    expect(html).not.toContain('opens in a new tab');
+    expect(html).toMatch(/Resume\s*<span class="sr-only"[^>]*> \(PDF download\)<\/span>/);
     expect(html).toContain('href="/rss.xml"');
+  });
+
+  it('opens an external resume URL in a new tab instead of downloading it', async () => {
+    const html = await container.renderToString(Footer, {
+      props: { name: 'S', resume: 'https://example.com/cv.pdf' },
+    });
+    const pill = /<a[^>]*href="https:\/\/example\.com\/cv\.pdf"[^>]*>/.exec(html)?.[0] ?? '';
+    expect(pill).toMatch(/target="_blank"[^>]*rel="noopener noreferrer"/);
+    expect(pill).not.toMatch(/\sdownload(\s|>|=)/);
+    expect(html).toMatch(/Resume\s*<span class="sr-only"[^>]*> \(opens in a new tab\)<\/span>/);
   });
 });
 
