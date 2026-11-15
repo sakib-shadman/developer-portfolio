@@ -37,7 +37,7 @@ const year = new Date().getFullYear();
           >
             <Icon name="download" color="var(--acc)" />
             Resume
-            {opensInNewTab(resumeLink) && <NewTabHint />}
+            {opensInNewTab(resumeLink) ? <NewTabHint /> : <span class="sr-only"> (PDF download)</span>}
           </a>
         </li>
       )}

@@ -418,6 +418,19 @@ describe('watch-ci', () => {
     expect(r.status).toBe(1);
     expect(r.err).toContain('NO checks reported');
   });
+  it('--once never polls for the first check, and bad durations are rejected with exit 2', () => {
+    const f = fake('w-once', { 'checks.json': allPass, 'view.json': head, empty_polls: 'x\n' });
+    expect(watch(f, ['--once']).status).toBe(1);
+    expect(f.log()).not.toContain('--json name ');
+    for (const args of [
+      ['--interval', '0'],
+      ['--interval', 'x'],
+      ['--grace', '-1'],
+      ['--timeout', '1.5'],
+    ]) {
+      expect(watch(fake(`w-bad-${args.join('')}`), args).status, args.join(' ')).toBe(2);
+    }
+  });
   it('waits with gh pr checks --watch unless --once, and needs no jq binary', () => {
     const f = fake('w5', { 'checks.json': allPass, 'view.json': head });
     expect(watch(f, ['--interval', '5', '--timeout', '30']).status).toBe(0);

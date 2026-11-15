@@ -4,7 +4,8 @@
 #   --once   do not wait, just evaluate the current state (used by merge-pr)
 #   --grace  how long to wait for the FIRST check to appear (default 300). Right after a push or
 #            `gh pr update-branch` GitHub has not created any check runs yet, and `gh pr checks --watch`
-#            would return at once with "no checks reported".
+#            would return at once with "no checks reported". The grace wait comes before, and is not part of,
+#            --timeout, so the worst case is grace + timeout.
 # Required checks: ALWAYS at least "branch-policy quality e2e pr-title". REQUIRED_CHECKS may only ADD names;
 # an override that drops a default one is ignored (with a warning). No checks reported at all is a FAILURE.
 # On a verdict the last line before RESULT is "VERIFIED_HEAD=<sha>": the PR head the verdict is about
@@ -29,6 +30,10 @@ while [ $# -gt 0 ]; do
     *) echo "watch-ci: unknown option $1" >&2; exit 2 ;;
   esac
 done
+for v in "$timeout_s" "$interval" "$grace"; do
+  case "$v" in '' | *[!0-9]*) echo "watch-ci: --timeout, --interval and --grace take whole seconds (got '$v')" >&2; exit 2 ;; esac
+done
+if [ "$interval" -lt 1 ]; then echo "watch-ci: --interval must be at least 1" >&2; exit 2; fi
 # macOS has no timeout(1) by default: wait without a limit there.
 with_timeout() { if command -v timeout >/dev/null 2>&1; then timeout "$@"; else shift; "$@"; fi; }
 

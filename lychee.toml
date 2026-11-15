@@ -2,4 +2,5 @@
 max_concurrency = 8
 accept = ["200..=299", "429"]
 timeout = 20
-exclude = ["^https://www\\.linkedin\\.com"] # LinkedIn returns 999 to bots
+# LinkedIn returns 999 and Medium (Cloudflare) 403 to bots; both are checked by hand before a release.
+exclude = ["^https://www\\.linkedin\\.com", "^https://medium\\.com"]

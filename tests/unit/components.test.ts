@@ -65,6 +65,7 @@ describe('Footer', () => {
     expect(pill).toMatch(/\sdownload(\s|>|=)/);
     expect(pill).not.toContain('target=');
     expect(html).not.toContain('opens in a new tab');
+    expect(html).toMatch(/Resume\s*<span class="sr-only"[^>]*> \(PDF download\)<\/span>/);
     expect(html).toContain('href="/rss.xml"');
   });
 
