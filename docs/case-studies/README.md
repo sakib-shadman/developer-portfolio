@@ -1,14 +1,14 @@
 # Case study drafts
 
-Drafts for the four featured projects, written only from the owner's CV (`public/resume/shadman-sakib-resume.pdf`) and LinkedIn profile. They are **not published**: nothing here is in `src/content`, so no project links a case study yet.
+Drafts for the four featured projects, written only from the owner's CV (`public/resume/shadman-sakib-resume.pdf`) and LinkedIn profile. Their frontmatter is published as-is (owner's call, 2026-11-16) in `src/content/case-studies/`; the bodies grow from the answers below.
 
 Each draft has three parts:
 
 1. **Sourced facts**: the lines the draft is built from, with the source.
-2. **Draft**: the frontmatter (and, where the sources allow, body) that would go in `src/content/case-studies/<slug>.mdx`. The project page already renders the problem, the project's contributions and the outcomes, so the body is reserved for architecture, decisions, challenges and metrics, which the sources don't cover. Only Financfy has a body so far: a diagram of the internal packages its CV line names.
+2. **Draft**: the frontmatter (and, where the sources allow, body) that would go in `src/content/case-studies/<slug>.mdx`. The project page already renders the problem, the project's contributions and the outcomes, so the body is reserved for architecture, decisions, challenges and metrics, which the sources don't cover.
 3. **Questions for the owner**: what is needed to make the case study worth reading. Answer in plain text; numbers only if they are real and shareable.
 
-To publish one: answer its questions, extend the draft, move it to `src/content/case-studies/<slug>.mdx`, and add `"caseStudy": "<slug>"` to the project JSON (see "Add a case study" in `docs/MAINTENANCE.md`).
+To grow one: answer its questions here, then extend the body of `src/content/case-studies/<slug>.mdx` with the components listed in "Add a case study" in `docs/MAINTENANCE.md`.
 
 | Project           | Draft                                          |
 | ----------------- | ---------------------------------------------- |

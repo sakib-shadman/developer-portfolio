@@ -12,5 +12,6 @@
   "technologies": ["android", "kotlin", "bluetooth", "ble", "mvvm", "retrofit"],
   "featured": true,
   "featuredOrder": 3,
-  "status": "published"
+  "status": "published",
+  "caseStudy": "inspector-android"
 }

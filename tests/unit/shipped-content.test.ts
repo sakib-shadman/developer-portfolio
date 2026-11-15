@@ -45,4 +45,23 @@ describe('shipped content: the CV roles, the published projects and the four fea
         .map((p) => p.id),
     ).toEqual(['bluestack-ios-sdk', 'bkash-dso-app', 'inspector-android', 'financfy']);
   });
+
+  it('links a case study from each of the four featured projects, and from no other', () => {
+    const linked = readdirSync('src/content/projects')
+      .map((f) => [f.replace(/\.json$/, ''), json(`src/content/projects/${f}`).caseStudy] as const)
+      .filter(([, cs]) => cs !== undefined);
+    expect(linked.sort()).toEqual(
+      [
+        ['bkash-dso-app', 'bkash-dso-app'],
+        ['bluestack-ios-sdk', 'bluestack-ios-sdk'],
+        ['financfy', 'financfy'],
+        ['inspector-android', 'inspector-android'],
+      ].sort(),
+    );
+    expect(
+      readdirSync('src/content/case-studies')
+        .filter((f) => f.endsWith('.mdx'))
+        .sort(),
+    ).toEqual(['bkash-dso-app.mdx', 'bluestack-ios-sdk.mdx', 'financfy.mdx', 'inspector-android.mdx']);
+  });
 });

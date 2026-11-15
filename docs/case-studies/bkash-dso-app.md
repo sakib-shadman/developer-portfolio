@@ -1,6 +1,6 @@
 # Case study draft: bKash DSO App
 
-Status: draft, not published.
+Status: frontmatter published (problem line only); body waits on the questions below.
 
 ## Sourced facts
 

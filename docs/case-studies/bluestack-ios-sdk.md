@@ -1,6 +1,6 @@
 # Case study draft: BlueStack iOS SDK
 
-Status: draft, not published.
+Status: frontmatter published (problem line only); body waits on the questions below.
 
 ## Sourced facts
 
