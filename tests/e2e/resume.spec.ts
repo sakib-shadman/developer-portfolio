@@ -69,7 +69,7 @@ test('@smoke the real resume PDF is served as application/pdf with a short cache
   expect(body.length).toBeGreaterThan(10_000);
 });
 
-test('@smoke home: header and footer open the resume in a new tab, the hero downloads it', async ({
+test('@smoke home: the header opens the resume in a new tab, the footer and hero download it', async ({
   page,
 }) => {
   await page.goto('/');
@@ -78,12 +78,13 @@ test('@smoke home: header and footer open the resume in a new tab, the hero down
   const header = page.getByRole('banner').locator(`a[href="${RESUME}"]`);
   const footer = page.getByRole('contentinfo').locator(`a[href="${RESUME}"]`);
   const hero = page.locator('#hero').locator(`a[href="${RESUME}"]`);
-  for (const l of [header, footer]) {
-    await expect(l).toHaveCount(1);
-    await expect(l).toHaveAttribute('target', '_blank');
-    await expect(l).toHaveAttribute('rel', 'noopener noreferrer');
-    await expect(l).not.toHaveAttribute('download', /.*/);
-  }
+  await expect(header).toHaveCount(1);
+  await expect(header).toHaveAttribute('target', '_blank');
+  await expect(header).toHaveAttribute('rel', 'noopener noreferrer');
+  await expect(header).not.toHaveAttribute('download', /.*/);
+  await expect(footer).toHaveCount(1);
+  await expect(footer).toHaveAttribute('download', '');
+  await expect(footer).not.toHaveAttribute('target', /.*/);
   await expect(hero).toHaveCount(1);
   await expect(hero).toHaveAttribute('download', '');
   await expect(hero).toContainText('Download resume');
@@ -99,11 +100,12 @@ test('@smoke about: Download resume (twice) and View resume, plus header and foo
   await expect(view).toHaveAttribute('href', RESUME);
   await expect(view).toHaveAttribute('target', '_blank');
   await expect(view).toHaveAttribute('rel', 'noopener noreferrer');
-  for (const region of ['banner', 'contentinfo'] as const) {
-    const l = page.getByRole(region).locator(`a[href="${RESUME}"]`);
-    await expect(l).toHaveCount(1);
-    await expect(l).toHaveAttribute('target', '_blank');
-  }
+  const header = page.getByRole('banner').locator(`a[href="${RESUME}"]`);
+  await expect(header).toHaveCount(1);
+  await expect(header).toHaveAttribute('target', '_blank');
+  const footer = page.getByRole('contentinfo').locator(`a[href="${RESUME}"]`);
+  await expect(footer).toHaveCount(1);
+  await expect(footer).toHaveAttribute('download', '');
 });
 
 test('@smoke the resume is a link only: no page preloads or prefetches it', async ({ page }) => {

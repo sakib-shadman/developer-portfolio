@@ -90,7 +90,9 @@ case "$1 $2" in
   "pr view") f="$FAKE/view.json"
     # FAKE/head_seq: one sha per line, consumed by successive pr view headRefOid calls (a moving head).
     if [ -s "$FAKE/head_seq" ] && [[ "$*" == *headRefOid* ]]; then sha="$(head -n 1 "$FAKE/head_seq")"; sed -i 1d "$FAKE/head_seq"; echo "$sha"; exit 0; fi ;;
-  "pr checks") f="$FAKE/checks.json"; case "$*" in *--watch*) exit "\${FAKE_WATCH_RC:-0}" ;; esac ;;
+  "pr checks") f="$FAKE/checks.json"; case "$*" in *--watch*) exit "\${FAKE_WATCH_RC:-0}" ;; esac
+    # FAKE/empty_polls: N lines; each non-watch call consumes one and reports no checks (runs not created yet).
+    if [ -s "$FAKE/empty_polls" ]; then sed -i 1d "$FAKE/empty_polls"; exit 0; fi ;;
   "pr create") echo "https://github.com/o/r/pull/7"; exit 0 ;;
   "pr comment") for a in "$@"; do last="$a"; done; cat "$last" > "$FAKE/comment.txt"; exit 0 ;;
   "pr update-branch") [ -f "$FAKE/view_after.json" ] && cp "$FAKE/view_after.json" "$FAKE/view.json"; exit 0 ;;
@@ -400,6 +402,21 @@ describe('watch-ci', () => {
     const r = watch(f);
     expect(r.status).toBe(1);
     expect(r.err).toContain('head moved');
+  });
+  it('waits for the first check to appear before --watch (right after a push or update-branch)', () => {
+    const f = fake('w-late', { 'checks.json': allPass, 'view.json': head, empty_polls: 'x\nx\n' });
+    const r = watch(f, ['--interval', '1', '--grace', '10']);
+    expect(r.status).toBe(0);
+    expect(r.err).toContain('no checks reported yet');
+    const log = f.log();
+    expect(log.split('\n').filter((l) => l.startsWith('gh pr checks 9 --json name ')).length).toBe(3);
+    expect(log.indexOf('--watch')).toBeGreaterThan(log.lastIndexOf('gh pr checks 9 --json name '));
+  });
+  it('still fails when no check appears within --grace', () => {
+    const f = fake('w-never', { 'checks.json': '[]', 'view.json': head });
+    const r = watch(f, ['--interval', '1', '--grace', '2']);
+    expect(r.status).toBe(1);
+    expect(r.err).toContain('NO checks reported');
   });
   it('waits with gh pr checks --watch unless --once, and needs no jq binary', () => {
     const f = fake('w5', { 'checks.json': allPass, 'view.json': head });

@@ -12,7 +12,9 @@ interface Props {
 }
 
 const { name, location, resume, rss = false } = Astro.props;
-const resumeLink = linkAttrs(resume, { newTab: true });
+// The footer pill downloads the site's own PDF (the header's Resume link opens it in a new tab);
+// an external resume URL cannot be downloaded cross-origin, so it opens in a new tab instead.
+const resumeLink = linkAttrs(resume);
 const rssLink = rss ? linkAttrs('/rss.xml') : null;
 const year = new Date().getFullYear();
 ---
@@ -26,7 +28,13 @@ const year = new Date().getFullYear();
     <ul class="actions" role="list">
       {resumeLink && (
         <li>
-          <a class="pill" href={resumeLink.href} target={resumeLink.target} rel={resumeLink.rel}>
+          <a
+            class="pill"
+            href={resumeLink.href}
+            target={resumeLink.target}
+            rel={resumeLink.rel}
+            download={resumeLink.external ? undefined : true}
+          >
             <Icon name="download" color="var(--acc)" />
             Resume
             {opensInNewTab(resumeLink) && <NewTabHint />}

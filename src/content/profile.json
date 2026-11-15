@@ -11,11 +11,26 @@
     "now": "Building an iOS SDK for adtech",
     "email": "sakib.shadman@outlook.com",
     "links": {
-      "github": "https://github.com/sakib-shadman"
+      "github": "https://github.com/sakib-shadman",
+      "linkedin": "https://www.linkedin.com/in/shadman-sakib-02482710a/",
+      "medium": "https://medium.com/@sakib.shadman"
     },
     "resume": "/resume/shadman-sakib-resume.pdf",
-    "photo": { "src": "./images/shadman.jpg", "alt": "Shadman Sakib" },
-    "stats": [{ "label": "Platforms · iOS, Android", "value": "2" }],
+    "photo": {
+      "src": "./images/shadman.jpg",
+      "alt": "Shadman Sakib"
+    },
+    "stats": [
+      {
+        "label": "Years of experience",
+        "value": "9",
+        "suffix": "+"
+      },
+      {
+        "label": "Platforms · iOS, Android",
+        "value": "2"
+      }
+    ],
     "availability": "Open to engineering roles, freelance work and collaboration."
   }
 }
