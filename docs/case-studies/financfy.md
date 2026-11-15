@@ -1,6 +1,6 @@
 # Case study draft: Financfy
 
-Status: draft, not published.
+Status: frontmatter published (problem line only); body waits on the questions below.
 
 ## Sourced facts
 
@@ -20,24 +20,9 @@ project: financfy
 problem: Small businesses need to track sales, stock and receivables and keep cashbooks.
 outcomes: []
 ---
-
-<Section eyebrow="Architecture" title="Features on shared internal packages">
-
-<Diagram
-  nodes={[
-    { label: 'Features', highlight: true },
-    { label: 'UI library' },
-    { label: 'Network client' },
-    { label: 'Logger' },
-    { label: 'Error reporting' },
-  ]}
-  caption="A feature-first app on four internal packages."
-/>
-
-</Section>
 ```
 
-The `problem` line restates the sourced scope; sharpen it if there was a specific pain point. The diagram shows only the packages the CV names, one box each; check the arrangement (question 1).
+The `problem` line restates the sourced scope; sharpen it if there was a specific pain point. A package diagram was left out: the `Diagram` component draws a left-to-right chain, which would wrongly show the packages calling each other in sequence. It comes back once question 1 says how they relate.
 
 ## Questions for the owner
 

@@ -82,12 +82,19 @@ test.describe('with draft content', () => {
     await expect(page.getByRole('heading', { name: 'Project list' })).toHaveCount(0);
   });
 
-  test('cards hide missing data: no placeholder text, links or case study; role only where set', async ({
+  test('cards hide missing data: no placeholder text; case study links only on the four featured; role only where set', async ({
     page,
   }) => {
     const body = page.locator('main');
     await expect(body).not.toContainText(/\[[^\]]+\]/);
-    await expect(body.getByRole('link', { name: /Case study/ })).toHaveCount(0);
+    const studies = body.getByRole('link', { name: /Case study/ });
+    await expect(studies).toHaveCount(4);
+    expect(await studies.evaluateAll((els) => els.map((e) => e.getAttribute('href')))).toEqual([
+      '/projects/bluestack-ios-sdk',
+      '/projects/bkash-dso-app',
+      '/projects/inspector-android',
+      '/projects/financfy',
+    ]);
     // Every published project carries a role; the LMS Cricket draft has none and so shows no "Role:" line.
     const card = (name: string) => items(page).filter({ has: page.getByRole('heading', { name }) });
     await expect(card('BlueStack iOS SDK')).toContainText('Role: Senior Software Engineer');

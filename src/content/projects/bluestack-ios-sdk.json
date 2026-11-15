@@ -13,5 +13,6 @@
   "progress": "in-progress",
   "featured": true,
   "featuredOrder": 1,
-  "status": "published"
+  "status": "published",
+  "caseStudy": "bluestack-ios-sdk"
 }

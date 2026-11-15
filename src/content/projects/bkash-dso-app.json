@@ -12,5 +12,6 @@
   "technologies": ["flutter", "dart", "bloc", "clean-architecture"],
   "featured": true,
   "featuredOrder": 2,
-  "status": "published"
+  "status": "published",
+  "caseStudy": "bkash-dso-app"
 }

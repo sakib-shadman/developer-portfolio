@@ -11,5 +11,6 @@
   "technologies": ["flutter", "dart", "bloc", "clean-architecture"],
   "featured": true,
   "featuredOrder": 4,
-  "status": "published"
+  "status": "published",
+  "caseStudy": "financfy"
 }
