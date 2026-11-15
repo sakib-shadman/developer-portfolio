@@ -2,7 +2,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { test, expect, type APIRequestContext, type Page } from '@playwright/test';
 
 // Content-agnostic SEO checks (FR-14): they discover the routes from the page, so they run on the
-// shipped build (no projects/articles), the draft build and the fixture build. @fixtures tests need
+// shipped build, the draft build and the fixture build, whatever projects/articles they hold. @fixtures tests need
 // tests/fixtures/content (`pnpm e2e:fixtures`) and read their expectations from those files.
 const STATIC_ROUTES = ['/', '/projects', '/about', '/contact', '/blog'];
 const MISSING = '/definitely-not-a-page';

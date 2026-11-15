@@ -8,7 +8,7 @@ Each draft has three parts:
 2. **Draft**: the frontmatter (and, where the sources allow, body) that would go in `src/content/case-studies/<slug>.mdx`. The project page already renders the problem, the project's contributions and the outcomes, so the body is reserved for architecture, decisions, challenges and metrics, which the sources don't cover.
 3. **Questions for the owner**: what is needed to make the case study worth reading. Answer in plain text; numbers only if they are real and shareable.
 
-To publish one: answer its questions, extend the draft, move it to `src/content/case-studies/<slug>.mdx`, and add `"caseStudy": "<slug>"` to the project JSON (see "Add a case study" in `docs/MAINTENANCE.md`).
+To grow one: answer its questions here, then extend the body of `src/content/case-studies/<slug>.mdx` with the components listed in "Add a case study" in `docs/MAINTENANCE.md`.
 
 | Project           | Draft                                          |
 | ----------------- | ---------------------------------------------- |

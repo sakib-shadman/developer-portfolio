@@ -1,7 +1,8 @@
 import AxeBuilder from '@axe-core/playwright';
 import { test, expect, type Page } from '@playwright/test';
 
-// Detail pages exist only for projects that have a case study, so real content may have none (today).
+// Detail pages exist only for projects that have a case study (real content has four; the shipped build
+// could in principle have none).
 // The page-level tests are tagged @any-content: they run on real content and skip when empty, and the
 // @fixtures run (pnpm e2e:fixtures) includes them so they are exercised against case studies.
 // Everything here discovers pages from /projects and is content-agnostic; the
